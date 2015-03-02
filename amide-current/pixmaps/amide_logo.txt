@@ -1,0 +1,7 @@
+Made the logo in GIMP as follows
+
+New image, 90x90 with transparent background
+Text: Letter A - courier (bitstream) bold, size 130
+
+Script-Fu -> Alpha to Logo -> Gradient Bevel
+Then reapplied gradient to get the blue/purple colors

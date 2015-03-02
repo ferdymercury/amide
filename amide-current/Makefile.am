@@ -2,12 +2,14 @@ ACLOCAL_AMFLAGS = \
 	-I /usr/local/share/aclocal \
 	-I macros
 
+# note, win32 needs to be before src
 SUBDIRS = \
+	pixmaps \
+	win32 \
 	src \
 	doc \
 	help \
 	omf-install \
-	pixmaps \
 	po \
 	etc
 

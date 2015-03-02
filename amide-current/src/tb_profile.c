@@ -61,13 +61,18 @@ typedef struct tb_profile_t {
   GtkWidget * text;
   gdouble min_x, max_x;
   gdouble scale_x;
-  gboolean calc_gaussian_fit;
-  gdouble initial_x;
-  gboolean fix_x;
-  gboolean fix_dc_zero;
 
   GPtrArray * results;
+
+
+  /* gaussian fit stuff */
   GnomeCanvasItem * x_label[2];
+  gboolean calc_gaussian_fit;
+  gdouble initial_x;
+  gdouble x_limit[2];
+  gboolean fix_x;
+  gboolean fix_dc_zero;
+  GnomeCanvasItem * x_limit_item[2];
 
   guint reference_count;
 } tb_profile_t;
@@ -209,6 +214,8 @@ static tb_profile_t * profile_init(void) {
   tb_profile->initial_x = -1.0;
   tb_profile->fix_x = FALSE;
   tb_profile->fix_dc_zero=FALSE;
+  tb_profile->x_limit_item[0] = NULL;
+  tb_profile->x_limit_item[1] = NULL;
 
 
   return tb_profile;
@@ -372,19 +379,74 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
   tb_profile_t * tb_profile = data;
   AmitkCanvasPoint canvas_cpoint;
   GnomeCanvas * canvas;
+  gdouble x_point;
+  gboolean find_new_initial = FALSE;
+  AmitkLineProfileDataElement * element;
+  gboolean initialized;
+  gdouble peak_x=0.0;
+  gdouble peak_y=0.0;
+  int i,j;
+  result_t * result;
+  
 
   canvas = GNOME_CANVAS(widget);
   gnome_canvas_window_to_world(canvas, event->button.x, event->button.y, &canvas_cpoint.x, &canvas_cpoint.y);
   gnome_canvas_w2c_d(canvas, canvas_cpoint.x, canvas_cpoint.y, &canvas_cpoint.x, &canvas_cpoint.y);
   switch (event->type) {
+
   case GDK_BUTTON_RELEASE:
-    tb_profile->initial_x = ((canvas_cpoint.x-EDGE_SPACING)/tb_profile->scale_x)+tb_profile->min_x;
+    x_point = ((canvas_cpoint.x-EDGE_SPACING)/tb_profile->scale_x)+tb_profile->min_x;
+    switch (event->button.button) {
+    case 1:
+      if (x_point < tb_profile->x_limit[1])
+	tb_profile->x_limit[0] = x_point;
+      find_new_initial = TRUE;
+      break;
+    case 3:
+      if (x_point > tb_profile->x_limit[0])
+	tb_profile->x_limit[1] = x_point;
+      find_new_initial = TRUE;
+      break;
+    case 2:
+    default:
+      tb_profile->initial_x = x_point;
+      break;
+    }
+
+    /* find new peaks */
+    if (find_new_initial) {
+      tb_profile->initial_x = -1.0;
+      
+      for (i=0; i < tb_profile->results->len; i++) {
+	result = g_ptr_array_index(tb_profile->results, i);
+	g_return_val_if_fail(result != NULL, FALSE);
+	
+	initialized = FALSE;
+	for (j=0; j<result->line->len; j++) {
+	  element = g_ptr_array_index(result->line, j);
+	  if ((element->location >= tb_profile->x_limit[0]) &&
+	      (element->location <= tb_profile->x_limit[1])) {
+	    if ((!initialized) || (peak_y < element->value)) {
+	      peak_x = element->location;
+	      peak_y = element->value;
+	      initialized = TRUE;
+	    } 
+	  }
+	}
+	
+	if (initialized) result->peak_location = peak_x;
+      }
+    }
+
+    /* redisplay */
     if (tb_profile->calc_gaussian_fit)
       display_gaussian_fit(tb_profile);
     break;
+
   default:
     break;
   }
+
 
   return FALSE;
 }
@@ -442,6 +504,7 @@ typedef struct params_t {
   gboolean fix_x;
   gdouble x;
   gboolean fix_dc_zero;
+  gdouble x_limit[2];
 } params_t;
 
 static int gaussian_f(const gsl_vector * func_p, void * data, gsl_vector * f) {
@@ -466,7 +529,11 @@ static int gaussian_f(const gsl_vector * func_p, void * data, gsl_vector * f) {
 
   for (i = 0; i < params->line->len; i++) {
     element = g_ptr_array_index(params->line, i);
-    gsl_vector_set(f, i, calc_gaussian(s,p,c,b,element->location) - element->value);
+    if ((element->location > params->x_limit[0]) &&
+	(element->location < params->x_limit[1])) 
+      gsl_vector_set(f, i, calc_gaussian(s,p,c,b,element->location) - element->value);
+    else
+      gsl_vector_set(f, i, 0.0);
   }
 
   return GSL_SUCCESS;
@@ -496,12 +563,22 @@ static int gaussian_df (const gsl_vector * func_p, void *data,  gsl_matrix * J) 
     inner = exp(-0.5*(diff)*(diff)/(s*s));
 
     j = 0;
-    gsl_matrix_set (J, i, j++, p*inner*diff*diff/(s*s*s));
-    gsl_matrix_set (J, i, j++, inner);
-    if (!params->fix_x)
-      gsl_matrix_set (J, i, j++, p*inner*diff/(s*s));
-    if (!params->fix_dc_zero)
-      gsl_matrix_set (J, i, j++, 1);
+    if ((element->location > params->x_limit[0]) &&
+	(element->location < params->x_limit[1])) {
+      gsl_matrix_set (J, i, j++, p*inner*diff*diff/(s*s*s));
+      gsl_matrix_set (J, i, j++, inner);
+      if (!params->fix_x)
+	gsl_matrix_set (J, i, j++, p*inner*diff/(s*s));
+      if (!params->fix_dc_zero)
+	gsl_matrix_set (J, i, j++, 1);
+    } else {
+      gsl_matrix_set (J, i, j++, 0.0);
+      gsl_matrix_set (J, i, j++, 0.0);
+      if (!params->fix_x)
+	gsl_matrix_set (J, i, j++, 0.0);
+      if (!params->fix_dc_zero)
+	gsl_matrix_set (J, i, j++, 0.0);
+    }
   }
 
   return GSL_SUCCESS;
@@ -552,7 +629,7 @@ static void fit_gaussian(tb_profile_t * tb_profile) {
 
     /* figure out where we'd like to start along x*/
     initial_x = (tb_profile->initial_x >= 0.0) ? tb_profile->initial_x : result->peak_location;
-      
+
     /* initialize parameters */
     j=0;
     gsl_vector_set(init_p, j++, 1.0); /* s - sigma argument, proportional to width */
@@ -570,6 +647,8 @@ static void fit_gaussian(tb_profile_t * tb_profile) {
     params.line = result->line;
     params.fix_x = tb_profile->fix_x;
     params.x = initial_x;
+    params.x_limit[0] = tb_profile->x_limit[0];
+    params.x_limit[1] = tb_profile->x_limit[1];
     params.fix_dc_zero = tb_profile->fix_dc_zero;
     fdf.params = &params;
     fdf.n = result->line->len;
@@ -647,7 +726,42 @@ static void display_gaussian_fit(tb_profile_t * tb_profile) {
 
   /* perform gaussian fits */
   fit_gaussian(tb_profile);
-  tb_profile->initial_x = -1.0;
+
+  /* make the x limit lines */
+  if (tb_profile->x_limit_item[0] != NULL)
+    gtk_object_destroy(GTK_OBJECT(tb_profile->x_limit_item[0]));
+  if (tb_profile->x_limit_item[1] != NULL)
+    gtk_object_destroy(GTK_OBJECT(tb_profile->x_limit_item[1]));
+  
+  points = gnome_canvas_points_new(2);
+  points->coords[0] = points->coords[2] = 
+    tb_profile->scale_x*(tb_profile->x_limit[0]-tb_profile->min_x)+EDGE_SPACING;
+  points->coords[1] = EDGE_SPACING+CANVAS_HEIGHT/4.0;
+  points->coords[3] = 3*CANVAS_HEIGHT/4.0+EDGE_SPACING;
+  tb_profile->x_limit_item[0] = 
+    gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(tb_profile->canvas)),
+			  gnome_canvas_line_get_type(),
+			  "points", points,
+			  "fill_color", "white",
+			  "line_style", GDK_LINE_ON_OFF_DASH,
+			  "width_units", 1.0,
+			  NULL);
+  gnome_canvas_points_unref(points);
+  
+  points = gnome_canvas_points_new(2);
+  points->coords[0] = points->coords[2] =
+    tb_profile->scale_x*(tb_profile->x_limit[1]-tb_profile->min_x)+EDGE_SPACING;
+  points->coords[1] = EDGE_SPACING+CANVAS_HEIGHT/4.0;
+  points->coords[3] = 3*CANVAS_HEIGHT/4.0+EDGE_SPACING;
+  tb_profile->x_limit_item[1] = 
+    gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(tb_profile->canvas)),
+			  gnome_canvas_line_get_type(),
+			  "points", points,
+			  "fill_color", "white",
+			  "line_style", GDK_LINE_ON_OFF_DASH,
+			  "width_units", 1.0,
+			  NULL);
+  gnome_canvas_points_unref(points);
 
   buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (tb_profile->text));
 
@@ -893,6 +1007,10 @@ static gboolean update_while_idle(gpointer data) {
 			    "y", (gdouble) EDGE_SPACING+i*TEXT_HEIGHT,
 			    "fill_color_rgba", color_rotation[x.rem],
 			    "font_desc", amitk_fixed_font_desc, NULL);
+
+  tb_profile->initial_x = -1.0;
+  tb_profile->x_limit[0] = tb_profile->min_x;
+  tb_profile->x_limit[1] = tb_profile->max_x;
 
 #ifdef AMIDE_LIBGSL_SUPPORT
     if (tb_profile->calc_gaussian_fit)

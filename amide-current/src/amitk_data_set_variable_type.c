@@ -104,7 +104,7 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_distribution(Amit
 									    gpointer update_data) {
 
   AmitkVoxel i,j;
-  amide_data_t scale;
+  amide_data_t scale, diff;
   AmitkVoxel distribution_dim;
   AmitkVoxel data_set_dim;
   gchar * temp_string;
@@ -118,10 +118,11 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_distribution(Amit
     return;
 
   data_set_dim = AMITK_DATA_SET_DIM(data_set);
-  if (data_set->global_max - data_set->global_min == 0.0)
+  diff = amitk_data_set_get_global_max(data_set) - amitk_data_set_get_global_min(data_set);
+  if (diff == 0.0)
     scale = 0.0;
   else
-    scale = (AMITK_DATA_SET_DISTRIBUTION_SIZE-1)/(data_set->global_max - data_set->global_min);
+    scale = (AMITK_DATA_SET_DISTRIBUTION_SIZE-1)/diff;
   
   distribution_dim.x = AMITK_DATA_SET_DISTRIBUTION_SIZE;
   distribution_dim.y = distribution_dim.z = distribution_dim.t = 1;
@@ -154,7 +155,7 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_distribution(Amit
 
       for (i.y = 0; i.y < data_set_dim.y; i.y++) 
 	for (i.x = 0; i.x < data_set_dim.x; i.x++) {
-	  j.x = scale*(AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENT(data_set,i)-data_set->global_min);
+	  j.x = scale*(AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENT(data_set,i)-amitk_data_set_get_global_min(data_set));
 	  AMITK_RAW_DATA_DOUBLE_SET_CONTENT(distribution,j) += 1.0;
 	}
     }
@@ -187,8 +188,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
 									      const amide_time_t start_time,
 									      const amide_time_t duration,
 									      const amide_real_t pixel_dim,
-									      const AmitkVolume * slice_volume,
-									      const gboolean need_calc_max_min) {
+									      const AmitkVolume * slice_volume) {
 
   /* zp_start, where on the zp axis to start the slice, zp (z_prime) corresponds
      to the rotated axises, if negative, choose the midpoint */
@@ -318,8 +318,8 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
   if (end.y >= dim.y) end.y = dim.y-1;
 
   /* empty is what we fill voxels with that aren't in the data set*/
-  if (AMITK_DATA_SET_GLOBAL_MIN(data_set) < 0)
-    empty = AMITK_DATA_SET_GLOBAL_MIN(data_set);
+  if (amitk_data_set_get_global_max(data_set) < 0)
+    empty = amitk_data_set_get_global_min(data_set);
   else
     empty = 0;
 
@@ -518,10 +518,6 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
     }
     break;
   }
-
-
-  if (need_calc_max_min)
-    amitk_data_set_calc_max_min(slice, NULL, NULL);
 
   return slice;
 }

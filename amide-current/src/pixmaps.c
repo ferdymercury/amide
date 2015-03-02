@@ -27,13 +27,14 @@
 #include "amitk_study.h"
 #include "fads.h"
 
-#include "../pixmaps/amide_logo.xpm"
+#include "../pixmaps/amide_logo.h"
+#include "../pixmaps/amide_logo_small.h"
 
 #include "../pixmaps/icon_transfer_function.xpm"
 
 #include "../pixmaps/icon_interpolation_nearest_neighbor.xpm"
 #include "../pixmaps/icon_interpolation_trilinear.xpm"
-const char ** icon_interpolation[AMITK_INTERPOLATION_NUM] = {
+const char ** interpolation_icon[AMITK_INTERPOLATION_NUM] = {
   icon_interpolation_nearest_neighbor_xpm,
   icon_interpolation_trilinear_xpm
 };
@@ -68,32 +69,39 @@ const char ** icon_view[AMITK_VIEW_NUM] = {
 
 
 #include "../pixmaps/icon_threshold.xpm"
-#include "../pixmaps/icon_thresholding_per_slice.xpm"
-#include "../pixmaps/icon_thresholding_per_frame.xpm"
-#include "../pixmaps/icon_thresholding_interpolate_frames.xpm"
-#include "../pixmaps/icon_thresholding_global.xpm"
-const char ** icon_thresholding[AMITK_THRESHOLDING_NUM] = {
-  icon_thresholding_per_slice_xpm,
-  icon_thresholding_per_frame_xpm,
-  icon_thresholding_interpolate_frames_xpm,
-  icon_thresholding_global_xpm
+#include "../pixmaps/thresholding_per_slice_icon.h"
+#include "../pixmaps/thresholding_per_frame_icon.h"
+#include "../pixmaps/thresholding_interpolate_frames_icon.h"
+#include "../pixmaps/thresholding_global_icon.h"
+const guint8 * thresholding_icons[AMITK_THRESHOLDING_NUM] = {
+  thresholding_per_slice_icon,
+  thresholding_per_frame_icon,
+  thresholding_interpolate_frames_icon,
+  thresholding_global_icon
 };
 
-#include "../pixmaps/icon_window_bone.xpm"
-#include "../pixmaps/icon_window_soft_tissue.xpm"
-const char ** icon_windowing[AMITK_WINDOW_NUM] = {
-  icon_window_bone_xpm,
-  icon_window_soft_tissue_xpm
+#include "../pixmaps/window_bone_icon.h"
+#include "../pixmaps/window_soft_tissue_icon.h"
+const guint8 * windowing_icons[AMITK_WINDOW_NUM] = {
+  window_bone_icon,
+  window_soft_tissue_icon
 };
 
-#include "../pixmaps/CYLINDER.xpm"
-#include "../pixmaps/BOX.xpm"
-#include "../pixmaps/ELLIPSOID.xpm"
-#include "../pixmaps/ISOCONTOUR_2D.xpm"
-#include "../pixmaps/ISOCONTOUR_3D.xpm"
 
-#include "../pixmaps/study.xpm"
-#include "../pixmaps/ALIGN_PT.xpm"
+#include "../pixmaps/box_icon.h"
+#include "../pixmaps/cylinder_icon.h"
+#include "../pixmaps/ellipsoid_icon.h"
+#include "../pixmaps/isocontour_2d_icon.h"
+#include "../pixmaps/isocontour_3d_icon.h"
+const guint8 * roi_icons[AMITK_ROI_TYPE_NUM] = {
+  ellipsoid_icon,
+  cylinder_icon,
+  box_icon,
+  isocontour_2d_icon,
+  isocontour_3d_icon
+};
+#include "../pixmaps/align_pt_icon.h"
+#include "../pixmaps/study_icon.h"
 
 #include "../pixmaps/linear_layout.xpm"
 #include "../pixmaps/orthogonal_layout.xpm"

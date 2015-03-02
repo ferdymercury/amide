@@ -85,7 +85,14 @@
 
 
 <sect2 id="profile-dialog"><title>Profile Tool</title>
- <para>Nothing written yet...</para>
+ <para>A complete description of this tool has not yet been written.</para>
+
+ <para> The left and right limits of the gaussian fit can be altered
+ by clicking on the profile with the left and right mouse buttons,
+ respectively.  The x value used for initializing the gaussian fit can
+ be picked by clicking on the profile with the middle mouse button.
+ </para>
+
 </sect2>
 
 

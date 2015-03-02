@@ -428,7 +428,6 @@ static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename, AmitkInterpol
 
   /* recalc the temporary parameters */
   amitk_data_set_calc_far_corner(new_volume);
-  amitk_data_set_calc_max_min(new_volume, NULL, NULL);
 
   /* and load in any alignment points */
   pts_nodes = xml_get_node(nodes, "Alignment_points");

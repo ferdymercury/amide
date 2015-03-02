@@ -36,9 +36,10 @@
   static gdouble subfraction=0.0;
 #endif
 
-#include "ui_common.h"
+#include "amitk_common.h"
 #include "analysis.h"
 #include "tb_roi_analysis.h"
+#include "ui_common.h"
 
 
 #define ROI_STATISTICS_WIDTH 950
@@ -320,8 +321,9 @@ static gchar * analyses_as_string(analysis_roi_t * roi_analyses) {
 			      AMITK_OBJECT_NAME(roi_analyses->study), ctime(&current_time));
   
   /* print the titles */
-  amitk_append_str(&roi_stats,"%12s", analysis_titles[COLUMN_ROI_NAME]);
-  for (i=COLUMN_ROI_NAME+1;i<NUM_ANALYSIS_COLUMNS;i++)
+  amitk_append_str(&roi_stats,"# %-10s", analysis_titles[COLUMN_ROI_NAME]);
+  amitk_append_str(&roi_stats,"\t%-12s", analysis_titles[COLUMN_DATA_SET_NAME]);
+  for (i=COLUMN_DATA_SET_NAME+1;i<NUM_ANALYSIS_COLUMNS;i++)
     amitk_append_str(&roi_stats,"\t%12s", analysis_titles[i]);
   amitk_append_str(&roi_stats,"\n");
 
@@ -338,7 +340,7 @@ static gchar * analyses_as_string(analysis_roi_t * roi_analyses) {
       frame = 0;
 
       while (frame_analyses != NULL) {
-	amitk_append_str(&roi_stats, "%12s\t%12s",
+	amitk_append_str(&roi_stats, "%-12s\t%-12s",
 			 AMITK_OBJECT_NAME(roi_analyses->roi),
 			 AMITK_OBJECT_NAME(volume_analyses->data_set));
 

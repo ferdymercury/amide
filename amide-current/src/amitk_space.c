@@ -188,7 +188,7 @@ static void space_shift(AmitkSpace * space, AmitkPoint * shift) {
 
   /* get around some bizarre compiler bug */
   if (isnan(space->offset.x) || isnan(space->offset.y) || isnan(space->offset.z)) {
-    g_error("inappropriate offset, probably a libecat memory bug, working around");
+    g_warning("inappropriate offset, probably a compiler bug from libecat, working around");
     space->offset = zero_point;
   }
     
@@ -236,7 +236,7 @@ static void space_transform(AmitkSpace * space, AmitkSpace * transform_space) {
       isnan(space->axes[AMITK_AXIS_Y].x) || isnan(space->axes[AMITK_AXIS_Y].y) || isnan(space->axes[AMITK_AXIS_Y].z) ||
       isnan(space->axes[AMITK_AXIS_Z].x) || isnan(space->axes[AMITK_AXIS_Z].y) || isnan(space->axes[AMITK_AXIS_Z].z)) {
     AmitkAxis i_axis;
-    g_error("inappropriate axis, probably a libecat memory bug, working around");
+    g_warning("inappropriate axis, probably a compiler bug from libecat, working around");
     for (i_axis=0;i_axis<AMITK_AXIS_NUM;i_axis++)
       space->axes[i_axis]=base_axes[i_axis];
   }

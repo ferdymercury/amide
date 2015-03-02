@@ -38,7 +38,7 @@
   scaling. </para>
 
 <para> When all this is completed, the rendering window should pop-up.
-  It's use is described below. </para>
+  Its use is described below. </para>
 
 
 
@@ -109,7 +109,7 @@
 	in each voxel and how much that voxel should be represented in
 	the final rendered image.  On the x axis is the possible
 	values of the different voxels.  On the y-axis is the opacity
-	that will be given a voxel based on it's value.
+	that will be given a voxel based on its value.
       </para>
       <para>
 	Both classification functions have several buttons on the
@@ -127,7 +127,7 @@
 
 	  <listitem><para><emphasis>Density Dependent:</emphasis> This
 	    function tells you how opaque each voxel will be based on
-	    it's current value.  In a sense, this is analogous to an
+	    its current value.  In a sense, this is analogous to an
 	    x-ray, where the amount of the x-rays that are absorbed in
 	    a structure is related to the density of that structure.
 	    of the display.</para></listitem>
@@ -135,7 +135,7 @@
 	  <listitem><para><emphasis>Gradient Dependent:</emphasis>
 	    Instead of relating the density of a voxel to its opacity,
 	    this function relates the gradient of a voxel (how much
-	    the value changes between this voxel and it's neighbors)
+	    the value changes between this voxel and its neighbors)
 	    to its opacity.  This has the effect of giving added
 	    weight to surfaces.</para></listitem>
 

@@ -1,7 +1,7 @@
 /* ui_common.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2003 Andy Loening
+ * Copyright (C) 2001-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -44,9 +44,6 @@ typedef enum {
   UI_CURSOR_WAIT,
   NUM_CURSORS
 } ui_common_cursor_t;
-
-void amitk_real_cell_data_func(GtkTreeViewColumn *tree_column, GtkCellRenderer *cell,
-			       GtkTreeModel *tree_model, GtkTreeIter *iter, gpointer data);
 
 /* external functions */
 gboolean ui_common_check_filename(const gchar * filename);

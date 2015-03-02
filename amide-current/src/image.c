@@ -824,24 +824,8 @@ GdkPixbuf * image_get_object_pixbuf(AmitkObject * object) {
   g_return_val_if_fail(AMITK_IS_OBJECT(object), NULL);
 
   if (AMITK_IS_ROI(object)) {
-    switch (AMITK_ROI_TYPE(object)) {
-    case AMITK_ROI_TYPE_CYLINDER:
-      pixbuf = gdk_pixbuf_new_from_xpm_data(CYLINDER_xpm);
-      break;
-    case AMITK_ROI_TYPE_ELLIPSOID:
-      pixbuf = gdk_pixbuf_new_from_xpm_data(ELLIPSOID_xpm);
-      break;
-    case AMITK_ROI_TYPE_ISOCONTOUR_2D:
-      pixbuf = gdk_pixbuf_new_from_xpm_data(ISOCONTOUR_2D_xpm);
-      break;
-    case AMITK_ROI_TYPE_ISOCONTOUR_3D:
-      pixbuf = gdk_pixbuf_new_from_xpm_data(ISOCONTOUR_3D_xpm);
-      break;
-    case AMITK_ROI_TYPE_BOX:
-    default:
-      pixbuf = gdk_pixbuf_new_from_xpm_data(BOX_xpm);
-      break;
-    }
+    pixbuf = gdk_pixbuf_new_from_inline(-1, roi_icons[AMITK_ROI_TYPE(object)], FALSE, NULL);
+
   } else if (AMITK_IS_DATA_SET(object)) {
 
     switch (AMITK_DATA_SET_MODALITY(object)) {
@@ -865,9 +849,9 @@ GdkPixbuf * image_get_object_pixbuf(AmitkObject * object) {
 			     AMITK_DATA_SET_COLOR_TABLE(object));
 
   } else if (AMITK_IS_STUDY(object)) {
-    pixbuf = gdk_pixbuf_new_from_xpm_data(study_xpm);
+    pixbuf = gdk_pixbuf_new_from_inline(-1, study_icon, FALSE, NULL);
   } else if (AMITK_IS_FIDUCIAL_MARK(object)) {
-    pixbuf = gdk_pixbuf_new_from_xpm_data(ALIGN_PT_xpm);
+    pixbuf = gdk_pixbuf_new_from_inline(-1, align_pt_icon, FALSE, NULL);
   } else {
     pixbuf = NULL;
     g_print("Unknown case in %s at %d\n", __FILE__, __LINE__);

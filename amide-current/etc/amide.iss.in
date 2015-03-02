@@ -15,6 +15,7 @@ AllowNoIcons=yes
 LicenseFile=C:\Documents and Settings\loening\Desktop\@PACKAGE@-@VERSION@\COPYING
 OutputBaseFileName=@PACKAGE@-@VERSION@-1_install
 OutputDir=Inno_Output
+ChangesAssociations=yes
 
 [Tasks]
 Name: "desktopicon"; Description: "Create a &desktop icon"; GroupDescription: "Additional icons:"
@@ -24,6 +25,12 @@ Name: "desktopicon"; Description: "Create a &desktop icon"; GroupDescription: "A
 Root: HKLM; Subkey: "Software\Microsoft\Windows\CurrentVersion\App Paths\@PACKAGE@.exe"; Flags: uninsdeletekeyifempty
 Root: HKLM; Subkey: "Software\Microsoft\Windows\CurrentVersion\App Paths\@PACKAGE@.exe"; ValueType: string; ValueData: "{app}\@PACKAGE@.exe"; Flags: uninsdeletevalue
 Root: HKLM; Subkey: "Software\Microsoft\Windows\CurrentVersion\App Paths\@PACKAGE@.exe"; ValueType: string; ValueName: "Path"; ValueData: "{app};{app}\bin;{code:GetGtkPath}\lib"; Flags: uninsdeletevalue
+
+; This allows .xif files to get sent to AMIDE
+Root: HKCR; Subkey: ".xif"; ValueType: string; ValueName: ""; ValueData: "AmideXmlImageFormat"; Flags: uninsdeletevalue
+Root: HKCR; Subkey: "AmideXmlImageFormat"; ValueType: string; ValueName: ""; ValueData: "amide"; Flags: uninsdeletekey
+Root: HKCR; Subkey: "AmideXmlImageFormat\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\AMIDE.EXE,1"
+Root: HKCR; Subkey: "AmideXmlImageFormat\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\AMIDE.EXE"" ""%1"""
 
 
 
@@ -36,7 +43,6 @@ Source: "C:\Documents and Settings\loening\Desktop\@PACKAGE@-@VERSION@\share\*";
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
-Name: "{app}\amide"; Filename: "{app}\amide.exe"; IconFileName: "{app}\etc\amide.ico"
 Name: "{group}\amide"; Filename: "{app}\amide.exe"; IconFileName: "{app}\etc\amide.ico"
 Name: "{userdesktop}\amide"; Filename: "{app}\amide.exe"; IconFileName: "{app}\etc\amide.ico"; Tasks: desktopicon
 

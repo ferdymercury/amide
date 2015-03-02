@@ -2,7 +2,7 @@ dnl ============================================================================
 dnl              Configure script for AMIDE
 dnl ===============================================================================
 AC_PREREQ(2.53)
-AC_INIT([amide],[0.8.1],[amide-users@lists.sourceforge.net])
+AC_INIT([amide],[0.8.2],[amide-users@lists.sourceforge.net])
 
 AC_CONFIG_SRCDIR(src/amide.c)
 AM_CONFIG_HEADER(amide_config.h)
@@ -75,6 +75,17 @@ AC_SUBST(AMIDE_GNOME_CFLAGS)
 
 dnl glib-genmarshal
 AC_PATH_PROG(GLIB_GENMARSHAL, glib-genmarshal)
+
+dnl This is installed from GTK+ 2.0's gdk-pixbuf
+AC_PATH_PROG(GDK_PIXBUF_CSOURCE, gdk-pixbuf-csource)
+test -z "$GDK_PIXBUF_CSOURCE" && AC_MSG_ERROR([
+*** You need the gdk-pixbuf-csource tool which is installed
+*** from GTK+ 2's gdk-pixbuf.
+***
+*** Either the location where you installed your GTK+ 2 is
+*** not in your PATH or something is screwed up with your
+*** GTK+ 2 installation
+])
 
 
 dnl record if our version of libgnomecanvas can handle anti-aliasing
@@ -291,6 +302,7 @@ AC_SUBST(LDFLAGS)
 AC_CONFIG_FILES([
 Makefile
 pixmaps/Makefile
+win32/Makefile
 help/Makefile
 help/C/Makefile
 help/es/Makefile

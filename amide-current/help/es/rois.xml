@@ -138,9 +138,9 @@
     Despues de pulse 'execute' , ejecutar, tras unos instantes el
     programa mostrar&aacute; los valores calculados. Seleccionando "save as"
     permite guardarlo es un fichero con los valores separados por una
-    coma (SCV). Este fichero deber&iacute;a ser importado f&aacute;cilmente a
+    tab (TSV). Este fichero deber&iacute;a ser importado f&aacute;cilmente a
     cualquier hoja de c&aacute;lculo (Excel es un poco est&uacute;pido, tiene que
-    expecificarle que esta importando un fichero CSV, Comma Separated
+    expecificarle que esta importando un fichero TSV, Tab Separated
     Values).
   </para>
 

@@ -1,14 +1,14 @@
 if AMIDE_WIN32_HACKS
 
-AMIDE_WIN32_LDADD = -lwsock32
-
+AMIDE_WIN32_LDADD = -lwsock32 ../win32/amiderc.o
 AMIDE_WIN32_LDFLAGS = -mwindows
-
 INCLUDES = \
 	-DGNOMELOCALEDIR=\""$(prefix)/$(DATADIRNAME)/locale"\" 
 
 else
 
+AMIDE_WIN32_LDADD = 
+AMIDE_WIN32_LDFLAGS = 
 INCLUDES = \
 	-DGNOMELOCALEDIR=\""$(prefix)/$(DATADIRNAME)/locale"\"  \
 	-DPREFIX=\""$(prefix)"\"			        \
@@ -60,6 +60,8 @@ amide_SOURCES = \
 	amide.c \
 	amide_limits.h \
 	amide_intl.h \
+	amitk_common.c \
+	amitk_common.h \
 	alignment.c \
 	alignment.h \
 	analysis.c \
@@ -329,7 +331,6 @@ $(AMITK_DATA_SET_VARIABLE_H): $(VARIABLE_INPUT) $(AMITK_DATA_SET_VARIABLE_H_SRC)
 ## BUILT_SOURCES =	\
 ##	$(MARSHAL_SOURCES) \
 ##	$(TYPE_BUILTINS_SOURCES) \
-
 
 
 MARSHAL_SOURCES = \

@@ -53,8 +53,8 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
 									      const amide_time_t start_time,
 									      const amide_time_t duration,
 									      const amide_real_t pixel_dim,
-									      const AmitkVolume * slice_volume,
-									      const gboolean need_calc_max_min);
+									      const AmitkVolume * slice_volume);
+
 
 
 #endif /* __AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'__ */

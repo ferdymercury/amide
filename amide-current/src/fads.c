@@ -64,11 +64,11 @@ gchar * fads_type_explanation[] = {
 };
 
 
-#include "../pixmaps/two_compartment.xpm"
-const char ** fads_type_xpm[NUM_FADS_TYPES] = {
+#include "../pixmaps/two_compartment.h"
+const guint8 * fads_type_icon[NUM_FADS_TYPES] = {
   NULL,
   NULL,
-  two_compartment_xpm
+  two_compartment
 };
 
 
@@ -410,12 +410,11 @@ void fads_pca(AmitkDataSet * data_set,
     amitk_object_set_name(AMITK_OBJECT(new_ds),temp_string);
     g_free(temp_string);
     amitk_space_copy_in_place(AMITK_SPACE(new_ds), AMITK_SPACE(data_set));
-    amitk_data_set_calc_max_min(new_ds, NULL, NULL);
     amitk_data_set_set_voxel_size(new_ds, AMITK_DATA_SET_VOXEL_SIZE(data_set));
     amitk_data_set_set_modality(new_ds, AMITK_DATA_SET_MODALITY(data_set));
     amitk_data_set_calc_far_corner(new_ds);
-    amitk_data_set_set_threshold_max(new_ds, 0, AMITK_DATA_SET_GLOBAL_MAX(new_ds));
-    amitk_data_set_set_threshold_min(new_ds, 0, AMITK_DATA_SET_GLOBAL_MIN(new_ds));
+    amitk_data_set_set_threshold_max(new_ds, 0, amitk_data_set_get_global_max(new_ds));
+    amitk_data_set_set_threshold_min(new_ds, 0, amitk_data_set_get_global_min(new_ds));
     amitk_data_set_set_interpolation(new_ds, AMITK_DATA_SET_INTERPOLATION(data_set));
     amitk_object_add_child(AMITK_OBJECT(data_set), AMITK_OBJECT(new_ds));
     amitk_object_unref(new_ds); /* add_child adds a reference */
@@ -1215,12 +1214,11 @@ void fads_pls(AmitkDataSet * data_set,
     amitk_object_set_name(AMITK_OBJECT(new_ds),temp_string);
     g_free(temp_string);
     amitk_space_copy_in_place(AMITK_SPACE(new_ds), AMITK_SPACE(p.data_set));
-    amitk_data_set_calc_max_min(new_ds, NULL, NULL);
     amitk_data_set_set_voxel_size(new_ds, AMITK_DATA_SET_VOXEL_SIZE(p.data_set));
     amitk_data_set_set_modality(new_ds, AMITK_DATA_SET_MODALITY(p.data_set));
     amitk_data_set_calc_far_corner(new_ds);
-    amitk_data_set_set_threshold_max(new_ds, 0, AMITK_DATA_SET_GLOBAL_MAX(new_ds));
-    amitk_data_set_set_threshold_min(new_ds, 0, AMITK_DATA_SET_GLOBAL_MIN(new_ds));
+    amitk_data_set_set_threshold_max(new_ds, 0, amitk_data_set_get_global_max(new_ds));
+    amitk_data_set_set_threshold_min(new_ds, 0, amitk_data_set_get_global_min(new_ds));
     amitk_data_set_set_interpolation(new_ds, AMITK_DATA_SET_INTERPOLATION(p.data_set));
     amitk_object_add_child(AMITK_OBJECT(p.data_set), AMITK_OBJECT(new_ds));
     amitk_object_unref(new_ds); /* add_child adds a reference */
@@ -2015,7 +2013,7 @@ void fads_two_comp(AmitkDataSet * data_set,
 
   for (j=0; j<p.num_frames; j++) {
     temp = exp(-(p.midpt[j]-time_start)/time_constant); 
-    temp *= 3.0*AMITK_DATA_SET_FRAME_MAX(p.data_set, j);
+    temp *= 3.0*amitk_data_set_get_frame_max(p.data_set, j);
     gsl_vector_set(initial, p.bc_offset+j, temp);
   }
 
@@ -2186,12 +2184,11 @@ void fads_two_comp(AmitkDataSet * data_set,
     amitk_object_set_name(AMITK_OBJECT(new_ds),temp_string);
     g_free(temp_string);
     amitk_space_copy_in_place(AMITK_SPACE(new_ds), AMITK_SPACE(p.data_set));
-    amitk_data_set_calc_max_min(new_ds, NULL, NULL);
     amitk_data_set_set_voxel_size(new_ds, AMITK_DATA_SET_VOXEL_SIZE(p.data_set));
     amitk_data_set_set_modality(new_ds, AMITK_DATA_SET_MODALITY(p.data_set));
     amitk_data_set_calc_far_corner(new_ds);
-    amitk_data_set_set_threshold_max(new_ds, 0, AMITK_DATA_SET_GLOBAL_MAX(new_ds));
-    amitk_data_set_set_threshold_min(new_ds, 0, AMITK_DATA_SET_GLOBAL_MIN(new_ds));
+    amitk_data_set_set_threshold_max(new_ds, 0, amitk_data_set_get_global_max(new_ds));
+    amitk_data_set_set_threshold_min(new_ds, 0, amitk_data_set_get_global_min(new_ds));
     amitk_data_set_set_interpolation(new_ds, AMITK_DATA_SET_INTERPOLATION(p.data_set));
     amitk_object_add_child(AMITK_OBJECT(p.data_set), AMITK_OBJECT(new_ds));
     amitk_object_unref(new_ds); /* add_child adds a reference */

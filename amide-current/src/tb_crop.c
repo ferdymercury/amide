@@ -944,7 +944,7 @@ void tb_crop(AmitkStudy * study, AmitkDataSet * active_ds) {
   }
   
 
-  logo = gdk_pixbuf_new_from_xpm_data(amide_logo_xpm);
+  logo = gdk_pixbuf_new_from_inline(-1, amide_logo_small, FALSE, NULL);
 
   tb_crop = tb_crop_init();
   tb_crop->study = amitk_object_ref(study);
@@ -973,7 +973,7 @@ void tb_crop(AmitkStudy * study, AmitkDataSet * active_ds) {
     g_object_set_data(G_OBJECT(page),"which_page", GINT_TO_POINTER(i_view+TRANSVERSE_PAGE));
     
     /* note, the _connect_after is a workaround, it should just be _connect */
-    /* the problem, is gnome_druid currently overwrites button sensitivity in it's own prepare routine*/
+    /* the problem, is gnome_druid currently overwrites button sensitivity in its own prepare routine*/
     g_signal_connect_after(G_OBJECT(page), "prepare", 
 			   G_CALLBACK(prepare_page_cb), tb_crop);
     gnome_druid_append_page(GNOME_DRUID(druid), GNOME_DRUID_PAGE(page));

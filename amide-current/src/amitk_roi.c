@@ -589,9 +589,10 @@ void amitk_roi_erase_volume(const AmitkRoi * roi,
 
   guint i_frame;
 
-  for (i_frame=0; i_frame<AMITK_DATA_SET_NUM_FRAMES(ds); i_frame++) {
+  for (i_frame=0; i_frame<AMITK_DATA_SET_NUM_FRAMES(ds); i_frame++) 
     amitk_roi_calculate_on_data_set(roi, ds, i_frame, outside, erase_volume, ds);
-  }
+
+  /* recalc max and min */
   amitk_data_set_calc_max_min(ds, update_func, update_data);
 
   /* mark the distribution data as invalid */

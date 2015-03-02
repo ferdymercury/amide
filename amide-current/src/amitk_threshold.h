@@ -43,8 +43,6 @@ G_BEGIN_DECLS
 #define AMITK_IS_THRESHOLD(obj)         (GTK_CHECK_TYPE ((obj), AMITK_TYPE_THRESHOLD))
 #define AMITK_IS_THRESHOLD_CLASS(klass) (GTK_CHECK_CLASS_TYPE ((klass), AMITK_TYPE_THRESHOLD))
 
-#define AMITK_THRESHOLD_SPIN_BUTTON_DIGITS 4 /* how many digits after the decimal point */
-
 typedef struct _AmitkThreshold             AmitkThreshold;
 typedef struct _AmitkThresholdClass        AmitkThresholdClass;
 

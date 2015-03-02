@@ -25,8 +25,8 @@
 
 #include "amide_config.h"
 #include <gtk/gtk.h>
+#include "amitk_common.h"
 #include "ui_time_dialog.h"
-#include "ui_common.h"
 
 
 
@@ -499,12 +499,13 @@ GtkWidget * ui_time_dialog_create(AmitkStudy * study, GtkWindow * parent) {
 
   td->start_spin = gtk_spin_button_new_with_range(-G_MAXDOUBLE, G_MAXDOUBLE, 1.0);
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(td->start_spin), FALSE);
-  gtk_spin_button_set_digits(GTK_SPIN_BUTTON(td->start_spin),2);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(td->start_spin), td->start);
   g_object_set_data(G_OBJECT(td->start_spin), "type", GINT_TO_POINTER(ENTRY_START));
   gtk_widget_set_size_request(td->start_spin, SPIN_BUTTON_X_SIZE, -1);
   g_signal_connect(G_OBJECT(td->start_spin), "value_changed",  
 		   G_CALLBACK(change_spin_cb), dialog);
+  g_signal_connect(G_OBJECT(td->start_spin), "output",
+		   G_CALLBACK(amitk_spin_button_scientific_output), NULL);
   gtk_table_attach(GTK_TABLE(packing_table), td->start_spin,1,2,
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
@@ -517,12 +518,13 @@ GtkWidget * ui_time_dialog_create(AmitkStudy * study, GtkWindow * parent) {
     
   td->end_spin = gtk_spin_button_new_with_range(-G_MAXDOUBLE, G_MAXDOUBLE, 1.0);
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(td->end_spin), FALSE);
-  gtk_spin_button_set_digits(GTK_SPIN_BUTTON(td->end_spin),2);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(td->end_spin), td->end);
   g_object_set_data(G_OBJECT(td->end_spin), "type", GINT_TO_POINTER(ENTRY_END));
   gtk_widget_set_size_request(td->end_spin, SPIN_BUTTON_X_SIZE, -1);
   g_signal_connect(G_OBJECT(td->end_spin), "value_changed",  
 		   G_CALLBACK(change_spin_cb), dialog);
+  g_signal_connect(G_OBJECT(td->end_spin), "output",
+		   G_CALLBACK(amitk_spin_button_scientific_output), NULL);
   gtk_table_attach(GTK_TABLE(packing_table), td->end_spin,1,2,
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;

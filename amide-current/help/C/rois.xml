@@ -21,7 +21,7 @@
   
     <varlistentry><term>Elliptic Cylinder</term>
     <listitem><para>An elliptic cylinder is similar to a regular
-      cylinder, except it has an ellipse as it's base instead of a
+      cylinder, except it has an ellipse as its base instead of a
       circle.</para></listitem>
     </varlistentry>
 
@@ -100,7 +100,7 @@
 
   <para>
     After an ROI is drawn, it can be further manipulated to adjust
-    it's size, placement, and orientation.  You can directly
+    its size, placement, and orientation.  You can directly
     manipulate the ROI by clicking on it in any of the viewing
     windows.  Mouse button 1 is used to shift ROIs.  Mouse button 2 is
     used to rotate ellipsoid, elliptic cylinder, and box ROIs, and for
@@ -135,10 +135,10 @@
   <para>
    After hitting execute, the program will crank for a while, and then
    show the calculated values in a new dialog window.  Hitting "Save
-   as" button allows saving these values as a comma separated values
-   (CSV) file.  This file should be easily imported into most
-   spreadsheet applications (Excel's a little stupid, you'll have to
-   explicitly tell it you're importing a CSV file).  Pressing the
+   as" button allows saving these values as a tab separated values
+   (TSV) file.  This file should be easily imported into most
+   spreadsheet applications (Excel's a little stupid, you may have to
+   explicitly tell it you're importing a TSV file).  Pressing the
    "Copy" button copies the information into the operating systems
    clipboard, allowing pasting of the results into other programs.
   </para>

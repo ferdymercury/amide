@@ -27,6 +27,7 @@
 
 
 #include "amide_config.h"
+#include "amitk_common.h"
 #include "amitk_progress_dialog.h"
 #include "amitk_threshold.h"
 #include "pixmaps.h"
@@ -275,9 +276,15 @@ static void threshold_construct(AmitkThreshold * threshold,
 	gtk_spin_button_new_with_range(-G_MAXDOUBLE, G_MAXDOUBLE, 1.0);
       threshold->spin_button[i_ref][AMITK_THRESHOLD_ENTRY_MIN_PERCENT] = 
 	gtk_spin_button_new_with_range(-G_MAXDOUBLE, G_MAXDOUBLE, 1.0);
+
+      g_signal_connect(G_OBJECT(threshold->spin_button[i_ref][AMITK_THRESHOLD_ENTRY_MAX_ABSOLUTE]), 
+		       "output", G_CALLBACK(amitk_spin_button_scientific_output), NULL);
+      g_signal_connect(G_OBJECT(threshold->spin_button[i_ref][AMITK_THRESHOLD_ENTRY_MIN_ABSOLUTE]), 
+		       "output", G_CALLBACK(amitk_spin_button_scientific_output), NULL);
+      gtk_spin_button_set_digits(GTK_SPIN_BUTTON(threshold->spin_button[i_ref][AMITK_THRESHOLD_ENTRY_MAX_PERCENT]), 1);
+      gtk_spin_button_set_digits(GTK_SPIN_BUTTON(threshold->spin_button[i_ref][AMITK_THRESHOLD_ENTRY_MIN_PERCENT]), 1);
+
       for (i_entry=0; i_entry< AMITK_THRESHOLD_ENTRY_NUM_ENTRIES; i_entry++) {
-	gtk_spin_button_set_digits(GTK_SPIN_BUTTON(threshold->spin_button[i_ref][i_entry]), 
-				   AMITK_THRESHOLD_SPIN_BUTTON_DIGITS);
 	gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(threshold->spin_button[i_ref][i_entry]), FALSE);
 	g_object_set_data(G_OBJECT(threshold->spin_button[i_ref][i_entry]), "type", GINT_TO_POINTER(i_entry));
 	g_object_set_data(G_OBJECT(threshold->spin_button[i_ref][i_entry]), "which_ref", GINT_TO_POINTER(i_ref));
@@ -546,7 +553,7 @@ static void threshold_realize_type_icon_cb(GtkWidget * pix_box, gpointer data) {
   /* make sure we don't get called again */
   if (gtk_container_get_children(GTK_CONTAINER(pix_box)) != NULL) return;
 
-  pixbuf = gdk_pixbuf_new_from_xpm_data(icon_thresholding[thresholding]);
+  pixbuf = gdk_pixbuf_new_from_inline(-1, thresholding_icons[thresholding], FALSE, NULL);
   image = gtk_image_new_from_pixbuf(pixbuf);
   g_object_unref(pixbuf);
 
@@ -570,7 +577,7 @@ static void threshold_realize_windowing_button_cb(GtkWidget * button, gpointer d
 
   window = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(button), "which_window"));
 
-  pixbuf = gdk_pixbuf_new_from_xpm_data(icon_windowing[window]);
+  pixbuf = gdk_pixbuf_new_from_inline(-1, windowing_icons[window], FALSE, NULL);
   image = gtk_image_new_from_pixbuf(pixbuf);
   g_object_unref(pixbuf);
 
@@ -639,8 +646,8 @@ static void threshold_update_spin_buttons(AmitkThreshold * threshold) {
   if (threshold->minimal) return; /* no spin buttons in minimal configuration */
   g_return_if_fail(AMITK_IS_DATA_SET(threshold->data_set));
 
-  scale = (AMITK_DATA_SET_GLOBAL_MAX(threshold->data_set)-
-	   AMITK_DATA_SET_GLOBAL_MIN(threshold->data_set));
+  scale = (amitk_data_set_get_global_max(threshold->data_set) -
+	   amitk_data_set_get_global_min(threshold->data_set));
   step = scale / 100.0;
   if (scale < EPSILON) {
     scale = EPSILON;
@@ -654,7 +661,7 @@ static void threshold_update_spin_buttons(AmitkThreshold * threshold) {
 
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(threshold->spin_button[i_ref][AMITK_THRESHOLD_ENTRY_MAX_PERCENT]),
 			      (100*(threshold->threshold_max[i_ref]-
-				    AMITK_DATA_SET_GLOBAL_MIN(threshold->data_set))/scale));
+				    amitk_data_set_get_global_min(threshold->data_set))/scale));
     gtk_spin_button_set_increments(GTK_SPIN_BUTTON(threshold->spin_button[i_ref][AMITK_THRESHOLD_ENTRY_MAX_ABSOLUTE]),
 				   step, 10.0*step);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(threshold->spin_button[i_ref][AMITK_THRESHOLD_ENTRY_MAX_ABSOLUTE]),
@@ -662,7 +669,7 @@ static void threshold_update_spin_buttons(AmitkThreshold * threshold) {
 
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(threshold->spin_button[i_ref][AMITK_THRESHOLD_ENTRY_MIN_PERCENT]),
 			      (100*(threshold->threshold_min[i_ref]-
-				    AMITK_DATA_SET_GLOBAL_MIN(threshold->data_set))/scale));
+				    amitk_data_set_get_global_min(threshold->data_set))/scale));
     gtk_spin_button_set_increments(GTK_SPIN_BUTTON(threshold->spin_button[i_ref][AMITK_THRESHOLD_ENTRY_MIN_ABSOLUTE]),
 				   step, 10.0*step);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(threshold->spin_button[i_ref][AMITK_THRESHOLD_ENTRY_MIN_ABSOLUTE]),
@@ -689,8 +696,8 @@ static void threshold_update_arrow(AmitkThreshold * threshold, AmitkThresholdArr
   amide_data_t global_diff;
 
   global_diff = 
-    AMITK_DATA_SET_GLOBAL_MAX(threshold->data_set)- 
-    AMITK_DATA_SET_GLOBAL_MIN(threshold->data_set);
+    amitk_data_set_get_global_max(threshold->data_set)- 
+    amitk_data_set_get_global_min(threshold->data_set);
   if (global_diff < EPSILON) global_diff = 1.0; /* non sensicle */
 
   for (i_ref=0; i_ref< threshold_visible_refs(threshold->data_set); i_ref++) {
@@ -711,10 +718,10 @@ static void threshold_update_arrow(AmitkThreshold * threshold, AmitkThresholdArr
       else
 	point = THRESHOLD_TRIANGLE_HEIGHT + 
 	  THRESHOLD_COLOR_SCALE_HEIGHT * 
-	  (1-(threshold->threshold_min[i_ref]- AMITK_DATA_SET_GLOBAL_MIN(threshold->data_set))/global_diff);
+	  (1-(threshold->threshold_min[i_ref]- amitk_data_set_get_global_min(threshold->data_set))/global_diff);
       top = point;
       bottom = point+THRESHOLD_TRIANGLE_HEIGHT;
-      if (threshold->threshold_min[i_ref] < AMITK_DATA_SET_GLOBAL_MIN(threshold->data_set))
+      if (threshold->threshold_min[i_ref] < amitk_data_set_get_global_min(threshold->data_set))
 	down_pointing=TRUE;
       fill_color = "white";
       break;
@@ -727,10 +734,10 @@ static void threshold_update_arrow(AmitkThreshold * threshold, AmitkThresholdArr
       else
 	point = THRESHOLD_TRIANGLE_HEIGHT + 
 	  THRESHOLD_COLOR_SCALE_HEIGHT * 
-	  (1-(threshold->threshold_max[i_ref]-AMITK_DATA_SET_GLOBAL_MIN(threshold->data_set))/global_diff);
+	  (1-(threshold->threshold_max[i_ref]-amitk_data_set_get_global_min(threshold->data_set))/global_diff);
       top = point-THRESHOLD_TRIANGLE_HEIGHT;
       bottom = point;
-      if (threshold->threshold_max[i_ref] > AMITK_DATA_SET_GLOBAL_MAX(threshold->data_set)) 
+      if (threshold->threshold_max[i_ref] > amitk_data_set_get_global_max(threshold->data_set)) 
 	up_pointing=TRUE; /* want upward pointing max arrow */
       fill_color = "black";
       break;
@@ -810,10 +817,6 @@ static void threshold_update_arrow(AmitkThreshold * threshold, AmitkThresholdArr
 		       G_CALLBACK(threshold_arrow_cb), threshold);
     }
     gnome_canvas_points_unref(points);
-
-    /* need to force an update to get smooth action */
-    if (GTK_WIDGET_REALIZED(threshold))
-      gnome_canvas_update_now(GNOME_CANVAS(threshold->color_scales[i_ref]));
   }
     
   return;
@@ -838,8 +841,8 @@ static void threshold_update_color_scale(AmitkThreshold * threshold, AmitkThresh
 			      THRESHOLD_COLOR_SCALE_HEIGHT,
 			      threshold->threshold_min[i_ref],
 			      threshold->threshold_max[i_ref],
-			      AMITK_DATA_SET_GLOBAL_MIN(threshold->data_set),
-			      AMITK_DATA_SET_GLOBAL_MAX(threshold->data_set),
+			      amitk_data_set_get_global_min(threshold->data_set),
+			      amitk_data_set_get_global_max(threshold->data_set),
 			      FALSE);
       x = THRESHOLD_TRIANGLE_WIDTH;
       y = THRESHOLD_TRIANGLE_HEIGHT;
@@ -890,8 +893,8 @@ static void threshold_update_connector_lines(AmitkThreshold * threshold, AmitkTh
   amide_data_t global_diff;
 
   global_diff = 
-    AMITK_DATA_SET_GLOBAL_MAX(threshold->data_set)- 
-    AMITK_DATA_SET_GLOBAL_MIN(threshold->data_set);
+    amitk_data_set_get_global_max(threshold->data_set)- 
+    amitk_data_set_get_global_min(threshold->data_set);
   if (global_diff < EPSILON) global_diff = 1.0; /* non-sensicle */
 
   for (i_ref=0; i_ref< threshold_visible_refs(threshold->data_set); i_ref++) {
@@ -903,7 +906,7 @@ static void threshold_update_connector_lines(AmitkThreshold * threshold, AmitkTh
     line_points = gnome_canvas_points_new(2);
     line_points->coords[0] = THRESHOLD_COLOR_SCALE_WIDTH+THRESHOLD_TRIANGLE_WIDTH;
     temp = (1.0-(threshold->threshold_max[i_ref]-
-		 AMITK_DATA_SET_GLOBAL_MIN(threshold->data_set))/global_diff);
+		 amitk_data_set_get_global_min(threshold->data_set))/global_diff);
     if (temp < 0.0) temp = 0.0;
     line_points->coords[1] = THRESHOLD_TRIANGLE_HEIGHT + THRESHOLD_COLOR_SCALE_HEIGHT * temp;
     line_points->coords[2] = THRESHOLD_COLOR_SCALE_WIDTH+
@@ -927,7 +930,7 @@ static void threshold_update_connector_lines(AmitkThreshold * threshold, AmitkTh
     line_points = gnome_canvas_points_new(2);
     line_points->coords[0] = THRESHOLD_COLOR_SCALE_WIDTH+THRESHOLD_TRIANGLE_WIDTH;
     temp = (1.0-(threshold->threshold_min[i_ref]-
-		 AMITK_DATA_SET_GLOBAL_MIN(threshold->data_set))/global_diff);
+		 amitk_data_set_get_global_min(threshold->data_set))/global_diff);
     if (temp > 1.0) temp = 1.0;
     line_points->coords[1] = THRESHOLD_TRIANGLE_HEIGHT + THRESHOLD_COLOR_SCALE_HEIGHT * temp;
     line_points->coords[2] = THRESHOLD_COLOR_SCALE_WIDTH+
@@ -1280,11 +1283,11 @@ static gint threshold_arrow_cb(GtkWidget* widget, GdkEvent * event, gpointer dat
 	
 	switch (which_threshold_arrow) {
 	  case AMITK_THRESHOLD_ARROW_FULL_MAX:
-	    delta *= (AMITK_DATA_SET_GLOBAL_MAX(threshold->data_set) - 
-		      AMITK_DATA_SET_GLOBAL_MIN(threshold->data_set));
+	    delta *= (amitk_data_set_get_global_max(threshold->data_set) - 
+		      amitk_data_set_get_global_min(threshold->data_set));
 	    temp = threshold->initial_max[which_ref] + delta;
-	    if (temp < AMITK_DATA_SET_GLOBAL_MIN(threshold->data_set))
-	      temp = AMITK_DATA_SET_GLOBAL_MIN(threshold->data_set);
+	    if (temp < amitk_data_set_get_global_min(threshold->data_set))
+	      temp = amitk_data_set_get_global_min(threshold->data_set);
 	    if ((temp-EPSILON*fabs(temp)) < threshold->threshold_min[which_ref])
 	      temp = threshold->threshold_min[which_ref]+EPSILON*fabs(threshold->threshold_min[which_ref]);
 	    threshold->threshold_max[which_ref] = temp;
@@ -1292,15 +1295,15 @@ static gint threshold_arrow_cb(GtkWidget* widget, GdkEvent * event, gpointer dat
 	    threshold_update_connector_lines(threshold, AMITK_THRESHOLD_SCALE_FULL);
 	    break;
 	  case AMITK_THRESHOLD_ARROW_FULL_MIN:
-	    delta *= (AMITK_DATA_SET_GLOBAL_MAX(threshold->data_set) - 
-		      AMITK_DATA_SET_GLOBAL_MIN(threshold->data_set));
+	    delta *= (amitk_data_set_get_global_max(threshold->data_set) - 
+		      amitk_data_set_get_global_min(threshold->data_set));
 	    temp = threshold->initial_min[which_ref] + delta;
-	    if (temp < AMITK_DATA_SET_GLOBAL_MIN(threshold->data_set)) 
-	      temp = AMITK_DATA_SET_GLOBAL_MIN(threshold->data_set);
+	    if (temp < amitk_data_set_get_global_min(threshold->data_set)) 
+	      temp = amitk_data_set_get_global_min(threshold->data_set);
 	    if ((temp+EPSILON*fabs(temp)) > threshold->threshold_max[which_ref]) 
 	      temp = threshold->threshold_max[which_ref]-EPSILON*fabs(threshold->threshold_max[which_ref]);
-	    if (temp > AMITK_DATA_SET_GLOBAL_MAX(threshold->data_set)) 
-	      temp = AMITK_DATA_SET_GLOBAL_MAX(threshold->data_set);
+	    if (temp > amitk_data_set_get_global_max(threshold->data_set)) 
+	      temp = amitk_data_set_get_global_max(threshold->data_set);
 	    threshold->threshold_min[which_ref] = temp;
 	    threshold_update_arrow(threshold, AMITK_THRESHOLD_ARROW_FULL_MIN);
 	    threshold_update_connector_lines(threshold, AMITK_THRESHOLD_SCALE_FULL);
@@ -1310,8 +1313,8 @@ static gint threshold_arrow_cb(GtkWidget* widget, GdkEvent * event, gpointer dat
 	    temp = threshold->initial_max[which_ref] + delta;
 	    if ((temp-EPSILON*fabs(temp)) < threshold->threshold_min[which_ref]) 
 	      temp = threshold->threshold_min[which_ref]+EPSILON*fabs(threshold->threshold_min[which_ref]);
-	    if (temp < AMITK_DATA_SET_GLOBAL_MIN(threshold->data_set))
-	      temp = AMITK_DATA_SET_GLOBAL_MIN(threshold->data_set);
+	    if (temp < amitk_data_set_get_global_min(threshold->data_set))
+	      temp = amitk_data_set_get_global_min(threshold->data_set);
 	    threshold->threshold_max[which_ref] = temp;
 	    threshold_update_arrow(threshold, AMITK_THRESHOLD_ARROW_FULL_MAX);
 	    threshold_update_arrow(threshold, AMITK_THRESHOLD_ARROW_SCALED_MAX);
@@ -1321,14 +1324,14 @@ static gint threshold_arrow_cb(GtkWidget* widget, GdkEvent * event, gpointer dat
 	  case AMITK_THRESHOLD_ARROW_SCALED_MIN:
 	    delta *= (threshold->initial_max[which_ref] - threshold->initial_min[which_ref]);
 	    temp = threshold->initial_min[which_ref] + delta;
-	    if (temp < AMITK_DATA_SET_GLOBAL_MIN(threshold->data_set)) 
-	      temp = AMITK_DATA_SET_GLOBAL_MIN(threshold->data_set);
+	    if (temp < amitk_data_set_get_global_min(threshold->data_set)) 
+	      temp = amitk_data_set_get_global_min(threshold->data_set);
 	    if (temp >= threshold->threshold_max[which_ref]) 
 	      temp = threshold->threshold_max[which_ref];
 	    if ((temp+EPSILON*fabs(temp)) > threshold->threshold_max[which_ref]) 
 	      temp = threshold->threshold_max[which_ref]-EPSILON*fabs(threshold->threshold_max[which_ref]);
-	    if (temp > AMITK_DATA_SET_GLOBAL_MAX(threshold->data_set)) 
-	      temp = AMITK_DATA_SET_GLOBAL_MAX(threshold->data_set);
+	    if (temp > amitk_data_set_get_global_max(threshold->data_set)) 
+	      temp = amitk_data_set_get_global_max(threshold->data_set);
 	    threshold->threshold_min[which_ref] = temp;
 	    threshold_update_arrow(threshold, AMITK_THRESHOLD_ARROW_FULL_MIN);
 	    threshold_update_arrow(threshold, AMITK_THRESHOLD_ARROW_SCALED_MIN);
@@ -1445,25 +1448,25 @@ static void threshold_spin_button_cb(GtkWidget* widget, gpointer data) {
   temp = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
  
   global_diff = 
-    AMITK_DATA_SET_GLOBAL_MAX(threshold->data_set)- 
-    AMITK_DATA_SET_GLOBAL_MIN(threshold->data_set);
+    amitk_data_set_get_global_max(threshold->data_set)- 
+    amitk_data_set_get_global_min(threshold->data_set);
   if (global_diff < EPSILON) global_diff = EPSILON; /* non sensicle */
 
   /* make sure it's a valid floating point */
   switch (which_threshold_entry) {
     case AMITK_THRESHOLD_ENTRY_MAX_PERCENT:
-      temp = (global_diff*temp/100.0)+AMITK_DATA_SET_GLOBAL_MIN(threshold->data_set);
+      temp = (global_diff*temp/100.0)+amitk_data_set_get_global_min(threshold->data_set);
     case AMITK_THRESHOLD_ENTRY_MAX_ABSOLUTE:
       if ((temp > threshold->threshold_min[which_ref]) && 
-	  (temp > AMITK_DATA_SET_GLOBAL_MIN(threshold->data_set))) {
+	  (temp > amitk_data_set_get_global_min(threshold->data_set))) {
 	amitk_data_set_set_threshold_max(threshold->data_set, which_ref, temp);
 	threshold->threshold_max[which_ref] = temp;
       }
       break;
     case AMITK_THRESHOLD_ENTRY_MIN_PERCENT:
-      temp = (global_diff * temp/100.0)+AMITK_DATA_SET_GLOBAL_MIN(threshold->data_set);
+      temp = (global_diff * temp/100.0)+amitk_data_set_get_global_min(threshold->data_set);
     case AMITK_THRESHOLD_ENTRY_MIN_ABSOLUTE:
-      if ((temp < AMITK_DATA_SET_GLOBAL_MAX(threshold->data_set)) && 
+      if ((temp < amitk_data_set_get_global_max(threshold->data_set)) && 
 	  (temp < threshold->threshold_max[which_ref])) {
 	amitk_data_set_set_threshold_min(threshold->data_set, which_ref, temp);
 	threshold->threshold_min[which_ref] = temp;

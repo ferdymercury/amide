@@ -1,7 +1,7 @@
 /* ui_common.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2003 Andy Loening
+ * Copyright (C) 2001-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -32,6 +32,7 @@
 #include "amitk_xif_sel.h"
 #include "pixmaps.h"
 #include "amitk_color_table.h"
+#include "amitk_common.h"
 #include "amitk_preferences.h"
 #include "amitk_threshold.h"
 #ifdef AMIDE_LIBGSL_SUPPORT
@@ -46,6 +47,9 @@
 #ifdef AMIDE_LIBFAME_SUPPORT
 #include <fame_version.h>
 #endif
+
+
+
 
 #define AXIS_WIDTH 120
 #define AXIS_HEADER 20
@@ -79,35 +83,6 @@ static gchar * line_style_names[] = {
   N_("On/Off"),
   N_("Double Dash")
 };
-
-
-
-
-/* this function's use is a bit of a cludge 
-   GTK typically uses %f for changing a float to text to display in a table
-   Here we overwrite the typical conversion with a %g conversion
- */
-void amitk_real_cell_data_func(GtkTreeViewColumn *tree_column,
-			       GtkCellRenderer *cell,
-			       GtkTreeModel *tree_model,
-			       GtkTreeIter *iter,
-			       gpointer data) {
-
-  gdouble value;
-  gchar *text;
-  gint column = GPOINTER_TO_INT(data);
-
-  /* Get the double value from the model. */
-  gtk_tree_model_get (tree_model, iter, column, &value, -1);
-
-  /* Now we can format the value ourselves. */
-  text = g_strdup_printf ("%g", value);
-  g_object_set (cell, "text", text, NULL);
-  g_free (text);
-
-  return;
-}
-
 
 
 
@@ -304,7 +279,7 @@ void ui_common_file_selection_cancel_cb(GtkWidget* widget, gpointer data) {
 void ui_common_about_cb(GtkWidget * button, gpointer data) {
 
   GtkWidget *about;
-  GdkPixbuf * amide_logo;
+  GdkPixbuf * logo;
 
   const gchar *authors[] = {
     "Andy Loening <loening@alum.mit.edu>",
@@ -339,13 +314,12 @@ void ui_common_about_cb(GtkWidget * button, gpointer data) {
 #endif
 		       NULL);
 
-  amide_logo = gdk_pixbuf_new_from_xpm_data(amide_logo_xpm);
-
+  logo = gdk_pixbuf_new_from_inline(-1, amide_logo, FALSE, NULL);
   about = gnome_about_new(PACKAGE, VERSION, 
-			  _("Copyright (c) 2000-2003 Andy Loening"),
+			  _("Copyright (c) 2000-2004 Andy Loening"),
 			  contents,
-			  authors, NULL, NULL, amide_logo);
-  g_object_unref(amide_logo);
+			  authors, NULL, NULL, logo);
+  g_object_unref(logo);
 
   gtk_window_set_modal(GTK_WINDOW(about), FALSE);
 
@@ -544,10 +518,11 @@ void ui_common_data_set_preferences_widgets(GtkWidget * packing_table,
     for (i_limit = 0; i_limit < AMITK_LIMIT_NUM; i_limit++) {
       
       window_spins[i_window][i_limit] = gtk_spin_button_new_with_range(-G_MAXDOUBLE, G_MAXDOUBLE, 1.0);
-      gtk_spin_button_set_digits(GTK_SPIN_BUTTON(window_spins[i_window][i_limit]), AMITK_THRESHOLD_SPIN_BUTTON_DIGITS);
       gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(window_spins[i_window][i_limit]), FALSE);
       g_object_set_data(G_OBJECT(window_spins[i_window][i_limit]), "which_window", GINT_TO_POINTER(i_window));
       g_object_set_data(G_OBJECT(window_spins[i_window][i_limit]), "which_limit", GINT_TO_POINTER(i_limit));
+      g_signal_connect(G_OBJECT(window_spins[i_window][i_limit]), "output",
+		       G_CALLBACK(amitk_spin_button_scientific_output), NULL);
       gtk_table_attach(GTK_TABLE(packing_table), window_spins[i_window][i_limit], 1+i_limit,2+i_limit, 
 		       table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
       gtk_widget_show(window_spins[i_window][i_limit]);
@@ -836,7 +811,7 @@ void ui_common_window_realize_cb(GtkWidget * widget, gpointer data) {
 
   g_return_if_fail(GTK_IS_WINDOW(widget));
 
-  pixbuf = gdk_pixbuf_new_from_xpm_data(amide_logo_xpm);
+  pixbuf = gdk_pixbuf_new_from_inline(-1, amide_logo_small, FALSE, NULL);
   gtk_window_set_icon(GTK_WINDOW(widget), pixbuf);
   g_object_unref(pixbuf);
 

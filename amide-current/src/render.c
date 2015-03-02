@@ -174,9 +174,9 @@ rendering_t * rendering_init(const AmitkObject * object,
   new_rendering->optimize_rendering = optimize_rendering;
 
   /* figure out the size of our context */
-  new_rendering->dim.x = ceil((AMITK_VOLUME_X_CORNER(rendering_volume)+EPSILON)/voxel_size);
-  new_rendering->dim.y = ceil((AMITK_VOLUME_Y_CORNER(rendering_volume)+EPSILON)/voxel_size);
-  new_rendering->dim.z = ceil((AMITK_VOLUME_Z_CORNER(rendering_volume)+EPSILON)/voxel_size);
+  new_rendering->dim.x = ceil((AMITK_VOLUME_X_CORNER(rendering_volume))/voxel_size);
+  new_rendering->dim.y = ceil((AMITK_VOLUME_Y_CORNER(rendering_volume))/voxel_size);
+  new_rendering->dim.z = ceil((AMITK_VOLUME_Z_CORNER(rendering_volume))/voxel_size);
   new_rendering->voxel_size = voxel_size;
 
   /* adjust the thresholding if needed */
@@ -518,6 +518,8 @@ gboolean rendering_load_object(rendering_t * rendering,
     AmitkPoint temp_corner;
     amide_data_t temp_val, scale;
     amide_data_t max, min;
+    AmitkVoxel dim;
+    gboolean unmatched_dimensions = FALSE;
 
     
     slice_volume = AMITK_VOLUME(amitk_object_copy(AMITK_OBJECT(rendering->extraction_volume)));
@@ -543,7 +545,20 @@ gboolean rendering_load_object(rendering_t * rendering,
 				       rendering->start, 
 				       rendering->duration, 
 				       rendering->voxel_size, 
-				       slice_volume, FALSE);
+				       slice_volume);
+
+      if (!unmatched_dimensions && 
+	  ((rendering->dim.x != AMITK_DATA_SET_DIM_X(slice)) || 
+	   (rendering->dim.y != AMITK_DATA_SET_DIM_Y(slice)))) {
+	g_warning("unmatched dimensions between rendering and slices (%dx%d != %dx%d) in %s\n", 
+		  rendering->dim.x, rendering->dim.y,
+		  AMITK_DATA_SET_DIM_X(slice), AMITK_DATA_SET_DIM_Y(slice),
+		  __FILE__);
+	unmatched_dimensions = TRUE;
+      }
+      dim.x = MIN(rendering->dim.x, AMITK_DATA_SET_DIM_X(slice));
+      dim.y = MIN(rendering->dim.y, AMITK_DATA_SET_DIM_Y(slice));
+
 
       amitk_data_set_get_thresholding_max_min(AMITK_DATA_SET_SLICE_PARENT(slice),
 					      AMITK_DATA_SET(slice),
@@ -554,8 +569,8 @@ gboolean rendering_load_object(rendering_t * rendering,
 
       /* note, volpack needs a mirror reversal on the z axis */
       if (rendering->zero_fill) {
-	for (j_voxel.y = i_voxel.y = 0; i_voxel.y <  rendering->dim.y; j_voxel.y++, i_voxel.y++)
-	  for (j_voxel.x = i_voxel.x = 0; i_voxel.x <  rendering->dim.x; j_voxel.x++, i_voxel.x++) {
+	for (j_voxel.y = i_voxel.y = 0; i_voxel.y <  dim.y; j_voxel.y++, i_voxel.y++)
+	  for (j_voxel.x = i_voxel.x = 0; i_voxel.x <  dim.x; j_voxel.x++, i_voxel.x++) {
 	    temp_val = scale * (AMITK_DATA_SET_DOUBLE_0D_SCALING_CONTENT(slice,j_voxel)-min);
 	    if (temp_val > RENDERING_DENSITY_MAX) temp_val = 0.0;
 	    if (temp_val < 0.0) temp_val = 0.0;
@@ -564,8 +579,8 @@ gboolean rendering_load_object(rendering_t * rendering,
 		    (rendering->dim.z-i_voxel.z-1)* rendering->dim.y* rendering->dim.x] = temp_val;
 	  }
       } else {
-	for (j_voxel.y = i_voxel.y = 0; i_voxel.y <  rendering->dim.y; j_voxel.y++, i_voxel.y++)
-	  for (j_voxel.x = i_voxel.x = 0; i_voxel.x <  rendering->dim.x; j_voxel.x++, i_voxel.x++) {
+	for (j_voxel.y = i_voxel.y = 0; i_voxel.y <  dim.y; j_voxel.y++, i_voxel.y++)
+	  for (j_voxel.x = i_voxel.x = 0; i_voxel.x <  dim.x; j_voxel.x++, i_voxel.x++) {
 	    temp_val = scale * (AMITK_DATA_SET_DOUBLE_0D_SCALING_CONTENT(slice,j_voxel)-min);
 	    if (temp_val > RENDERING_DENSITY_MAX) temp_val = RENDERING_DENSITY_MAX;
 	    if (temp_val < 0.0) temp_val = 0.0;

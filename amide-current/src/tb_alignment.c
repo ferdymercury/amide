@@ -526,7 +526,7 @@ void tb_alignment(AmitkStudy * study) {
   
   g_return_if_fail(AMITK_IS_STUDY(study));
   
-  logo = gdk_pixbuf_new_from_xpm_data(amide_logo_xpm);
+  logo = gdk_pixbuf_new_from_inline(-1, amide_logo_small, FALSE, NULL);
 
   alignment = tb_alignment_init();
   alignment->data_sets = 

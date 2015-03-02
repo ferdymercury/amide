@@ -29,14 +29,13 @@
 
 #include <sys/stat.h>
 #include <libgnomecanvas/gnome-canvas-pixbuf.h>
+#include "amitk_common.h"
 #include "amitk_threshold.h"
 #include "amitk_progress_dialog.h"
 #include "mpeg_encode.h"
 #include "ui_common.h"
 #include "tb_fly_through.h"
 #include "amitk_canvas.h"
-
-#define SPIN_BUTTON_DIGITS 3
 
 typedef enum {
   NOT_DYNAMIC,
@@ -677,10 +676,10 @@ void tb_fly_through(AmitkStudy * study,
   tb_fly_through->start_position_spin = 
     gtk_spin_button_new_with_range(-G_MAXDOUBLE, G_MAXDOUBLE, 1.0);
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(tb_fly_through->start_position_spin), FALSE);
-  gtk_spin_button_set_digits(GTK_SPIN_BUTTON(tb_fly_through->start_position_spin), 
-			     SPIN_BUTTON_DIGITS);
   g_signal_connect(G_OBJECT(tb_fly_through->start_position_spin), "value_changed", 
 		   G_CALLBACK(change_start_position_spin_cb), tb_fly_through);
+  g_signal_connect(G_OBJECT(tb_fly_through->start_position_spin), "output",
+		   G_CALLBACK(amitk_spin_button_scientific_output), NULL);
   gtk_table_attach(GTK_TABLE(right_table), tb_fly_through->start_position_spin,
 		   1,2, table_row, table_row+1, 
 		   GTK_FILL, 0, X_PADDING, Y_PADDING);
@@ -692,10 +691,10 @@ void tb_fly_through(AmitkStudy * study,
   tb_fly_through->end_position_spin = 
     gtk_spin_button_new_with_range(-G_MAXDOUBLE, G_MAXDOUBLE, 1.0);
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(tb_fly_through->end_position_spin), FALSE);
-  gtk_spin_button_set_digits(GTK_SPIN_BUTTON(tb_fly_through->end_position_spin), 
-			     SPIN_BUTTON_DIGITS);
   g_signal_connect(G_OBJECT(tb_fly_through->end_position_spin), "value_changed", 
 		   G_CALLBACK(change_end_position_spin_cb), tb_fly_through);
+  g_signal_connect(G_OBJECT(tb_fly_through->end_position_spin), "output",
+		   G_CALLBACK(amitk_spin_button_scientific_output), NULL);
   gtk_table_attach(GTK_TABLE(right_table), tb_fly_through->end_position_spin,
 		   1,2, table_row, table_row+1, 
 		   GTK_FILL, 0, X_PADDING, Y_PADDING);
@@ -707,10 +706,10 @@ void tb_fly_through(AmitkStudy * study,
   tb_fly_through->duration_spin_button = 
     gtk_spin_button_new_with_range(0, G_MAXDOUBLE, 1.0);
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(tb_fly_through->duration_spin_button), FALSE);
-  gtk_spin_button_set_digits(GTK_SPIN_BUTTON(tb_fly_through->duration_spin_button), 
-			     SPIN_BUTTON_DIGITS);
   g_signal_connect(G_OBJECT(tb_fly_through->duration_spin_button), "value_changed", 
 		   G_CALLBACK(change_duration_spin_cb), tb_fly_through);
+  g_signal_connect(G_OBJECT(tb_fly_through->duration_spin_button), "output",
+		   G_CALLBACK(amitk_spin_button_scientific_output), NULL);
   gtk_table_attach(GTK_TABLE(right_table), tb_fly_through->duration_spin_button,
 		   1,2, table_row, table_row+1, 
 		   GTK_FILL, 0, X_PADDING, Y_PADDING);
@@ -832,12 +831,12 @@ void tb_fly_through(AmitkStudy * study,
     tb_fly_through->start_time_spin_button = 
       gtk_spin_button_new_with_range(tb_fly_through->start_time, tb_fly_through->end_time, 1.0);
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(tb_fly_through->start_time_spin_button), FALSE);
-    gtk_spin_button_set_digits(GTK_SPIN_BUTTON(tb_fly_through->start_time_spin_button),
-			       SPIN_BUTTON_DIGITS);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(tb_fly_through->start_time_spin_button),
 			      tb_fly_through->start_time);
     g_signal_connect(G_OBJECT(tb_fly_through->start_time_spin_button), "value_changed", 
 		     G_CALLBACK(change_start_time_cb), tb_fly_through);
+    g_signal_connect(G_OBJECT(tb_fly_through->start_time_spin_button), "output",
+		     G_CALLBACK(amitk_spin_button_scientific_output), NULL);
     gtk_table_attach(GTK_TABLE(right_table), tb_fly_through->start_time_spin_button,1,2,
 		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
     
@@ -863,12 +862,12 @@ void tb_fly_through(AmitkStudy * study,
     tb_fly_through->end_time_spin_button =
       gtk_spin_button_new_with_range(tb_fly_through->start_time, tb_fly_through->end_time, 1.0);
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(tb_fly_through->end_time_spin_button), FALSE);
-    gtk_spin_button_set_digits(GTK_SPIN_BUTTON(tb_fly_through->end_time_spin_button),
-			       SPIN_BUTTON_DIGITS);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(tb_fly_through->end_time_spin_button),
 			      tb_fly_through->end_time);
     g_signal_connect(G_OBJECT(tb_fly_through->end_time_spin_button), "value_changed", 
 		     G_CALLBACK(change_end_time_cb), tb_fly_through);
+    g_signal_connect(G_OBJECT(tb_fly_through->end_time_spin_button), "output",
+		     G_CALLBACK(amitk_spin_button_scientific_output), NULL);
     gtk_table_attach(GTK_TABLE(right_table), tb_fly_through->end_time_spin_button,1,2,
 		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
     

@@ -26,6 +26,7 @@
 
 #include "amide_config.h"
 #include <libgnomeui/libgnomeui.h>
+#include "amitk_common.h"
 #include "amitk_data_set.h"
 #include "amitk_progress_dialog.h"
 #include "tb_filter.h"
@@ -262,10 +263,11 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
 	
       spin_button =  gtk_spin_button_new_with_range(MIN_FWHM, MAX_FWHM,0.2);
       gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), FALSE);
-      gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button),3);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), tb_filter->fwhm);
       g_signal_connect(G_OBJECT(spin_button), "value_changed",  
       			 G_CALLBACK(fwhm_spinner_cb), tb_filter);
+      g_signal_connect(G_OBJECT(spin_button), "output",
+		       G_CALLBACK(amitk_spin_button_scientific_output), NULL);
       gtk_table_attach(GTK_TABLE(table), spin_button, 
 			 table_column+1,table_column+2, table_row,table_row+1,
 			 FALSE,FALSE, X_PADDING, Y_PADDING);
@@ -506,7 +508,7 @@ void tb_filter(AmitkStudy * study, AmitkDataSet * active_ds) {
     return;
   }
   
-  logo = gdk_pixbuf_new_from_xpm_data(amide_logo_xpm);
+  logo = gdk_pixbuf_new_from_inline(-1, amide_logo_small, FALSE, NULL);
 
   tb_filter = tb_filter_init();
   tb_filter->study = amitk_object_ref(study);
@@ -530,7 +532,7 @@ void tb_filter(AmitkStudy * study, AmitkDataSet * active_ds) {
     g_object_set_data(G_OBJECT(tb_filter->page[i_page]),"which_page", GINT_TO_POINTER(i_page));
     
     /* note, the _connect_after is a workaround, it should just be _connect */
-    /* the problem, is gnome_druid currently overwrites button sensitivity in it's own prepare routine*/
+    /* the problem, is gnome_druid currently overwrites button sensitivity in its own prepare routine*/
     g_signal_connect_after(G_OBJECT(tb_filter->page[i_page]), "prepare", 
 			   G_CALLBACK(prepare_page_cb), tb_filter);
     g_signal_connect(G_OBJECT(tb_filter->page[i_page]), "next", G_CALLBACK(next_page_cb), tb_filter);

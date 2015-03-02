@@ -1,7 +1,7 @@
 /* amide.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2003 Andy Loening
+ * Copyright (C) 2001-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -78,6 +78,7 @@ typedef enum {
   AMITK_HELP_INFO_CANVAS_LINE_PROFILE,
   AMITK_HELP_INFO_CANVAS_NEW_ROI,
   AMITK_HELP_INFO_CANVAS_NEW_ISOCONTOUR_ROI,
+  AMITK_HELP_INFO_CANVAS_CHANGE_ISOCONTOUR,
   AMITK_HELP_INFO_CANVAS_SHIFT_OBJECT,
   AMITK_HELP_INFO_CANVAS_ROTATE_OBJECT,
   AMITK_HELP_INFO_TREE_VIEW_DATA_SET,

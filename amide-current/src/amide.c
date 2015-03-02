@@ -1,7 +1,7 @@
 /* amide.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2003 Andy Loening
+ * Copyright (C) 2000-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -29,7 +29,9 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <string.h>
-#ifndef AMIDE_WIN32_HACKS
+#ifdef AMIDE_WIN32_HACKS
+#include <popt.h>
+#else
 #include <libgnome/libgnome.h>
 #endif
 #include "amide.h"
@@ -172,6 +174,23 @@ gboolean amide_is_xif_flat_file(const gchar * filename, guint64 * plocation_le, 
 
 
 
+void amide_log_handler_nopopup(const gchar *log_domain,
+			       GLogLevelFlags log_level,
+			       const gchar *message,
+			       gpointer user_data) {
+
+  gchar * temp_string;
+  AmitkPreferences * preferences = user_data;
+
+  if (AMITK_PREFERENCES_WARNINGS_TO_CONSOLE(preferences)) {
+    temp_string = g_strdup_printf("AMIDE WARNING: %s\n", message);
+    g_print(temp_string);
+    g_free(temp_string);
+  }
+
+  return;
+}
+
 void amide_log_handler(const gchar *log_domain,
 		       GLogLevelFlags log_level,
 		       const gchar *message,
@@ -263,17 +282,18 @@ int main (int argc, char *argv []) {
 
   gint studies_launched=0;
   AmitkPreferences * preferences;
-#ifndef AMIDE_WIN32_HACKS
+#ifdef AMIDE_WIN32_HACKS
+  struct poptOption popt_options[] = {POPT_TABLEEND};
+#else
+  GnomeProgram * program;
+#endif
   struct stat file_info;
-  AmitkStudy * study = NULL;
   AmitkStudy * imported_study = NULL;
-  const gchar ** input_filenames;
-  guint i=0;
+  AmitkStudy * study = NULL;
+  const gchar * input_filename;
   AmitkDataSet * new_ds;
   amide_real_t min_voxel_size;
   poptContext amide_ctx;
-  GnomeProgram * program;
-#endif
 
   /* setup i18n */
   setlocale(LC_ALL, "");
@@ -294,10 +314,9 @@ int main (int argc, char *argv []) {
 
 #else /* AMIDE_WIN32_HACKS */
   gtk_init(&argc, &argv);
+  amide_ctx = poptGetContext(NULL, argc, argv, popt_options, 0); //POPT_CONTEXT_NO_EXEC);
+  poptGetNextOpt(amide_ctx); /* this is needed for some reason or else poptGetArg will fail */
 #endif
-
-
-
 
 #ifdef AMIDE_DEBUG
   /* restore the normal segmentation fault signalling so we can get 
@@ -311,59 +330,58 @@ int main (int argc, char *argv []) {
   /* specify my own error handler */
   g_log_set_handler (NULL, G_LOG_LEVEL_WARNING, amide_log_handler, preferences);
 
-  /* and tell gnome-ui to pump it's errors similarly */
+  /* and tell gnome-ui to pump its errors similarly */
   g_log_set_handler ("GnomeUI", G_LOG_LEVEL_WARNING, amide_log_handler, preferences);
 
-
+#ifdef AMIDE_WIN32_HACKS
+  /* ignore gdk warnings on win32 */
+  /* as of gtk 2.2.4, get "General case not implemented" warnings from gdkproperty-win32.c
+     that appear to be unwarrented */
+  g_log_set_handler ("Gdk", G_LOG_LEVEL_WARNING, amide_log_handler_nopopup, preferences);
+#endif
+  
   /* startup initializations */
   font_init();
 
 
-#ifndef AMIDE_WIN32_HACKS
-  /* figure out if there was anything else on the command line */
-  input_filenames = poptGetArgs(amide_ctx);
-  /*  input_filenames is just pointers into the amide_ctx structure,
-      and shouldn't be freed */
-    
   /* if we specified files on the command line, load it in */
-  if (input_filenames != NULL) {
-    for (i=0; input_filenames[i] != NULL; i++) {
-
-      /* check to see that the filename exists and it's a directory */
-      if (stat(input_filenames[i], &file_info) != 0) {
-	g_warning(_("%s does not exist"),input_filenames[i]);
-      } else if (amide_is_xif_flat_file(input_filenames[i], NULL, NULL) ||
-		 amide_is_xif_directory(input_filenames[i], NULL, NULL)) {
-	if ((study=amitk_study_load_xml(input_filenames[i])) == NULL)
-	  g_warning(_("Failed to load in as XIF file: %s"), input_filenames[i]);
-      } else if (!S_ISDIR(file_info.st_mode)) {
-	/* not a directory... maybe an import file? */
-	if ((new_ds = amitk_data_set_import_file(AMITK_IMPORT_METHOD_GUESS, 0, input_filenames[i], 
-						 preferences, NULL, NULL)) != NULL) {
-	  if (imported_study == NULL) {
-	    imported_study = amitk_study_new(preferences);
-	    amitk_object_set_name(AMITK_OBJECT(imported_study), AMITK_OBJECT_NAME(new_ds));
-	    amitk_study_set_view_center(imported_study, amitk_volume_get_center(AMITK_VOLUME(new_ds)));
-	  }
-	  amitk_object_add_child(AMITK_OBJECT(imported_study), AMITK_OBJECT(new_ds));
-	  min_voxel_size = amitk_data_sets_get_min_voxel_size(AMITK_OBJECT_CHILDREN(imported_study));
-	  amitk_study_set_view_thickness(imported_study, min_voxel_size);
-	  new_ds = amitk_object_unref(new_ds);
-	} else 
-	  g_warning(_("%s is not an AMIDE study or importable file type"), input_filenames[i]);
-      } else {
-	  g_warning(_("%s is not an AMIDE XIF Directory"), input_filenames[i]);
-      }
-
-      if (study != NULL) {
-	/* each whole study gets it's own window */
-	ui_study_create(study, preferences);
-	studies_launched++;
-	study = amitk_object_unref(study);
-      } 
-
+  while ((input_filename = poptGetArg(amide_ctx)) != NULL) {
+    /*  input_filename is just pointers into the amide_ctx structure, and shouldn't be freed */
+    
+    /* check to see that the filename exists and it's a directory */
+    if (stat(input_filename, &file_info) != 0) {
+      g_warning(_("%s does not exist"),input_filename);
+    } else if (amide_is_xif_flat_file(input_filename, NULL, NULL) ||
+ 	       amide_is_xif_directory(input_filename, NULL, NULL)) {
+      if ((study=amitk_study_load_xml(input_filename)) == NULL)
+ 	g_warning(_("Failed to load in as XIF file: %s"), input_filename);
+    } else if (!S_ISDIR(file_info.st_mode)) {
+      /* not a directory... maybe an import file? */
+      if ((new_ds = amitk_data_set_import_file(AMITK_IMPORT_METHOD_GUESS, 0, input_filename, 
+ 					       preferences, NULL, NULL)) != NULL) {
+ 	if (imported_study == NULL) {
+ 	  imported_study = amitk_study_new(preferences);
+ 	  amitk_object_set_name(AMITK_OBJECT(imported_study), AMITK_OBJECT_NAME(new_ds));
+ 	  amitk_study_set_view_center(imported_study, amitk_volume_get_center(AMITK_VOLUME(new_ds)));
+ 	}
+ 	amitk_object_add_child(AMITK_OBJECT(imported_study), AMITK_OBJECT(new_ds));
+ 	min_voxel_size = amitk_data_sets_get_min_voxel_size(AMITK_OBJECT_CHILDREN(imported_study));
+ 	amitk_study_set_view_thickness(imported_study, min_voxel_size);
+	new_ds = amitk_object_unref(new_ds);
+      } else 
+ 	g_warning(_("%s is not an AMIDE study or importable file type"), input_filename);
+    } else {
+      g_warning(_("%s is not an AMIDE XIF Directory"), input_filename);
     }
+    
+    if (study != NULL) {
+      /* each whole study gets it's own window */
+      ui_study_create(study, preferences);
+      studies_launched++;
+      study = amitk_object_unref(study);
+    } 
   } 
+  
 
   if (imported_study != NULL) {
     /* all imported data sets go into one study */
@@ -373,7 +391,7 @@ int main (int argc, char *argv []) {
   }
 
   poptFreeContext(amide_ctx);
-#endif 
+
 
   /* start up an empty study if we haven't loaded in anything */
   if (studies_launched < 1) ui_study_create(NULL, preferences);

@@ -95,7 +95,7 @@ AmitkDataSet * libecat_import(const gchar * libecat_filename,
   case ByteImage:
   case ByteVolume:
   default:
-    g_warning(_("Can't open this CTI file type: %d"), libecat_file->mhptr->file_type);
+    g_warning(_("Don't know how to handle this CTI file type: %d"), libecat_file->mhptr->file_type);
     goto error;
     break;
   }
@@ -284,14 +284,15 @@ AmitkDataSet * libecat_import(const gchar * libecat_filename,
       case PetImage: 
       case PetVolume: 
       case InterfileImage:
-	ish = (Image_subheader *) matrix_data->shptr;
+	ish = (Image_subheader *) matrix_slice->shptr;
 	ds->frame_duration[i.t] = ish->frame_duration/1000.0;
 	break;
+      case Normalization:
       case AttenCor:
 	ds->frame_duration[i.t] = 1.0; /* doesn't mean anything */
 	break;
       case Sinogram:
-	ssh = (Scan_subheader *) matrix_data->shptr;
+	ssh = (Scan_subheader *) matrix_slice->shptr;
 	ds->frame_duration[i.t] = ssh->frame_duration/1000.0;
 	break;
       default:

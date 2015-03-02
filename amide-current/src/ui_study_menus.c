@@ -1,7 +1,7 @@
 /* ui_study_menus.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2003 Andy Loening
+ * Copyright (C) 2000-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -28,6 +28,7 @@
 
 #include "amide_config.h"
 #include <libgnomeui/libgnomeui.h>
+#include "amitk_common.h"
 #include "ui_common.h"
 #include "ui_series.h"
 #include "ui_study.h"
@@ -525,11 +526,11 @@ void ui_study_toolbar_create(ui_study_t * ui_study) {
   /* start make the interpolation toolbar items*/
   for (i_interpolation = 0; i_interpolation < AMITK_INTERPOLATION_NUM; i_interpolation++) 
     fill_in_radioitem(&(interpolation_list[i_interpolation]),
-		      (icon_interpolation[i_interpolation] == NULL) ? amitk_interpolation_get_name(i_interpolation) : NULL,
+		      (interpolation_icon[i_interpolation] == NULL) ? amitk_interpolation_get_name(i_interpolation) : NULL,
 		      amitk_interpolation_explanations[i_interpolation],
 		      ui_study_cb_interpolation,
 		      ui_study, 
-		      icon_interpolation[i_interpolation]);
+		      interpolation_icon[i_interpolation]);
   fill_in_end(&(interpolation_list[AMITK_INTERPOLATION_NUM]));
 
   /* start make the fuse_type toolbar items*/
@@ -640,7 +641,6 @@ void ui_study_toolbar_create(ui_study_t * ui_study) {
   gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(ui_study->thickness_spin),FALSE);
   gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(ui_study->thickness_spin), FALSE);
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(ui_study->thickness_spin), FALSE);
-  gtk_spin_button_set_digits(GTK_SPIN_BUTTON(ui_study->thickness_spin), 2);
   gtk_widget_set_size_request (ui_study->thickness_spin, 60, -1);
 
   gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(ui_study->thickness_spin), 
@@ -648,6 +648,8 @@ void ui_study_toolbar_create(ui_study_t * ui_study) {
 
   g_signal_connect(G_OBJECT(ui_study->thickness_spin), "value_changed", 
   		   G_CALLBACK(ui_study_cb_thickness), ui_study);
+  g_signal_connect(G_OBJECT(ui_study->thickness_spin), "output",
+		   G_CALLBACK(amitk_spin_button_scientific_output), NULL);
   gtk_toolbar_append_widget(GTK_TOOLBAR(toolbar), ui_study->thickness_spin, 
 			    _("specify how thick to make the slices (mm)"), NULL);
   gtk_widget_show(ui_study->thickness_spin);

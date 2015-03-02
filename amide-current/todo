@@ -3,8 +3,16 @@ misc list of things todo:
 for next release?
 -----------------
 
-* in import function, do better check to see if it's a concorde file.
-	add something to libmdc_interface for checking file types?
+* profile tool:
+	-needs to update on data set selection change
+
+* have ui_series have an initial popup for picking over time/over space/which view/etc.
+	-also, have an amitk_tree on the popup, where the user can
+	switch which things will be displayed
+* on ui_render's initial poup, have an amitk_tree for changing what gets displayed
+
+* change tb_filter, tb_crop, tb_fads, so that an amitk_tree is used for the
+	initial popup letting you change which data set will be used
 
 * add key combination-> set pixel to max threshold/set pixel to min threshold
                                                                                 
@@ -31,15 +39,15 @@ for next release?
 
 windows todo
 ------------
+* icons still look like crap....
+	may need better program than png2ico
+	may need more sizes
 * checking that file can be read on 32bit system doesn't
 	currently work on windows... files: xml.c and amitk_raw_data.c
 	work around is define out at the moment.  Seems to be some
 	problem with mingw32 gcc and long comparisons
 * zdial on rendering doesn't work
-* get popt working, then can have file associations with .xif files
-	-specify icon for .xif files
 * preferences aren't currently saved between amide sessions
-* figure out how to set the application icon
 
 
 factor analysis things:
@@ -81,6 +89,11 @@ big things:
                        
 small things:
 -------------
+* could probably subclass isocontour's from AmitkRoi -> AimtkIsocontourRoi
+	would allow simplification of amitk_canvas event cruft
+	also probably get rid of amitk_roi_variable_types.c... not worth the performance improvement
+	
+* add sqrt and log abilities into color table lookup?
 * get rid of amitk_canvas view_changed signal, should just listen to
 	study's version of it.  Also, canvas->center is redundant.
 * should have option to use rigid body registration with scaling
@@ -88,7 +101,6 @@ small things:
 	after 0.7.6 (addition of optional transverse/coronal/etc. buttons).
 * need to switch gtk_idle (deprecated) calls to g_source calls
 * try to work in the max/min/distribution calculations into the loading loop
-* would changing the icons to .png files allow anti-aliasing? better icons?
 * fix zooming of off angle roi's on the canvas
 * should all voxel's that an roi edge passes through be displayed?
         -would mean creating roi canvas object as pixmap, similar to isocontour
@@ -131,8 +143,6 @@ probably post 1.0 things:
 		and overlapped.  
 	MIP rendering would be nice....
 * aligning of data using automated registration?
-* could probably subclass isocontour's from AmitkRoi -> AimtkIsocontourRoi
-	also probably get rid of amitk_roi_variable_types.c... not worth the performance improvement
 
 
 things dependent on other things: 
@@ -146,6 +156,10 @@ things dependent on other things:
 	directories need to go on the "files" side.  And also would need a drop down for 
 	switching from "guess" to "import particular", like in gimp.
 
+
+* I'd like to change the icons on the toolbar to pixbuf data structures generated from
+	.png files.  Currently, I'm using xpm data structures.  The gnome-app-helper toolbar
+	functions currently only support xpm data, holding up the change.
 
 * antialiased canvases have been disabled again, due to instabilities with ROI resizing
 	starts spewing "*** attempt to put segment in horiz list twice" errors

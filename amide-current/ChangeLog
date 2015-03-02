@@ -1,3 +1,27 @@
+0.8.2 2004
+	* incorrect loading of frame duration through libecat [1]
+	* rendering conversion had diff. dimension between slice and rendering
+	  lead to core dump on Mac OS X, and with some gcc's [2, 5]
+ 	* SUV calculations were off by a factor of 1000 [3]
+ 	* ignore gdk warnings on win32
+ 	  work around for gdkproperty.c "Not Implemented" warnings (gtk 2.2.4)
+ 	* added more digits to the scale spin buttons
+ 	* got popt/icons working on win32
+ 	* updated win32 install.  .xif files now associated with AMIDE
+	* updated most of the icons (exception of the toolbar icons)
+	* better interactivity on threshold for remote displays [1]
+	* roi analysis "copy to clipboard" now left justifies roi names [3]
+	* max/min calculations now done on demand
+	* changed mechanism for changing isocontours
+	  old mechanism wasn't working on win32
+	* added x limits to the gaussian fit on the profile tool [1]
+	* added scientific notation support to most of the spin buttons [2]
+	[1] Found/Suggested by Kris Thielemans
+	[2] Found by Anna Wu
+ 	[3] Found/Suggested by Chris Deroose
+	[4] Found by Keon Kang
+	[5] Found by Chris Heier
+	
 0.8.1 2004.01.13
 	* specifying import types was messed up [1]
 	[1] Found by Patrick Chow & Peter Bloomfield

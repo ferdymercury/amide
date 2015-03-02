@@ -1,7 +1,7 @@
 /* ui_render_movie_dialog.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2003 Andy Loening
+ * Copyright (C) 2001-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -30,6 +30,7 @@
 
 #include <sys/stat.h>
 #include <string.h>
+#include "amitk_common.h"
 #include "ui_common.h"
 #include "ui_render_movie.h"
 #include "amitk_type_builtins.h"
@@ -38,7 +39,6 @@
 
 
 #define MOVIE_DEFAULT_DURATION 10.0
-#define SPIN_BUTTON_DIGITS 3
 
 typedef enum {
   NOT_DYNAMIC,
@@ -610,12 +610,12 @@ gpointer * ui_render_movie_dialog_create(ui_render_t * ui_render) {
   ui_render_movie->duration_spin_button  = 
     gtk_spin_button_new_with_range(0, G_MAXDOUBLE, 1.0);
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(ui_render_movie->duration_spin_button), FALSE);
-  gtk_spin_button_set_digits(GTK_SPIN_BUTTON(ui_render_movie->duration_spin_button), 
-			     SPIN_BUTTON_DIGITS);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(ui_render_movie->duration_spin_button),
 			    ui_render_movie->duration);
   g_signal_connect(G_OBJECT(ui_render_movie->duration_spin_button), "value_changed", 
 		   G_CALLBACK(change_frames_cb),  ui_render_movie);
+  g_signal_connect(G_OBJECT(ui_render_movie->duration_spin_button), "output",
+		   G_CALLBACK(amitk_spin_button_scientific_output), NULL);
   gtk_table_attach(GTK_TABLE(packing_table), ui_render_movie->duration_spin_button,1,2,
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
@@ -638,8 +638,7 @@ gpointer * ui_render_movie_dialog_create(ui_render_t * ui_render) {
     ui_render_movie->axis_spin_button[i_axis] = 
       gtk_spin_button_new_with_range(-G_MAXDOUBLE, G_MAXDOUBLE, 1.0);
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(ui_render_movie->axis_spin_button[i_axis]), FALSE);
-    gtk_spin_button_set_digits(GTK_SPIN_BUTTON(ui_render_movie->axis_spin_button[i_axis]), 
-			       SPIN_BUTTON_DIGITS);
+    gtk_spin_button_set_digits(GTK_SPIN_BUTTON(ui_render_movie->axis_spin_button[i_axis]), 2);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(ui_render_movie->axis_spin_button[i_axis]),
 			      ui_render_movie->rotation[i_axis]);
     g_object_set_data(G_OBJECT(ui_render_movie->axis_spin_button[i_axis]), 
@@ -698,12 +697,12 @@ gpointer * ui_render_movie_dialog_create(ui_render_t * ui_render) {
   ui_render_movie->start_time_spin_button = 
     gtk_spin_button_new_with_range(ui_render_movie->start_time, ui_render_movie->end_time, 1.0);
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(ui_render_movie->start_time_spin_button), FALSE);
-  gtk_spin_button_set_digits(GTK_SPIN_BUTTON(ui_render_movie->start_time_spin_button),
-			     SPIN_BUTTON_DIGITS);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(ui_render_movie->start_time_spin_button),
 			    ui_render_movie->start_time);
   g_signal_connect(G_OBJECT(ui_render_movie->start_time_spin_button), "value_changed", 
 		   G_CALLBACK(change_start_time_cb), ui_render_movie);
+  g_signal_connect(G_OBJECT(ui_render_movie->start_time_spin_button), "output",
+		   G_CALLBACK(amitk_spin_button_scientific_output), NULL);
   gtk_table_attach(GTK_TABLE(packing_table), ui_render_movie->start_time_spin_button,1,2,
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
 
@@ -729,12 +728,12 @@ gpointer * ui_render_movie_dialog_create(ui_render_t * ui_render) {
   ui_render_movie->end_time_spin_button =
     gtk_spin_button_new_with_range(ui_render_movie->start_time, ui_render_movie->end_time, 1.0);
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(ui_render_movie->end_time_spin_button), FALSE);
-  gtk_spin_button_set_digits(GTK_SPIN_BUTTON(ui_render_movie->end_time_spin_button),
-			     SPIN_BUTTON_DIGITS);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(ui_render_movie->end_time_spin_button),
 			    ui_render_movie->end_time);
   g_signal_connect(G_OBJECT(ui_render_movie->end_time_spin_button), "value_changed", 
 		   G_CALLBACK(change_end_time_cb), ui_render_movie);
+  g_signal_connect(G_OBJECT(ui_render_movie->end_time_spin_button), "output",
+		   G_CALLBACK(amitk_spin_button_scientific_output), NULL);
   gtk_table_attach(GTK_TABLE(packing_table), ui_render_movie->end_time_spin_button,1,2,
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
 

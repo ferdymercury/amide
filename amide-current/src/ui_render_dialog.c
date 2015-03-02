@@ -38,7 +38,6 @@
 
 #define GAMMA_CURVE_WIDTH -1 /* sets automatically */
 #define GAMMA_CURVE_HEIGHT 100
-#define DIALOG_SPIN_BUTTON_DIGITS 3
 
 static void change_quality_cb(GtkWidget * widget, gpointer data);
 static void change_pixel_type_cb(GtkWidget * widget, gpointer data);
@@ -548,7 +547,7 @@ void ui_render_dialog_create_parameters(ui_render_t * ui_render) {
 
   spin_button = gtk_spin_button_new_with_range(-90.0, 90.0, 0.2);
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), FALSE);
-  gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button), DIALOG_SPIN_BUTTON_DIGITS);
+  gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button), 2);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), ui_render->stereo_eye_angle);
   g_signal_connect(G_OBJECT(spin_button), "value_changed", G_CALLBACK(change_eye_angle_cb), ui_render);
   gtk_table_attach(GTK_TABLE(packing_table), spin_button,1,2,
@@ -562,7 +561,7 @@ void ui_render_dialog_create_parameters(ui_render_t * ui_render) {
 
   spin_button = gtk_spin_button_new_with_range(0, G_MAXDOUBLE, 1.0);
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), FALSE);
-  gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button), DIALOG_SPIN_BUTTON_DIGITS);
+  gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button), 2);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), 
 			    gdk_screen_width_mm()*ui_render->stereo_eye_width/
 			    ((gdouble) gdk_screen_width()));
@@ -592,7 +591,7 @@ void ui_render_dialog_create_parameters(ui_render_t * ui_render) {
 
   spin_button = gtk_spin_button_new_with_range(-G_MAXDOUBLE, G_MAXDOUBLE, 0.2);
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), FALSE);
-  gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button), DIALOG_SPIN_BUTTON_DIGITS);
+  gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button), 2);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), ui_render->front_factor);
   g_signal_connect(G_OBJECT(spin_button), "value_changed", G_CALLBACK(change_front_factor_cb), ui_render);
   gtk_table_attach(GTK_TABLE(packing_table), spin_button,1,2,
@@ -605,7 +604,7 @@ void ui_render_dialog_create_parameters(ui_render_t * ui_render) {
 
   spin_button = gtk_spin_button_new_with_range(-G_MAXDOUBLE, G_MAXDOUBLE, 0.2);
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), FALSE);
-  gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button), DIALOG_SPIN_BUTTON_DIGITS);
+  gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button), 2);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), ui_render->density);
   g_signal_connect(G_OBJECT(spin_button), "value_changed", G_CALLBACK(change_density_cb), ui_render);
   gtk_table_attach(GTK_TABLE(packing_table), spin_button,1,2,

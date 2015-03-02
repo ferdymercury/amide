@@ -1,7 +1,7 @@
 /* amitk_object_dialog.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2002-2003 Andy Loening
+ * Copyright (C) 2002-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -32,13 +32,13 @@
 #include "amitk_study.h"
 #include "amitk_space_edit.h"
 #include "amitk_threshold.h"
+#include "amitk_common.h"
 #include "ui_common.h"
 #include "pixmaps.h"
 
 
 #define AMITK_RESPONSE_REVERT 2
 #define DIMENSION_STEP 0.2
-#define DIALOG_SPIN_BUTTON_DIGITS 3 /* how many digits after the decimal point */
 
 static void object_dialog_class_init (AmitkObjectDialogClass *class);
 static void object_dialog_init (AmitkObjectDialog *object_dialog);
@@ -434,10 +434,10 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 
     dialog->scaling_factor_spin = gtk_spin_button_new_with_range(0.0, G_MAXDOUBLE, 1.0);
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(dialog->scaling_factor_spin), FALSE);
-    gtk_spin_button_set_digits(GTK_SPIN_BUTTON(dialog->scaling_factor_spin),
-			       DIALOG_SPIN_BUTTON_DIGITS);
     g_signal_connect(G_OBJECT(dialog->scaling_factor_spin), "value_changed", 
 		     G_CALLBACK(dialog_change_scale_factor_cb), dialog);
+    g_signal_connect(G_OBJECT(dialog->scaling_factor_spin), "output",
+		     G_CALLBACK(amitk_spin_button_scientific_output), NULL);
     gtk_table_attach(GTK_TABLE(packing_table), dialog->scaling_factor_spin,
 		     table_column+1,table_column+2,table_row, table_row+1, 
 		     GTK_FILL, 0, X_PADDING, Y_PADDING);
@@ -461,10 +461,10 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 
     dialog->dose_spin = gtk_spin_button_new_with_range(0.0, G_MAXDOUBLE, 1.0);
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(dialog->dose_spin), FALSE);
-    gtk_spin_button_set_digits(GTK_SPIN_BUTTON(dialog->dose_spin),
-			       DIALOG_SPIN_BUTTON_DIGITS);
     g_signal_connect(G_OBJECT(dialog->dose_spin), "value_changed", 
 		     G_CALLBACK(dialog_change_dose_cb), dialog);
+    g_signal_connect(G_OBJECT(dialog->dose_spin), "output",
+		     G_CALLBACK(amitk_spin_button_scientific_output), NULL);
     gtk_table_attach(GTK_TABLE(packing_table), dialog->dose_spin,
 		     table_column+1,table_column+2,table_row, table_row+1, 
 		     GTK_FILL, 0, X_PADDING, Y_PADDING);
@@ -499,10 +499,10 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 
     dialog->weight_spin = gtk_spin_button_new_with_range(0.0, G_MAXDOUBLE, 1.0);
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(dialog->weight_spin), FALSE);
-    gtk_spin_button_set_digits(GTK_SPIN_BUTTON(dialog->weight_spin),
-			       DIALOG_SPIN_BUTTON_DIGITS);
     g_signal_connect(G_OBJECT(dialog->weight_spin), "value_changed", 
 		     G_CALLBACK(dialog_change_weight_cb), dialog);
+    g_signal_connect(G_OBJECT(dialog->weight_spin), "output",
+		     G_CALLBACK(amitk_spin_button_scientific_output), NULL);
     gtk_table_attach(GTK_TABLE(packing_table), dialog->weight_spin,
 		     table_column+1,table_column+2,table_row, table_row+1, 
 		     GTK_FILL, 0, X_PADDING, Y_PADDING);
@@ -537,10 +537,10 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 
     dialog->cylinder_spin = gtk_spin_button_new_with_range(0.0, G_MAXDOUBLE, 1.0);
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(dialog->cylinder_spin), FALSE);
-    gtk_spin_button_set_digits(GTK_SPIN_BUTTON(dialog->cylinder_spin),
-			       DIALOG_SPIN_BUTTON_DIGITS);
     g_signal_connect(G_OBJECT(dialog->cylinder_spin), "value_changed", 
 		     G_CALLBACK(dialog_change_cylinder_cb), dialog);
+    g_signal_connect(G_OBJECT(dialog->cylinder_spin), "output",
+		     G_CALLBACK(amitk_spin_button_scientific_output), NULL);
     gtk_table_attach(GTK_TABLE(packing_table), dialog->cylinder_spin,
 		     table_column+1,table_column+2,table_row, table_row+1, 
 		     GTK_FILL, 0, X_PADDING, Y_PADDING);
@@ -641,10 +641,10 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
       gtk_spin_button_new_with_range(-G_MAXDOUBLE, G_MAXDOUBLE, DIMENSION_STEP);
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(dialog->center_spin[i_axis]), FALSE);
     g_object_set_data(G_OBJECT(dialog->center_spin[i_axis]), "axis", GINT_TO_POINTER(i_axis));
-    gtk_spin_button_set_digits(GTK_SPIN_BUTTON(dialog->center_spin[i_axis]),
-			       DIALOG_SPIN_BUTTON_DIGITS);
     g_signal_connect(G_OBJECT(dialog->center_spin[i_axis]), "value_changed", 
 		     G_CALLBACK(dialog_change_center_cb), dialog);
+    g_signal_connect(G_OBJECT(dialog->center_spin[i_axis]), "output",
+		     G_CALLBACK(amitk_spin_button_scientific_output), NULL);
     gtk_table_attach(GTK_TABLE(packing_table), dialog->center_spin[i_axis],1,2,
 		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(dialog->center_spin[i_axis]);
@@ -698,12 +698,12 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
       dialog->voxel_size_spin[i_axis] = 
 	gtk_spin_button_new_with_range(0.0, G_MAXDOUBLE, DIMENSION_STEP);
       gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(dialog->voxel_size_spin[i_axis]), FALSE);
-      gtk_spin_button_set_digits(GTK_SPIN_BUTTON(dialog->voxel_size_spin[i_axis]),
-				 DIALOG_SPIN_BUTTON_DIGITS);
       g_object_set_data(G_OBJECT(dialog->voxel_size_spin[i_axis]), "axis", 
 			GINT_TO_POINTER(i_axis));
       g_signal_connect(G_OBJECT(dialog->voxel_size_spin[i_axis]), "value_changed", 
 		       G_CALLBACK(dialog_change_voxel_size_cb), dialog);
+    g_signal_connect(G_OBJECT(dialog->voxel_size_spin[i_axis]), "output",
+		     G_CALLBACK(amitk_spin_button_scientific_output), NULL);
       gtk_table_attach(GTK_TABLE(packing_table), dialog->voxel_size_spin[i_axis],1,2,
 		       table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
       gtk_widget_show(dialog->voxel_size_spin[i_axis]);
@@ -760,10 +760,10 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 	    gtk_spin_button_new_with_range(0.0, G_MAXDOUBLE, DIMENSION_STEP);
 	  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(dialog->dimension_spin[i_axis]), FALSE);
 	  g_object_set_data(G_OBJECT(dialog->dimension_spin[i_axis]), "axis", GINT_TO_POINTER(i_axis));
-	  gtk_spin_button_set_digits(GTK_SPIN_BUTTON(dialog->dimension_spin[i_axis]),
-				     DIALOG_SPIN_BUTTON_DIGITS);
 	  g_signal_connect(G_OBJECT(dialog->dimension_spin[i_axis]), "value_changed", 
 			   G_CALLBACK(dialog_change_dim_cb), dialog);
+	  g_signal_connect(G_OBJECT(dialog->dimension_spin[i_axis]), "output",
+			   G_CALLBACK(amitk_spin_button_scientific_output), NULL);
 	  gtk_table_attach(GTK_TABLE(packing_table), dialog->dimension_spin[i_axis],1,2,
 			   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
 	  gtk_widget_show(dialog->dimension_spin[i_axis]);
@@ -831,10 +831,10 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 
     dialog->start_spin = gtk_spin_button_new_with_range(-G_MAXDOUBLE, G_MAXDOUBLE, 1.0);
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(dialog->start_spin), FALSE);
-    gtk_spin_button_set_digits(GTK_SPIN_BUTTON(dialog->start_spin),
-			       DIALOG_SPIN_BUTTON_DIGITS);
     g_signal_connect(GTK_OBJECT(dialog->start_spin), "value_changed", 
 		     G_CALLBACK(dialog_change_scan_start_cb), dialog);
+    g_signal_connect(G_OBJECT(dialog->start_spin), "output",
+		     G_CALLBACK(amitk_spin_button_scientific_output), NULL);
     gtk_table_attach(GTK_TABLE(packing_table), dialog->start_spin,1,2,
 		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(dialog->start_spin);
@@ -890,12 +890,12 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 
       dialog->duration_spins[i] = gtk_spin_button_new_with_range(0.0, G_MAXDOUBLE, 1.0);
       gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(dialog->duration_spins[i]), FALSE);
-      gtk_spin_button_set_digits(GTK_SPIN_BUTTON(dialog->duration_spins[i]),
-				 DIALOG_SPIN_BUTTON_DIGITS);
       gtk_editable_set_editable(GTK_EDITABLE(dialog->duration_spins[i]), TRUE);
       g_object_set_data(G_OBJECT(dialog->duration_spins[i]), "frame", GINT_TO_POINTER(i));
       g_signal_connect(G_OBJECT(dialog->duration_spins[i]), "value_changed", 
 		       G_CALLBACK(dialog_change_frame_duration_cb), dialog);
+      g_signal_connect(G_OBJECT(dialog->duration_spins[i]), "output",
+		       G_CALLBACK(amitk_spin_button_scientific_output), NULL);
       gtk_table_attach(GTK_TABLE(frames_table), dialog->duration_spins[i],1,2,
 		       i, i+1, 0, 0, X_PADDING, Y_PADDING);
       gtk_widget_show(dialog->duration_spins[i]);
@@ -1464,7 +1464,7 @@ static void dialog_realize_interpolation_icon_cb(GtkWidget * pix_box, gpointer d
   /* make sure we don't get called again */
   if (gtk_container_get_children(GTK_CONTAINER(pix_box)) != NULL) return;
 
-  pixbuf = gdk_pixbuf_new_from_xpm_data(icon_interpolation[interpolation]);
+  pixbuf = gdk_pixbuf_new_from_xpm_data(interpolation_icon[interpolation]);
   image = gtk_image_new_from_pixbuf(pixbuf);
   g_object_unref(pixbuf);
 

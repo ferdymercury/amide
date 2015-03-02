@@ -100,11 +100,15 @@ static gchar * help_info_lines[][NUM_HELP_INFO_LINES] = {
    "", "", "",
    ""}, /* CANVAS_NEW_ISOCONTOUR_ROI */
   {N_("cancel"), "", 
-   N_("cancel"), "", 
+   "", "", 
+   N_("pick new isocontour"), "", "",
+   ""}, /*CANVAS CHANGE ISOCONTOUR */
+  {N_("cancel"), "", 
+   "", "", 
    N_("shift"), "", "",
    ""}, /*CANVAS SHIFT OBJECT */
   {N_("cancel"), "", 
-   N_("cancel"), "", 
+   "", "", 
    N_("rotate"), "", "",
    ""}, /*CANVAS ROTATE OBJECT */
   {N_("select data set"), "", 
@@ -385,7 +389,7 @@ ui_study_t * ui_study_init(AmitkPreferences * preferences) {
 
 
 
-/* if object is NULL, it'll do it's best guess */
+/* if object is NULL, it'll do its best guess */
 void ui_study_make_active_object(ui_study_t * ui_study, AmitkObject * object) {
 
   AmitkView i_view;

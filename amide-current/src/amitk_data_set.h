@@ -63,10 +63,6 @@ G_BEGIN_DECLS
 #define AMITK_DATA_SET_SLICE_PARENT(ds)            (AMITK_DATA_SET(ds)->slice_parent)
 #define AMITK_DATA_SET_SCAN_DATE(ds)               (AMITK_DATA_SET(ds)->scan_date)
 #define AMITK_DATA_SET_SCAN_START(ds)              (AMITK_DATA_SET(ds)->scan_start)
-#define AMITK_DATA_SET_GLOBAL_MAX(ds)              (AMITK_DATA_SET(ds)->global_max)
-#define AMITK_DATA_SET_GLOBAL_MIN(ds)              (AMITK_DATA_SET(ds)->global_min)
-#define AMITK_DATA_SET_FRAME_MAX(ds, i)            (AMITK_DATA_SET(ds)->frame_max[(i)])
-#define AMITK_DATA_SET_FRAME_MIN(ds, i)            (AMITK_DATA_SET(ds)->frame_min[(i)])
 #define AMITK_DATA_SET_THRESHOLD_REF_FRAME(ds,ref_frame) (AMITK_DATA_SET(ds)->threshold_ref_frame[ref_frame])
 #define AMITK_DATA_SET_THRESHOLD_MAX(ds, ref_frame)      (AMITK_DATA_SET(ds)->threshold_max[ref_frame])
 #define AMITK_DATA_SET_THRESHOLD_MIN(ds, ref_frame)      (AMITK_DATA_SET(ds)->threshold_min[ref_frame])
@@ -202,6 +198,7 @@ struct _AmitkDataSet
   /* parameters calculated as needed or on loading the object */
   /* theoritically, could be recalculated on the fly, but used enough we'll store... */
   AmitkRawData * distribution; /* 1D array of data distribution, used in thresholding */
+  gboolean max_min_calculated; /* the min/max values can be calculated on demand */
   amide_data_t global_max;
   amide_data_t global_min;
   amide_data_t * frame_max; 
@@ -268,6 +265,13 @@ void           amitk_data_set_export_file        (AmitkDataSet * ds,
 						  const gchar * filename,
 						  gboolean (*update_func)(),
 						  gpointer update_data);
+
+amide_data_t   amitk_data_set_get_global_max     (AmitkDataSet * ds);
+amide_data_t   amitk_data_set_get_global_min     (AmitkDataSet * ds);
+amide_data_t   amitk_data_set_get_frame_max      (AmitkDataSet * ds,
+						  const guint frame);
+amide_data_t   amitk_data_set_get_frame_min      (AmitkDataSet * ds,
+						  const guint frame);
 void           amitk_data_set_set_modality       (AmitkDataSet * ds,
 						  const AmitkModality modality);
 void           amitk_data_set_set_scan_start     (AmitkDataSet * ds,
@@ -326,17 +330,22 @@ amide_time_t   amitk_data_set_get_frame_duration (const AmitkDataSet * ds,
 						  guint frame);
 amide_time_t   amitk_data_set_get_min_frame_duration (const AmitkDataSet * ds);
 void           amitk_data_set_calc_far_corner    (AmitkDataSet * ds);
+
+/* note: calling any of the get_*_max or get_*_min functions will automatically
+   call calc_max_min if needed.  The main reason to call this function independently
+   is if you know it'll be needed later, and you'd like to put up a progress 
+   dialog. */
 void           amitk_data_set_calc_max_min       (AmitkDataSet * ds,
 						  gboolean (*update_func)(),
 						  gpointer update_data);
-amide_data_t   amitk_data_set_get_max            (const AmitkDataSet * ds, 
+amide_data_t   amitk_data_set_get_max            (AmitkDataSet * ds, 
 						  const amide_time_t start, 
 						  const amide_time_t duration);
-amide_data_t   amitk_data_set_get_min            (const AmitkDataSet * ds, 
+amide_data_t   amitk_data_set_get_min            (AmitkDataSet * ds, 
 						  const amide_time_t start, 
 						  const amide_time_t duration);
-void           amitk_data_set_get_thresholding_max_min(const AmitkDataSet * ds, 
-						       const AmitkDataSet * slice,
+void           amitk_data_set_get_thresholding_max_min(AmitkDataSet * ds, 
+						       AmitkDataSet * slice,
 						       const amide_time_t start,
 						       const amide_time_t duration,
 						       amide_data_t * max, amide_data_t * min);
@@ -373,8 +382,7 @@ AmitkDataSet * amitk_data_set_get_slice           (AmitkDataSet * ds,
 						   const amide_time_t start,
 						   const amide_time_t duration,
 						   const amide_real_t pixel_dim,
-						   const AmitkVolume * slice_volume,
-						   const gboolean need_calc_max_min);
+						   const AmitkVolume * slice_volume);
 void           amitk_data_set_get_line_profile    (AmitkDataSet * ds,
 						   const amide_time_t start,
 						   const amide_time_t duration,

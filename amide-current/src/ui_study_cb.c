@@ -1,7 +1,7 @@
 /* ui_study_cb.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2003 Andy Loening
+ * Copyright (C) 2000-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -704,7 +704,7 @@ void ui_study_cb_tree_view_delete_object(GtkWidget * tree_view, AmitkObject * ob
 				    _("Do you really want to delete: %s%s"),
 				    AMITK_OBJECT_NAME(object),
 				    AMITK_OBJECT_CHILDREN(object) != NULL ? 
-				    _("\nand it's children") : "");
+				    _("\nand its children") : "");
   
   /* and wait for the question to return */
   return_val = gtk_dialog_run(GTK_DIALOG(question));

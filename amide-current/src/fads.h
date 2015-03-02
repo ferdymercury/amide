@@ -50,7 +50,7 @@ typedef enum {
 extern gchar * fads_minimizer_algorithm_name[];
 extern gchar * fads_type_name[];
 extern gchar * fads_type_explanation[];
-extern const char ** fads_type_xpm[];
+extern const guint8 * fads_type_icon[];
 
 void fads_svd_factors(AmitkDataSet * data_set, 
 		      gint * pnum_factors,

@@ -80,6 +80,7 @@ EXTRA_GNOME_CFLAGS = @EXTRA_GNOME_CFLAGS@
 EXTRA_GNOME_LIBS = @EXTRA_GNOME_LIBS@
 F77 = @F77@
 FFLAGS = @FFLAGS@
+GDK_PIXBUF_CSOURCE = @GDK_PIXBUF_CSOURCE@
 GETTEXT_PACKAGE = @GETTEXT_PACKAGE@
 GLIB_GENMARSHAL = @GLIB_GENMARSHAL@
 GMOFILES = @GMOFILES@
@@ -197,14 +198,38 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
+
 pixmapdir = $(datadir)/pixmaps
 
 pixmap_DATA = \
-	amide_logo.png
+	amide_logo.png \
+	amide_file_logo.png
 
 
 EXTRA_DIST = $(pixmap_DATA) 
 
+pixbuf_csource = $(GDK_PIXBUF_CSOURCE)
+BUILT_SOURCES = \
+	amide_logo.h \
+	amide_logo_small.h \
+	thresholding_per_slice_icon.h \
+	thresholding_per_frame_icon.h \
+	thresholding_interpolate_frames_icon.h \
+	thresholding_global_icon.h \
+	three_compartment.h \
+	two_compartment.h \
+	window_bone_icon.h \
+	window_soft_tissue_icon.h \
+	align_pt_icon.h \
+	study_icon.h \
+	box_icon.h \
+	cylinder_icon.h \
+	ellipsoid_icon.h \
+	isocontour_2d_icon.h \
+	isocontour_3d_icon.h 
+
+
+CLEANFILES = $(BUILT_SOURCES)
 DISTCLEANFILES = *~
 subdir = pixmaps
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -215,9 +240,11 @@ DIST_SOURCES =
 DATA = $(pixmap_DATA)
 
 DIST_COMMON = $(srcdir)/Makefile.in Makefile.am
-all: all-am
+all: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) all-am
 
 .SUFFIXES:
+.SUFFIXES: .h .png
 $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ Makefile.am  $(top_srcdir)/configure.in $(ACLOCAL_M4)
 	cd $(top_srcdir) && \
 	  $(AUTOMAKE) --gnu  pixmaps/Makefile
@@ -290,12 +317,14 @@ distdir: $(DISTFILES)
 	  fi; \
 	done
 check-am: all-am
-check: check-am
+check: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) check-am
 all-am: Makefile $(DATA)
 
 installdirs:
 	$(mkinstalldirs) $(DESTDIR)$(pixmapdir)
-install: install-am
+install: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) install-am
 install-exec: install-exec-am
 install-data: install-data-am
 uninstall: uninstall-am
@@ -312,6 +341,7 @@ install-strip:
 mostlyclean-generic:
 
 clean-generic:
+	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-rm -f $(CONFIG_CLEAN_FILES)
@@ -320,6 +350,7 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
+	-test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
 clean: clean-am
 
 clean-am: clean-generic clean-libtool mostlyclean-am
@@ -374,6 +405,9 @@ uninstall-am: uninstall-info-am uninstall-pixmapDATA
 	mostlyclean-libtool pdf pdf-am ps ps-am uninstall uninstall-am \
 	uninstall-info-am uninstall-pixmapDATA
 
+
+.png.h:
+	$(pixbuf_csource) --raw --extern --name=$(subst .png,,$<) $< > $@
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

@@ -24,13 +24,13 @@
 */
 
 /* header files that are always needed with this file */
-extern const char * amide_logo_xpm[];
+
+extern const guint8 amide_logo[];
+extern const guint8 amide_logo_small[];
 
 extern const char * icon_transfer_function_xpm[];
 
-extern const char * icon_interpolation_nearest_neighbor_xpm[];
-extern const char * icon_interpolation_trilinear_xpm[];
-extern const char ** icon_interpolation[];
+extern const char ** interpolation_icon[];
 
 extern const char * icon_fuse_type_blend_xpm[];
 extern const char * icon_fuse_type_overlay_xpm[];
@@ -48,24 +48,13 @@ extern const char * icon_sagittal_xpm[];
 extern const char ** icon_view[];
 
 extern const char * icon_threshold_xpm[];
-extern const char * icon_thresholding_per_slice_xpm[];
-extern const char * icon_thresholding_per_frame_xpm[];
-extern const char * icon_thresholding_interpolate_frames_xpm[];
-extern const char * icon_thresholding_global_xpm[];
-extern const char ** icon_thresholding[];
+extern const guint8 * thresholding_icons[];
 
-extern const char * icon_window_bone[];
-extern const char * icon_window_soft_tissue[];
-extern const char ** icon_windowing[];
+extern const guint8 * windowing_icons[];
 
-extern const char * CYLINDER_xpm[];
-extern const char * BOX_xpm[];
-extern const char * ELLIPSOID_xpm[];
-extern const char * ISOCONTOUR_2D_xpm[];
-extern const char * ISOCONTOUR_3D_xpm[];
-
-extern const char * study_xpm[];
-extern const char * ALIGN_PT_xpm[];
+extern const guint8 * roi_icons[];
+extern const guint8 study_icon[];
+extern const guint8 align_pt_icon[];
 
 extern const char * linear_layout_xpm[];
 extern const char * orthogonal_layout_xpm[];

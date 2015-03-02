@@ -25,6 +25,7 @@
 
 
 #include "amide_config.h"
+#include "amitk_common.h"
 #include "amitk_progress_dialog.h"
 #include "fads.h"
 #include "tb_fads.h"
@@ -161,11 +162,11 @@ static void set_text(tb_fads_t * tb_fads) {
     gtk_text_buffer_set_text (tb_fads->explanation_buffer, 
 			      fads_type_explanation[tb_fads->fads_type], -1);
 
-    if (fads_type_xpm[tb_fads->fads_type] != NULL) {
+    if (fads_type_icon[tb_fads->fads_type] != NULL) {
       gtk_text_buffer_get_end_iter(tb_fads->explanation_buffer, &iter);
       gtk_text_buffer_insert(tb_fads->explanation_buffer, &iter, "\n", -1);
 
-      pixbuf = gdk_pixbuf_new_from_xpm_data(fads_type_xpm[tb_fads->fads_type]);
+      pixbuf = gdk_pixbuf_new_from_inline(-1,fads_type_icon[tb_fads->fads_type] , FALSE, NULL);
       gtk_text_buffer_get_end_iter(tb_fads->explanation_buffer, &iter);
       gtk_text_buffer_insert_pixbuf(tb_fads->explanation_buffer, &iter, pixbuf);
       g_object_unref(pixbuf);
@@ -395,11 +396,12 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
 
       tb_fads->stopping_criteria_spin = gtk_spin_button_new_with_range(EPSILON, 1.0, tb_fads->stopping_criteria);
       gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(tb_fads->stopping_criteria_spin), FALSE);
-      gtk_spin_button_set_digits(GTK_SPIN_BUTTON(tb_fads->stopping_criteria_spin), 7);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(tb_fads->stopping_criteria_spin), tb_fads->stopping_criteria);
       gtk_widget_set_size_request(tb_fads->stopping_criteria_spin, SPIN_BUTTON_X_SIZE, -1);
       g_signal_connect(G_OBJECT(tb_fads->stopping_criteria_spin), "value_changed",  
 		       G_CALLBACK(stopping_criteria_spinner_cb), tb_fads);
+      g_signal_connect(G_OBJECT(tb_fads->stopping_criteria_spin), "output",
+		       G_CALLBACK(amitk_spin_button_scientific_output), NULL);
       gtk_table_attach(GTK_TABLE(table), tb_fads->stopping_criteria_spin, 1,2, table_row,table_row+1,
 		       FALSE,FALSE, X_PADDING, Y_PADDING);
       table_row++;
@@ -444,10 +446,11 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
       tb_fads->k12_spin = gtk_spin_button_new_with_range(0.0, G_MAXDOUBLE, 0.01);
       gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(tb_fads->k12_spin), FALSE);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(tb_fads->k12_spin), tb_fads->k12);
-      gtk_spin_button_set_digits(GTK_SPIN_BUTTON(tb_fads->k12_spin), 7);
       gtk_widget_set_size_request(tb_fads->k12_spin, SPIN_BUTTON_X_SIZE, -1);
       g_signal_connect(G_OBJECT(tb_fads->k12_spin), "value_changed",  
 		       G_CALLBACK(k12_spinner_cb), tb_fads);
+      g_signal_connect(G_OBJECT(tb_fads->k12_spin), "output",
+		       G_CALLBACK(amitk_spin_button_scientific_output), NULL);
       gtk_table_attach(GTK_TABLE(table), tb_fads->k12_spin, 1,2, table_row,table_row+1,
 		       FALSE,FALSE, X_PADDING, Y_PADDING);
       table_row++;
@@ -460,10 +463,11 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
       tb_fads->k21_spin = gtk_spin_button_new_with_range(0.0, G_MAXDOUBLE, 0.01);
       gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(tb_fads->k21_spin), FALSE);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(tb_fads->k21_spin), tb_fads->k21);
-      gtk_spin_button_set_digits(GTK_SPIN_BUTTON(tb_fads->k21_spin), 7);
       gtk_widget_set_size_request(tb_fads->k21_spin, SPIN_BUTTON_X_SIZE, -1);
       g_signal_connect(G_OBJECT(tb_fads->k21_spin), "value_changed",  
 		       G_CALLBACK(k21_spinner_cb), tb_fads);
+      g_signal_connect(G_OBJECT(tb_fads->k21_spin), "output",
+		       G_CALLBACK(amitk_spin_button_scientific_output), NULL);
       gtk_table_attach(GTK_TABLE(table), tb_fads->k21_spin, 1,2, table_row,table_row+1,
 		       FALSE,FALSE, X_PADDING, Y_PADDING);
       // table_row++;
@@ -939,7 +943,7 @@ void tb_fads(AmitkDataSet * active_ds) {
 
   g_return_if_fail(AMITK_IS_DATA_SET(active_ds));
   
-  logo = gdk_pixbuf_new_from_xpm_data(amide_logo_xpm);
+  logo = gdk_pixbuf_new_from_inline(-1, amide_logo_small, FALSE, NULL);
 
   tb_fads = tb_fads_init();
   tb_fads->data_set = amitk_object_ref(active_ds);
@@ -969,7 +973,7 @@ void tb_fads(AmitkDataSet * active_ds) {
     g_object_set_data(G_OBJECT(tb_fads->page[i_page]),"which_page", GINT_TO_POINTER(i_page));
     
     /* note, the _connect_after is a workaround, it should just be _connect */
-    /* the problem, is gnome_druid currently overwrites button sensitivity in it's own prepare routine*/
+    /* the problem, is gnome_druid currently overwrites button sensitivity in its own prepare routine*/
     g_signal_connect_after(G_OBJECT(tb_fads->page[i_page]), "prepare", 
 			   G_CALLBACK(prepare_page_cb), tb_fads);
     gnome_druid_append_page(GNOME_DRUID(druid), GNOME_DRUID_PAGE(tb_fads->page[i_page]));
