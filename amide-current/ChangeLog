@@ -1,3 +1,13 @@
+0.7.12
+	* added ability to save XIF files as flat file, made default
+	* put in configure ability to detect libgnomecanvas version,
+	  disable anti-aliases canvases previous to libgnomecanvas 2.2.0
+	* .iss file now configure time generated
+	* configure.in file tweaks
+	* zh_CN i18n update from Wales Wang
+	* threshold "abolute" legend now reflects current conversion (%id/g, etc.)
+	* file/xif selection widgets paths are set to last used
+
 0.7.11
 	* zh_CN i18n contributed by Wales Wang
 	* added back in support for internationalization

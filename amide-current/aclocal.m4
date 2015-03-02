@@ -6759,6 +6759,68 @@ SED=$lt_cv_path_SED
 AC_MSG_RESULT([$SED])
 ])
 
+dnl @synopsis AC_FUNC_MKDIR
+dnl
+dnl Check whether mkdir() is mkdir or _mkdir, and whether it takes one or two
+dnl arguments.
+dnl
+dnl This macro can define HAVE_MKDIR, HAVE__MKDIR, and MKDIR_TAKES_ONE_ARG,
+dnl which are expected to be used as follow:
+dnl
+dnl   #if HAVE_MKDIR
+dnl   # if MKDIR_TAKES_ONE_ARG
+dnl      /* Mingw32 */
+dnl   #  define mkdir(a,b) mkdir(a)
+dnl   # endif
+dnl   #else
+dnl   # if HAVE__MKDIR
+dnl      /* plain Win32 */
+dnl   #  define mkdir(a,b) _mkdir(a)
+dnl   # else
+dnl   #  error "Don't know how to create a directory on this system."
+dnl   # endif
+dnl   #endif
+dnl
+dnl @version $Id: ac_func_mkdir.m4,v 1.1.1.1 2001/07/26 00:46:17 guidod Exp $
+dnl @author Alexandre Duret-Lutz <duret_g@epita.fr>
+dnl
+AC_DEFUN([AC_FUNC_MKDIR],
+[AC_CHECK_FUNCS([mkdir _mkdir])
+AC_CACHE_CHECK([whether mkdir takes one argument],
+                [ac_cv_mkdir_takes_one_arg],
+[AC_TRY_COMPILE([
+#include <sys/stat.h>
+#if HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+],[mkdir (".");],
+[ac_cv_mkdir_takes_one_arg=yes],[ac_cv_mkdir_takes_one_arg=no])])
+if test x"$ac_cv_mkdir_takes_one_arg" = xyes; then
+  AC_DEFINE([MKDIR_TAKES_ONE_ARG],1,
+            [Define if mkdir takes only one argument.])
+fi
+])
+
+dnl Note:
+dnl =====
+dnl I have not implemented the following suggestion because I don't have
+dnl access to such a broken environment to test the macro.  So I'm just
+dnl appending the comments here in case you have, and want to fix
+dnl AC_FUNC_MKDIR that way.
+dnl
+dnl |Thomas E. Dickey (dickey@herndon4.his.com) said:
+dnl |  it doesn't cover the problem areas (compilers that mistreat mkdir
+dnl |  may prototype it in dir.h and dirent.h, for instance).
+dnl |
+dnl |Alexandre:
+dnl |  Would it be sufficient to check for these headers and #include
+dnl |  them in the AC_TRY_COMPILE block?  (and is AC_HEADER_DIRENT
+dnl |  suitable for this?)
+dnl |
+dnl |Thomas:
+dnl |  I think that might be a good starting point (with the set of recommended
+dnl |  ifdef's and includes for AC_HEADER_DIRENT, of course).
+
 # Macro to add for using GNU gettext.
 # Ulrich Drepper <drepper@cygnus.com>, 1995, 1996
 #
@@ -7276,6 +7338,342 @@ AC_DEFUN(PKG_CHECK_MODULES, [
 ])
 
 
+
+# Configure path for the GNU Scientific Library
+# Christopher R. Gabriel <cgabriel@linux.it>, April 2000
+
+
+AC_DEFUN(AM_PATH_GSL,
+[
+AC_ARG_WITH(gsl-prefix,[  --with-gsl-prefix=PFX   Prefix where GSL is installed (optional)],
+            gsl_prefix="$withval", gsl_prefix="")
+AC_ARG_WITH(gsl-exec-prefix,[  --with-gsl-exec-prefix=PFX Exec prefix where GSL is installed (optional)],
+            gsl_exec_prefix="$withval", gsl_exec_prefix="")
+AC_ARG_ENABLE(gsltest, [  --disable-gsltest       Do not try to compile and run a test GSL program],
+		    , enable_gsltest=yes)
+
+  if test "x${GSL_CONFIG+set}" != xset ; then
+     if test "x$gsl_prefix" != x ; then
+         GSL_CONFIG="$gsl_prefix/bin/gsl-config"
+     fi
+     if test "x$gsl_exec_prefix" != x ; then
+        GSL_CONFIG="$gsl_exec_prefix/bin/gsl-config"
+     fi
+  fi
+
+  AC_PATH_PROG(GSL_CONFIG, gsl-config, no)
+  min_gsl_version=ifelse([$1], ,0.2.5,$1)
+  AC_MSG_CHECKING(for GSL - version >= $min_gsl_version)
+  no_gsl=""
+  if test "$GSL_CONFIG" = "no" ; then
+    no_gsl=yes
+  else
+    GSL_CFLAGS=`$GSL_CONFIG --cflags`
+    GSL_LIBS=`$GSL_CONFIG --libs`
+
+    gsl_major_version=`$GSL_CONFIG --version | \
+           sed 's/^\([[0-9]]*\).*/\1/'`
+    if test "x${gsl_major_version}" = "x" ; then
+       gsl_major_version=0
+    fi
+
+    gsl_minor_version=`$GSL_CONFIG --version | \
+           sed 's/^\([[0-9]]*\)\.\{0,1\}\([[0-9]]*\).*/\2/'`
+    if test "x${gsl_minor_version}" = "x" ; then
+       gsl_minor_version=0
+    fi
+
+    gsl_micro_version=`$GSL_CONFIG --version | \
+           sed 's/^\([[0-9]]*\)\.\{0,1\}\([[0-9]]*\)\.\{0,1\}\([[0-9]]*\).*/\3/'`
+    if test "x${gsl_micro_version}" = "x" ; then
+       gsl_micro_version=0
+    fi
+
+    if test "x$enable_gsltest" = "xyes" ; then
+      ac_save_CFLAGS="$CFLAGS"
+      ac_save_LIBS="$LIBS"
+      CFLAGS="$CFLAGS $GSL_CFLAGS"
+      LIBS="$LIBS $GSL_LIBS"
+
+      rm -f conf.gsltest
+      AC_TRY_RUN([
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+char* my_strdup (const char *str);
+
+char*
+my_strdup (const char *str)
+{
+  char *new_str;
+  
+  if (str)
+    {
+      new_str = (char *)malloc ((strlen (str) + 1) * sizeof(char));
+      strcpy (new_str, str);
+    }
+  else
+    new_str = NULL;
+  
+  return new_str;
+}
+
+int main (void)
+{
+  int major = 0, minor = 0, micro = 0;
+  int n;
+  char *tmp_version;
+
+  system ("touch conf.gsltest");
+
+  /* HP/UX 9 (%@#!) writes to sscanf strings */
+  tmp_version = my_strdup("$min_gsl_version");
+
+  n = sscanf(tmp_version, "%d.%d.%d", &major, &minor, &micro) ;
+
+  if (n != 2 && n != 3) {
+     printf("%s, bad version string\n", "$min_gsl_version");
+     exit(1);
+   }
+
+   if (($gsl_major_version > major) ||
+      (($gsl_major_version == major) && ($gsl_minor_version > minor)) ||
+      (($gsl_major_version == major) && ($gsl_minor_version == minor) && ($gsl_micro_version >= micro)))
+    {
+      exit(0);
+    }
+  else
+    {
+      printf("\n*** 'gsl-config --version' returned %d.%d.%d, but the minimum version\n", $gsl_major_version, $gsl_minor_version, $gsl_micro_version);
+      printf("*** of GSL required is %d.%d.%d. If gsl-config is correct, then it is\n", major, minor, micro);
+      printf("*** best to upgrade to the required version.\n");
+      printf("*** If gsl-config was wrong, set the environment variable GSL_CONFIG\n");
+      printf("*** to point to the correct copy of gsl-config, and remove the file\n");
+      printf("*** config.cache before re-running configure\n");
+      exit(1);
+    }
+}
+
+],, no_gsl=yes,[echo $ac_n "cross compiling; assumed OK... $ac_c"])
+       CFLAGS="$ac_save_CFLAGS"
+       LIBS="$ac_save_LIBS"
+     fi
+  fi
+  if test "x$no_gsl" = x ; then
+     AC_MSG_RESULT(yes)
+     ifelse([$2], , :, [$2])     
+  else
+     AC_MSG_RESULT(no)
+     if test "$GSL_CONFIG" = "no" ; then
+       echo "*** The gsl-config script installed by GSL could not be found"
+       echo "*** If GSL was installed in PREFIX, make sure PREFIX/bin is in"
+       echo "*** your path, or set the GSL_CONFIG environment variable to the"
+       echo "*** full path to gsl-config."
+     else
+       if test -f conf.gsltest ; then
+        :
+       else
+          echo "*** Could not run GSL test program, checking why..."
+          CFLAGS="$CFLAGS $GSL_CFLAGS"
+          LIBS="$LIBS $GSL_LIBS"
+          AC_TRY_LINK([
+#include <stdio.h>
+],      [ return 0; ],
+        [ echo "*** The test program compiled, but did not run. This usually means"
+          echo "*** that the run-time linker is not finding GSL or finding the wrong"
+          echo "*** version of GSL. If it is not finding GSL, you'll need to set your"
+          echo "*** LD_LIBRARY_PATH environment variable, or edit /etc/ld.so.conf to point"
+          echo "*** to the installed location  Also, make sure you have run ldconfig if that"
+          echo "*** is required on your system"
+	  echo "***"
+          echo "*** If you have an old version installed, it is best to remove it, although"
+          echo "*** you may also be able to get things to work by modifying LD_LIBRARY_PATH"],
+        [ echo "*** The test program failed to compile or link. See the file config.log for the"
+          echo "*** exact error that occured. This usually means GSL was incorrectly installed"
+          echo "*** or that you have moved GSL since it was installed. In the latter case, you"
+          echo "*** may want to edit the gsl-config script: $GSL_CONFIG" ])
+          CFLAGS="$ac_save_CFLAGS"
+          LIBS="$ac_save_LIBS"
+       fi
+     fi
+#     GSL_CFLAGS=""
+#     GSL_LIBS=""
+     ifelse([$3], , :, [$3])
+  fi
+  AC_SUBST(GSL_CFLAGS)
+  AC_SUBST(GSL_LIBS)
+  rm -f conf.gsltest
+])
+
+
+
+# Configure paths for (X)MedCon library
+# Elliot Lee 2000-01-10
+# stolen from Raph Levien 98-11-18
+# stolen from Manish Singh    98-9-30
+# stolen back from Frank Belew
+# stolen from Manish Singh
+# Shamelessly stolen from Owen Taylor
+
+dnl AM_PATH_XMEDCON([MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
+dnl Test for XMEDCON, and define XMEDCON_CFLAGS and XMEDCON_LIBS
+dnl
+AC_DEFUN(AM_PATH_XMEDCON,
+[dnl 
+dnl Get the cflags and libraries from the xmedcon-config script
+dnl
+AC_ARG_WITH(xmedcon-prefix,[  --with-xmedcon-prefix=PFX   Prefix where XMEDCON is installed (optional)],
+            xmedcon_prefix="$withval", xmedcon_prefix="")
+AC_ARG_WITH(xmedcon-exec-prefix,[  --with-xmedcon-exec-prefix=PFX Exec prefix where XMEDCON is installed (optional)],
+            xmedcon_exec_prefix="$withval", xmedcon_exec_prefix="")
+AC_ARG_ENABLE(xmedcontest, [  --disable-xmedcontest       Do not try to compile and run a test XMEDCON program],
+		    , enable_xmedcontest=yes)
+
+  if test x$xmedcon_exec_prefix != x ; then
+     xmedcon_args="$xmedcon_args --exec-prefix=$xmedcon_exec_prefix"
+     if test x${XMEDCON_CONFIG+set} = xset ; then
+        XMEDCON_CONFIG=$xmedcon_exec_prefix/xmedcon-config
+     fi
+  fi
+  if test x$xmedcon_prefix != x ; then
+     xmedcon_args="$xmedcon_args --prefix=$xmedcon_prefix"
+     if test x${XMEDCON_CONFIG+set} = xset ; then
+        XMEDCON_CONFIG=$xmedcon_prefix/bin/xmedcon-config
+     fi
+  fi
+
+  AC_PATH_PROG(XMEDCON_CONFIG, xmedcon-config, no)
+  min_xmedcon_version=ifelse([$1], ,0.5.2,$1)
+  AC_MSG_CHECKING(for XMEDCON - version >= $min_xmedcon_version)
+  no_xmedcon=""
+  if test "$XMEDCON_CONFIG" = "no" ; then
+    no_xmedcon=yes
+  else
+    XMEDCON_CFLAGS=`$XMEDCON_CONFIG $xmedconconf_args --cflags`
+    XMEDCON_LIBS=`$XMEDCON_CONFIG $xmedconconf_args --libs`
+
+    xmedcon_major_version=`$XMEDCON_CONFIG $xmedcon_args --version | \
+           sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\1/'`
+    xmedcon_minor_version=`$XMEDCON_CONFIG $xmedcon_args --version | \
+           sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\2/'`
+    xmedcon_micro_version=`$XMEDCON_CONFIG $xmedcon_config_args --version | \
+           sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\3/'`
+    if test "x$enable_xmedcontest" = "xyes" ; then
+      ac_save_CFLAGS="$CFLAGS"
+      ac_save_LIBS="$LIBS"
+      CFLAGS="$CFLAGS $XMEDCON_CFLAGS"
+      LIBS="$LIBS $XMEDCON_LIBS"
+dnl
+dnl Now check if the installed XMEDCON is sufficiently new. (Also sanity
+dnl checks the results of xmedcon-config to some extent
+dnl
+      rm -f conf.xmedcontest
+      AC_TRY_RUN([
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <medcon.h>
+
+char*
+my_strdup (char *str)
+{
+  char *new_str;
+  
+  if (str)
+    {
+      new_str = malloc ((strlen (str) + 1) * sizeof(char));
+      strcpy (new_str, str);
+    }
+  else
+    new_str = NULL;
+  
+  return new_str;
+}
+
+int main ()
+{
+  int major, minor, micro;
+  char *tmp_version;
+
+  system ("touch conf.xmedcontest");
+
+  /* HP/UX 9 (%@#!) writes to sscanf strings */
+  tmp_version = my_strdup("$min_xmedcon_version");
+  if (sscanf(tmp_version, "%d.%d.%d", &major, &minor, &micro) != 3) {
+     printf("%s, bad version string\n", "$min_xmedcon_version");
+     exit(1);
+   }
+
+   if (($xmedcon_major_version > major) ||
+      (($xmedcon_major_version == major) && ($xmedcon_minor_version > minor)) ||
+      (($xmedcon_major_version == major) && ($xmedcon_minor_version == minor) && ($xmedcon_micro_version >= micro)))
+    {
+      return 0;
+    }
+  else
+    {
+      printf("\n*** 'xmedcon-config --version' returned %d.%d.%d, but the minimum version\n", $xmedcon_major_version, $xmedcon_minor_version, $xmedcon_micro_version);
+      printf("*** of XMEDCON required is %d.%d.%d. If xmedcon-config is correct, then it is\n", major, minor, micro);
+      printf("*** best to upgrade to the required version.\n");
+      printf("*** If xmedcon-config was wrong, set the environment variable XMEDCON_CONFIG\n");
+      printf("*** to point to the correct copy of xmedcon-config, and remove the file\n");
+      printf("*** config.cache before re-running configure\n");
+      return 1;
+    }
+}
+
+],, no_xmedcon=yes,[echo $ac_n "cross compiling; assumed OK... $ac_c"])
+       CFLAGS="$ac_save_CFLAGS"
+       LIBS="$ac_save_LIBS"
+     fi
+  fi
+  if test "x$no_xmedcon" = x ; then
+     AC_MSG_RESULT(yes)
+     ifelse([$2], , :, [$2])     
+  else
+     AC_MSG_RESULT(no)
+     if test "$XMEDCON_CONFIG" = "no" ; then
+       echo "*** The xmedcon-config script installed by XMEDCON could not be found"
+       echo "*** If XMEDCON was installed in PREFIX, make sure PREFIX/bin is in"
+       echo "*** your path, or set the XMEDCON_CONFIG environment variable to the"
+       echo "*** full path to xmedcon-config."
+     else
+       if test -f conf.xmedcontest ; then
+        :
+       else
+          echo "*** Could not run XMEDCON test program, checking why..."
+          CFLAGS="$CFLAGS $XMEDCON_CFLAGS"
+          LIBS="$LIBS $XMEDCON_LIBS"
+          AC_TRY_LINK([
+#include <stdio.h>
+#include <medcon.h>
+],      [ return 0; ],
+        [ echo "*** The test program compiled, but did not run. This usually means"
+          echo "*** that the run-time linker is not finding XMEDCON or finding the wrong"
+          echo "*** version of XMEDCON. If it is not finding XMEDCON, you'll need to set your"
+          echo "*** LD_LIBRARY_PATH environment variable, or edit /etc/ld.so.conf to point"
+          echo "*** to the installed location  Also, make sure you have run ldconfig if that"
+          echo "*** is required on your system"
+	  echo "***"
+          echo "*** If you have an old version installed, it is best to remove it, although"
+          echo "*** you may also be able to get things to work by modifying LD_LIBRARY_PATH"],
+        [ echo "*** The test program failed to compile or link. See the file config.log for the"
+          echo "*** exact error that occured. This usually means XMEDCON was incorrectly installed"
+          echo "*** or that you have moved XMEDCON since it was installed. In the latter case, you"
+          echo "*** may want to edit the xmedcon-config script: $XMEDCON_CONFIG" ])
+          CFLAGS="$ac_save_CFLAGS"
+          LIBS="$ac_save_LIBS"
+       fi
+     fi
+     XMEDCON_CFLAGS=""
+     XMEDCON_LIBS=""
+     ifelse([$3], , :, [$3])
+  fi
+  AC_SUBST(XMEDCON_CFLAGS)
+  AC_SUBST(XMEDCON_LIBS)
+  rm -f conf.xmedcontest
+])
 
 dnl AM_PATH_LIBFAME([MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND [, MODULES]]]])
 dnl Test for libfame, and define LIBFAME_CFLAGS and LIBFAME_LIBS

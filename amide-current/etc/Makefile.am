@@ -16,4 +16,5 @@ CLEANFILES = \
 
 DISTCLEANFILES = \
 	*~ 	\
-	amide-*.info 
+	amide-*.info \
+	amide-*.iss

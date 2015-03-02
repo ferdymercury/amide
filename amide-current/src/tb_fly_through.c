@@ -277,8 +277,8 @@ static void save_as_ok_cb(GtkWidget* widget, gpointer data) {
 
   tb_fly_through = g_object_get_data(G_OBJECT(file_selection), "tb_fly_through");
 
-  if ((save_filename = ui_common_file_selection_get_name(file_selection)) == NULL)
-    return; /* inappropriate name or don't want to overwrite */
+  save_filename = ui_common_file_selection_get_save_name(file_selection);
+  if (save_filename == NULL) return; /* inappropriate name or don't want to overwrite */
 
   /* close the file selection box */
   ui_common_file_selection_cancel_cb(widget, file_selection);
@@ -307,7 +307,7 @@ static void response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
     temp_string = g_strdup_printf("%s_FlyThrough_%d.mpg", 
 				  AMITK_OBJECT_NAME(tb_fly_through->study), 
 				  save_image_num++);
-    gtk_file_selection_set_filename(GTK_FILE_SELECTION(file_selection), temp_string);
+    ui_common_file_selection_set_filename(file_selection, temp_string);
     g_free(temp_string); 
     
     /* don't want anything else going on till this window is gone */

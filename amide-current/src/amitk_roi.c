@@ -66,8 +66,13 @@ static void          roi_init                (AmitkRoi      *roi);
 static void          roi_finalize            (GObject          *object);
 static AmitkObject * roi_copy                (const AmitkObject * object);
 static void          roi_copy_in_place       (AmitkObject * dest_object, const AmitkObject * src_object);
-static void          roi_write_xml           (const AmitkObject * object, xmlNodePtr nodes);
-static gchar *       roi_read_xml            (AmitkObject * object, xmlNodePtr nodes, gchar * error_buf);
+static void          roi_write_xml           (const AmitkObject  *object, 
+					      xmlNodePtr          nodes, 
+					      FILE               *study_file);
+static gchar *       roi_read_xml            (AmitkObject        *object, 
+					      xmlNodePtr          nodes, 
+					      FILE               *study_file, 
+					      gchar              *error_buf);
 static AmitkVolumeClass * parent_class;
 static guint        roi_signals[LAST_SIGNAL];
 
@@ -191,13 +196,14 @@ static void roi_copy_in_place (AmitkObject * dest_object, const AmitkObject * sr
 }
 
 
-static void roi_write_xml (const AmitkObject * object, xmlNodePtr nodes) {
+static void roi_write_xml (const AmitkObject * object, xmlNodePtr nodes, FILE * study_file) {
 
   AmitkRoi * roi;
   gchar * name;
   gchar * filename;
+  guint64 location, size;
 
-  AMITK_OBJECT_CLASS(parent_class)->object_write_xml(object, nodes);
+  AMITK_OBJECT_CLASS(parent_class)->object_write_xml(object, nodes, study_file);
 
   roi = AMITK_ROI(object);
 
@@ -209,26 +215,29 @@ static void roi_write_xml (const AmitkObject * object, xmlNodePtr nodes) {
 
   if (AMITK_ROI_TYPE_ISOCONTOUR(roi)) {
     name = g_strdup_printf("roi_%s_isocontour", AMITK_OBJECT_NAME(roi));
-    filename = amitk_raw_data_write_xml(roi->isocontour, name);
+    amitk_raw_data_write_xml(roi->isocontour, name, study_file, &filename, &location, &size);
     g_free(name);
-    xml_save_string(nodes,"isocontour_file", filename);
-    g_free(filename);
-  } else {
-    xml_save_string(nodes,"isocontour_file", NULL);
+    if (study_file == NULL) {
+      xml_save_string(nodes,"isocontour_file", filename);
+      g_free(filename);
+    } else {
+      xml_save_location_and_size(nodes, "isocontour_location_and_size", location, size);
+    }
   }
 
   return;
 }
 
 
-static gchar * roi_read_xml (AmitkObject * object, xmlNodePtr nodes, gchar * error_buf) {
+static gchar * roi_read_xml (AmitkObject * object, xmlNodePtr nodes, FILE * study_file, gchar * error_buf) {
 
   AmitkRoi * roi;
   AmitkRoiType i_roi_type;
   gchar * temp_string;
-  gchar * isocontour_xml_filename;
+  gchar * isocontour_xml_filename=NULL;
+  guint64 location, size;
 
-  error_buf = AMITK_OBJECT_CLASS(parent_class)->object_read_xml(object, nodes, error_buf);
+  error_buf = AMITK_OBJECT_CLASS(parent_class)->object_read_xml(object, nodes, study_file, error_buf);
 
   roi = AMITK_ROI(object);
 
@@ -245,9 +254,17 @@ static gchar * roi_read_xml (AmitkObject * object, xmlNodePtr nodes, gchar * err
     amitk_roi_set_voxel_size(roi, amitk_point_read_xml(nodes, "voxel_size", &error_buf));
     roi->isocontour_value = xml_get_real(nodes, "isocontour_value", &error_buf);
 
-    isocontour_xml_filename = xml_get_string(nodes, "isocontour_file");
-    if (isocontour_xml_filename != NULL)
-      roi->isocontour = amitk_raw_data_read_xml(isocontour_xml_filename, &error_buf, NULL, NULL);
+    /* if the ROI's never been drawn, it's possible for this not to exist */
+    if (xml_node_exists(nodes, "isocontour_file") || 
+	xml_node_exists(nodes, "isocontour_location_and_size")) {
+      if (study_file == NULL) 
+	isocontour_xml_filename = xml_get_string(nodes, "isocontour_file");
+      else
+	xml_get_location_and_size(nodes, "isocontour_location_and_size", &location, &size, &error_buf);
+      roi->isocontour = amitk_raw_data_read_xml(isocontour_xml_filename, study_file, location, 
+						size,&error_buf, NULL, NULL);
+      if (isocontour_xml_filename != NULL) g_free(isocontour_xml_filename);
+    }
   }
 
   /* make sure to mark the roi as undrawn if needed */

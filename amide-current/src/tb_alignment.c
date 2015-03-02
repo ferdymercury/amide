@@ -104,6 +104,8 @@ static tb_alignment_t * tb_alignment_init(void);
 
 static gboolean next_page_cb(GtkWidget * page, gpointer *druid, gpointer data);
 static gboolean back_page_cb(GtkWidget * page, gpointer *druid, gpointer data);
+static void data_sets_update_model(tb_alignment_t * alignment);
+static void points_update_model(tb_alignment_t * alignment);
 static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data);
 static void data_set_selection_changed_cb(GtkTreeSelection * selection, gpointer data);
 static gboolean points_button_press_event(GtkWidget * list, GdkEventButton * event, gpointer data);
@@ -601,7 +603,7 @@ void tb_alignment(AmitkStudy * study) {
   g_object_unref(store);
 
   renderer = gtk_cell_renderer_text_new ();
-  column = gtk_tree_view_column_new_with_attributes(_("With Data Set: (fixed)"), renderer,
+  column = gtk_tree_view_column_new_with_attributes(_("Data Set to Profile"), renderer,
 						    "text", COLUMN_DATA_SET_NAME, NULL);
   gtk_tree_view_append_column (GTK_TREE_VIEW (alignment->list_fixed_ds), column);
 

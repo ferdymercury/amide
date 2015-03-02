@@ -45,6 +45,7 @@ static void roi_width_cb(GtkWidget * widget, gpointer data);
 //static void line_style_cb(GtkWidget * widget, gpointer data);
 static void layout_cb(GtkWidget * widget, gpointer data);
 static void save_on_exit_cb(GtkWidget * widget, gpointer data);
+static void save_xif_as_directory_cb(GtkWidget * widget, gpointer data);
 static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data);
 static void maintain_size_cb(GtkWidget * widget, gpointer data);
 static void target_empty_area_cb(GtkWidget * widget, gpointer data);
@@ -243,6 +244,30 @@ static void save_on_exit_cb(GtkWidget * widget, gpointer data) {
     gnome_config_push_prefix("/"PACKAGE"/");
     gnome_config_set_int("MISC/DontPromptForSaveOnExit",
 			 ui_study->dont_prompt_for_save_on_exit);
+    gnome_config_pop_prefix();
+    gnome_config_sync();
+#endif
+  }
+
+
+
+  return;
+}
+
+static void save_xif_as_directory_cb(GtkWidget * widget, gpointer data) {
+
+  ui_study_t * ui_study = data;
+  gboolean save_as_directory;
+
+  save_as_directory = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+
+  if (ui_study->save_xif_as_directory != save_as_directory) {
+    ui_study->save_xif_as_directory = save_as_directory;
+
+#ifndef AMIDE_WIN32_HACKS
+    gnome_config_push_prefix("/"PACKAGE"/");
+    gnome_config_set_int("MISC/SaveXifAsDirectory",
+			 ui_study->save_xif_as_directory);
     gnome_config_pop_prefix();
     gnome_config_sync();
 #endif
@@ -591,8 +616,19 @@ GtkWidget * ui_preferences_dialog_create(ui_study_t * ui_study) {
 			       ui_study->dont_prompt_for_save_on_exit);
   gtk_table_attach(GTK_TABLE(packing_table), check_button, 
 		   0,1, table_row, table_row+1,
-		   0, 0, X_PADDING, Y_PADDING);
+		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  table_row++;
   g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(save_on_exit_cb), ui_study);
+
+
+  check_button = gtk_check_button_new_with_label(_("Save .XIF file as directory:"));
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), 
+			       ui_study->save_xif_as_directory);
+  gtk_table_attach(GTK_TABLE(packing_table), check_button, 
+		   0,1, table_row, table_row+1,
+		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  table_row++;
+  g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(save_xif_as_directory_cb), ui_study);
 
 
   /* and show all our widgets */

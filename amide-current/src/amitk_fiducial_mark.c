@@ -39,8 +39,13 @@ static void          fiducial_mark_init                (AmitkFiducialMark      *
 static void          fiducial_mark_finalize            (GObject              *object);
 static AmitkObject * fiducial_mark_copy                (const AmitkObject          *object);
 static void          fiducial_mark_copy_in_place       (AmitkObject * dest_object, const AmitkObject * src_object);
-static void          fiducial_mark_write_xml           (const AmitkObject * object, xmlNodePtr nodes);
-static gchar *       fiducial_mark_read_xml            (AmitkObject * object, xmlNodePtr nodes, gchar *error_buf);
+static void          fiducial_mark_write_xml           (const AmitkObject   *object, 
+							xmlNodePtr           nodes,
+							FILE                *study_file);
+static gchar *       fiducial_mark_read_xml            (AmitkObject         *object, 
+							xmlNodePtr           nodes, 
+							FILE                *study_file,
+							gchar               *error_buf);
 
 static AmitkObjectClass * parent_class;
 /* static guint        fiducial_mark_signals[LAST_SIGNAL]; */
@@ -122,21 +127,22 @@ static void fiducial_mark_copy_in_place(AmitkObject * dest_object, const AmitkOb
 }
 
 
-static void fiducial_mark_write_xml(const AmitkObject * object, xmlNodePtr nodes) {
+static void fiducial_mark_write_xml(const AmitkObject * object, xmlNodePtr nodes, FILE *study_file) {
 
-  AMITK_OBJECT_CLASS(parent_class)->object_write_xml(object, nodes);
+  AMITK_OBJECT_CLASS(parent_class)->object_write_xml(object, nodes, study_file);
 
   return;
 }
 
-static gchar * fiducial_mark_read_xml(AmitkObject * object, xmlNodePtr nodes, gchar * error_buf ) {
+static gchar * fiducial_mark_read_xml(AmitkObject * object, xmlNodePtr nodes, 
+				      FILE * study_file, gchar * error_buf ) {
 
   AmitkFiducialMark * mark;
   AmitkPoint point;
 
   mark = AMITK_FIDUCIAL_MARK(object);
 
-  error_buf = AMITK_OBJECT_CLASS(parent_class)->object_read_xml(object, nodes, error_buf);
+  error_buf = AMITK_OBJECT_CLASS(parent_class)->object_read_xml(object, nodes, study_file, error_buf);
 
   /* legacy cruft.  the "point" option was eliminated in version 0.7.11, just 
      using the space's offset instead */

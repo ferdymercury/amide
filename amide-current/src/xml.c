@@ -26,6 +26,7 @@
 
 #include "amide_config.h"
 #include "xml.h"
+#include <errno.h>
 
 #define BOOLEAN_STRING_MAX_LENGTH 10 /* when we stop checking */
 static char * true_string = "true";
@@ -273,6 +274,28 @@ gint xml_get_int(xmlNodePtr nodes, const gchar * descriptor, gchar **perror_buf)
   return return_int;
 }
 
+void xml_get_location_and_size(xmlNodePtr nodes, const gchar * descriptor, 
+			       guint64 * location, guint64 * size, gchar **perror_buf) {
+
+  gchar * temp_str;
+  gint error;
+
+  temp_str = xml_get_string(nodes, descriptor);
+
+  if (temp_str != NULL) {
+    error = sscanf(temp_str, "0x%llx 0x%llx", location, size);
+    g_free(temp_str);
+  } 
+
+  if ((temp_str == NULL) || (error == EOF)) {
+    *location = 0x0;
+    *size = 0x0;
+    amitk_append_str(perror_buf,_("Couldn't read value for %s, substituting 0x%llx 0x%llx"),descriptor, *location, *size);
+  }
+
+  return;
+}
+
 
 
 
@@ -367,13 +390,85 @@ void xml_save_int(xmlNodePtr node, const gchar * descriptor, const int num) {
   return;
 }
 
+void xml_save_location_and_size(xmlNodePtr node, const gchar * descriptor, 
+				const guint64 location, const guint64 size) {
+
+  gchar * temp_str;
+
+  temp_str = g_strdup_printf("0x%llx 0x%llx", location, size);
+  xml_save_string(node, descriptor, temp_str);
+  g_free(temp_str);
+
+  return;
+}
 
 
 
 
 
 
+/* will return an xmlDocPtr if given either a xml filename,
+   or a prexisting FILE (along with location and size of the
+   xml data in the FILE) */
+xmlDocPtr xml_open_doc(gchar * xml_filename, FILE * study_file,
+		       guint64 location, guint64 size,
+		       gchar ** perror_buf) {
+ 
 
+  xmlDocPtr doc;
+  gchar * xml_buffer;
+  long location_long;
+  size_t size_size;
+  size_t bytes_read;
+  
+  if (study_file == NULL) { /* directory format */
+    if ((doc = xmlParseFile(xml_filename)) == NULL) {
+      amitk_append_str(perror_buf,_("Couldn't Parse AMIDE xml file %s"),xml_filename);
+      return NULL;
+    }
+
+
+  } else { /* flat file format */
+
+    /* check for file size problems */
+    if (sizeof(long) < sizeof(guint64))
+      if ((location>>32) > 0) {
+	amitk_append_str(perror_buf, _("File to large to read on 32bit platform."));
+	return NULL;
+      }
+    location_long = location;
+
+
+    if (sizeof(size_t) < sizeof(guint64))
+      if ((size>>32) > 0) {
+	amitk_append_str(perror_buf,_("File to large to read on 32bit platform.")); 
+	return NULL;
+      }
+    size_size = size;
+
+
+    xml_buffer = g_try_new(gchar, size_size);
+    g_return_val_if_fail(xml_buffer != NULL, NULL);
+
+    if (fseek(study_file, location_long,SEEK_SET) != 0) {
+      amitk_append_str(perror_buf, _("Could not seek to location %lx in file."), location_long);
+      return NULL;
+    }
+
+    bytes_read = fread(xml_buffer, sizeof(gchar), size_size, study_file);
+    if (bytes_read != size_size) {
+      amitk_append_str(perror_buf, _("Only read %x bytes from file, expected %x"), bytes_read, size_size);
+      return NULL;
+    }
+
+    /* and actually  process the xml */
+    doc = xmlParseMemory(xml_buffer, size_size);
+    g_free(xml_buffer);
+  }
+
+
+  return doc;
+}
 
 
 

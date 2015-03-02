@@ -27,6 +27,8 @@
 #include <locale.h>
 #include <signal.h>
 #include <sys/stat.h>
+#include <dirent.h>
+#include <string.h>
 #include "amide.h"
 #include "amitk_study.h"
 #include "ui_study.h"
@@ -49,6 +51,84 @@ PangoFontDescription * amitk_fixed_font_desc;
 
 /* internal variables */
 static GList * windows = NULL;
+
+
+gboolean amide_is_xif_directory(const gchar * filename, gboolean * plegacy1, gchar ** pxml_filename) {
+
+  struct stat file_info;
+  gchar * temp_str;
+  DIR * directory;
+  struct dirent * directory_entry;
+
+  if (stat(filename, &file_info) != 0) 
+    return FALSE; /* file doesn't exist */
+
+  if (!S_ISDIR(file_info.st_mode)) 
+    return FALSE;
+
+
+  /* check for legacy .xif file (< 2.0 version) */
+  temp_str = g_strdup_printf("%s%sStudy.xml", filename, G_DIR_SEPARATOR_S);
+  if (stat(temp_str, &file_info) == 0) {
+    if (plegacy1 != NULL)  *plegacy1 = TRUE;
+    if (pxml_filename != NULL) *pxml_filename = temp_str;
+    else g_free(temp_str);
+
+    return TRUE;
+  }
+  g_free(temp_str);
+
+  /* figure out the name of the study file */
+  directory = opendir(filename);
+      
+  /* currently, only looks at the first study_*.xml file... there should be only one anyway */
+  while (((directory_entry = readdir(directory)) != NULL))
+    if (g_pattern_match_simple("study_*.xml", directory_entry->d_name)) {
+      if (plegacy1 != NULL) *plegacy1 = FALSE;
+      if (pxml_filename != NULL) *pxml_filename = g_strdup(directory_entry->d_name);
+      closedir(directory);
+
+      return TRUE;
+    }
+    
+  closedir(directory);
+
+  return FALSE;
+
+}
+
+gboolean amide_is_xif_flat_file(const gchar * filename, guint64 * plocation_le, guint64 *psize_le) {
+
+  struct stat file_info;
+  FILE * study_file;
+  guint64 location_le, size_le;
+  gchar magic[64];
+
+  if (stat(filename, &file_info) != 0)
+    return FALSE; /* file doesn't exist */
+
+  if (S_ISDIR(file_info.st_mode)) return FALSE;
+
+  if ((study_file = fopen(filename, "r")) == NULL) 
+    return FALSE;
+
+  /* check magic string */
+  fread(magic, sizeof(gchar), 64, study_file);
+  if (strncmp(magic, AMIDE_FLAT_FILE_MAGIC_STRING, strlen(AMIDE_FLAT_FILE_MAGIC_STRING)) != 0) {
+    fclose(study_file);
+    return FALSE;
+  }
+
+  /* get area of file to read for initial XML data */
+  fread(&location_le, sizeof(guint64), 1, study_file);
+  fread(&size_le, sizeof(guint64), 1, study_file);
+  if (plocation_le != NULL)  *plocation_le = location_le;
+  if (psize_le != NULL) *psize_le = size_le;
+
+  fclose(study_file);
+
+  return TRUE;
+}
 
 
 
@@ -185,9 +265,13 @@ int main (int argc, char *argv []) {
     for (i=0; input_filenames[i] != NULL; i++) {
 
       /* check to see that the filename exists and it's a directory */
-      if (stat(input_filenames[i], &file_info) != 0) 
-	g_warning(_("AMIDE study %s does not exist"),input_filenames[i]);
-      else if (!S_ISDIR(file_info.st_mode)) {
+      if (stat(input_filenames[i], &file_info) != 0) {
+	g_warning(_("%s does not exist"),input_filenames[i]);
+      } else if (amide_is_xif_flat_file(input_filenames[i], NULL, NULL) ||
+		 amide_is_xif_directory(input_filenames[i], NULL, NULL)) {
+	if ((study=amitk_study_load_xml(input_filenames[i])) == NULL)
+	  g_warning(_("Failed to load in as XIF file: %s"), input_filenames[i]);
+      } else if (!S_ISDIR(file_info.st_mode)) {
 	/* not a directory... maybe an import file? */
 	if ((new_ds = amitk_data_set_import_file(AMITK_IMPORT_METHOD_GUESS, 0,
 						 input_filenames[i], NULL, NULL)) != NULL) {
@@ -201,10 +285,11 @@ int main (int argc, char *argv []) {
 	  amitk_study_set_view_thickness(imported_study, min_voxel_size);
 	  g_object_unref(new_ds);
 	  new_ds = NULL;
-	} else
-	  g_warning(_("%s is not an AMIDE study or importable file type "), input_filenames[i]);
-      } else if ((study=amitk_study_load_xml(input_filenames[i])) == NULL)
-	g_warning(_("error loading study: %s"),input_filenames[i]);
+	} else 
+	  g_warning(_("%s is not an AMIDE study or importable file type"), input_filenames[i]);
+      } else {
+	  g_warning(_("%s is not an AMIDE XIF Directory"), input_filenames[i]);
+      }
 
       if (study != NULL) {
 	/* each whole study gets it's own window */

@@ -54,10 +54,6 @@ G_BEGIN_DECLS
 #define AMITK_STUDY_CANVAS_VISIBLE(stu, canvas)   (AMITK_STUDY(stu)->canvas_visible[canvas])
 #define AMITK_STUDY_CANVAS_TARGET(stu)            (AMITK_STUDY(stu)->canvas_target)
 
-//#define AMIDE_STUDY_FILENAME "study.xml"
-#define AMIDE_FILE_VERSION "2.0"
-
-
 typedef enum {
   AMITK_FUSE_TYPE_BLEND,
   AMITK_FUSE_TYPE_OVERLAY,
@@ -146,9 +142,10 @@ void            amitk_study_set_zoom                (AmitkStudy * study,
 						     const amide_real_t new_zoom);
 void            amitk_study_set_canvas_target       (AmitkStudy * study,
 						     const gboolean always_on);
-AmitkStudy *    amitk_study_load_xml                (const gchar * study_directory);
+AmitkStudy *    amitk_study_load_xml                (const gchar * study_filename);
 gboolean        amitk_study_save_xml                (AmitkStudy * study, 
-						     const gchar * study_directory);
+						     const gchar * study_filename,
+						     const gboolean save_as_directory);
 
 const gchar *   amitk_fuse_type_get_name            (const AmitkFuseType fuse_type);
 const gchar *   amitk_view_mode_get_name            (const AmitkViewMode view_mode);

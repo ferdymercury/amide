@@ -13,22 +13,29 @@ INCLUDES = \
 endif
 
 AM_CFLAGS = \
+	$(GSL_CFLAGS) \
+	$(LIBFAME_CFLAGS) \
 	$(AMIDE_GNOME_CFLAGS) \
 	$(AMIDE_DEBUG_CFLAGS) \
 	 -DGTK_DISABLE_DEPRECATED \
 	-DGNOME_DISABLE_DEPRECATED
 
+# following are "toxic", as they drag in Gtk1 stuff
+#	$(XMEDCON_CFLAGS) 
+
 bin_PROGRAMS = amide
 
 amide_LDADD = \
-	$(AMIDE_LIBGSL_LIBS) \
+	$(GSL_LIBS) \
+	$(LIBFAME_LIBS) \
+	$(XMEDCON_LIBS) \
 	$(AMIDE_LIBECAT_LIBS) \
-	$(AMIDE_LIBMDC_LIBS) \
 	$(AMIDE_LIBVOLPACK_LIBS) \
-	$(AMIDE_LIBFAME_LIBS) \
 	$(AMIDE_GNOME_LIBS) \
 	$(AMIDE_WIN32_HACK_LIBS) \
-	-L/usr/local/lib 
+	-L/usr/local/lib \
+	-lmdc
+
 
 
 amide_SOURCES = \
@@ -54,7 +61,7 @@ amide_SOURCES = \
 	amitk_color_table_menu.c \
 	amitk_data_set.c \
 	amitk_dial.c \
-	amitk_dir_sel.c \
+	amitk_xif_sel.c \
 	amitk_fiducial_mark.c \
 	amitk_filter.c \
 	amitk_point.c \
@@ -97,6 +104,8 @@ amide_SOURCES = \
 	tb_filter.h \
 	tb_fly_through.c \
 	tb_fly_through.h \
+	tb_profile.c \
+	tb_profile.h \
 	tb_roi_analysis.c \
 	tb_roi_analysis.h \
 	ui_common.c \
@@ -129,7 +138,7 @@ AMITK_H_SOURCES = \
 	amitk_color_table.h \
 	amitk_color_table_menu.h \
 	amitk_dial.h \
-	amitk_dir_sel.h \
+	amitk_xif_sel.h \
 	amitk_data_set.h \
 	amitk_fiducial_mark.h \
 	amitk_filter.h \

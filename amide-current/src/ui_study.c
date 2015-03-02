@@ -395,6 +395,8 @@ ui_study_t * ui_study_init(void) {
     gnome_config_get_int("CANVAS/TargetEmptyArea"); /* in pixels */
   ui_study->dont_prompt_for_save_on_exit = 
     gnome_config_get_int("MISC/DontPromptForSaveOnExit"); /* 0 is FALSE, so we prompt */
+  ui_study->save_xif_as_directory =
+    gnome_config_get_int("MISC/SaveXifAsDirectory"); /* 0 is FALSE, so we save as flat file */
 
   for (i_modality=0; i_modality<AMITK_MODALITY_NUM; i_modality++) {
     temp_string = g_strdup_printf("DATASETS/DefaultColorTable%s", 
@@ -416,6 +418,7 @@ ui_study_t * ui_study_init(void) {
   ui_study->canvas_maintain_size = TRUE;
   ui_study->canvas_target_empty_area = 5; /* in pixels */
   ui_study->dont_prompt_for_save_on_exit = FALSE;
+  ui_study->save_xif_as_directory = FALSE;
 
   for (i_modality=0; i_modality<AMITK_MODALITY_NUM; i_modality++) {
     color_table = amitk_modality_default_color_table[i_modality];
@@ -969,7 +972,7 @@ void ui_study_update_layout(ui_study_t * ui_study) {
     g_object_ref(G_OBJECT(ui_study->canvas_table[i_view_mode]));
     if (!canvas_table_new)
       gtk_container_remove(GTK_CONTAINER(ui_study->center_table),
-			   ui_study->canvas_table[i_view_mode]);
+    			   ui_study->canvas_table[i_view_mode]);
 
     for (i_view=0; i_view < AMITK_VIEW_NUM ;i_view++ )
       if (ui_study->canvas[i_view_mode][i_view] != NULL)
@@ -1077,9 +1080,9 @@ void ui_study_update_layout(ui_study_t * ui_study) {
 
     /* and place them */
     gtk_table_attach(GTK_TABLE(ui_study->center_table), ui_study->canvas_table[i_view_mode],
-		     table_column, table_column+1, table_row, table_row+1,
-		     X_PACKING_OPTIONS | GTK_FILL, Y_PACKING_OPTIONS | GTK_FILL,  
-		     X_PADDING, Y_PADDING);
+    		     table_column, table_column+1, table_row, table_row+1,
+    		     X_PACKING_OPTIONS | GTK_FILL, Y_PACKING_OPTIONS | GTK_FILL,  
+    		     X_PADDING, Y_PADDING);
 
 
 

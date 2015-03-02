@@ -74,6 +74,7 @@ static void threshold_update_connector_lines(AmitkThreshold * threshold, AmitkTh
 static void threshold_update_color_scales(AmitkThreshold * threshold);
 static void threshold_update_layout(AmitkThreshold * threshold);
 static void threshold_update_type(AmitkThreshold * threshold);
+static void threshold_update_absolute_label(AmitkThreshold * threshold);
 static gint threshold_arrow_cb(GtkWidget* widget, GdkEvent * event, gpointer data);
 static void color_table_cb(GtkWidget * widget, gpointer data);
 static void data_set_changed_cb(AmitkDataSet * ds, AmitkThreshold* threshold);
@@ -236,7 +237,7 @@ static void threshold_construct(AmitkThreshold * threshold,
 		       X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
       /* show/hide taken care of by threshold_update_layout */
       
-      threshold->absolute_label[i_ref] = gtk_label_new(_("Absolute"));
+      threshold->absolute_label[i_ref] = gtk_label_new("");
       gtk_table_attach(GTK_TABLE(left_table), threshold->absolute_label[i_ref], 
 		       2+2*i_ref,3+2*i_ref,left_row,left_row+1,
 		       X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
@@ -464,6 +465,9 @@ static void threshold_construct(AmitkThreshold * threshold,
   /* update what's on the histogram */
   threshold_update_histogram(threshold);
 
+  /* update what's on the absolute label widget */
+  threshold_update_absolute_label(threshold);
+
   /* make sure the right widgets are shown or hidden */
   threshold_update_layout(threshold);
 
@@ -494,6 +498,7 @@ static void threshold_add_data_set(AmitkThreshold * threshold, AmitkDataSet * ds
   g_signal_connect(G_OBJECT(ds), "scale_factor_changed", G_CALLBACK(data_set_changed_cb), threshold);
   g_signal_connect(G_OBJECT(ds), "color_table_changed", G_CALLBACK(data_set_changed_cb), threshold);
   g_signal_connect(G_OBJECT(ds), "thresholding_changed", G_CALLBACK(data_set_changed_cb), threshold);
+  g_signal_connect(G_OBJECT(ds), "conversion_changed", G_CALLBACK(data_set_changed_cb), threshold);
 
   return;
 }
@@ -981,6 +986,29 @@ static void threshold_update_type(AmitkThreshold * threshold) {
   return;
 }
 
+/* set what the "absolute" label says */
+static void threshold_update_absolute_label(AmitkThreshold * threshold) {
+
+  guint i_ref;
+
+  for (i_ref=0; i_ref<2; i_ref++) {
+
+    switch (AMITK_DATA_SET_CONVERSION(threshold->data_set)) {
+    case AMITK_CONVERSION_SUV:
+    case AMITK_CONVERSION_PERCENT_ID_PER_G:
+      gtk_label_set_text(GTK_LABEL(threshold->absolute_label[i_ref]), 
+			 amitk_conversion_names[AMITK_DATA_SET_CONVERSION(threshold->data_set)]);
+      break;
+    case AMITK_CONVERSION_STRAIGHT:
+    default:
+      gtk_label_set_text(GTK_LABEL(threshold->absolute_label[i_ref]), _("Absolute"));
+      break;
+    }
+
+  }
+
+  return;
+}
 
 /* function called when the max or min triangle is moved 
  * mostly taken from Pennington's fine book */
@@ -1162,6 +1190,7 @@ static void data_set_changed_cb(AmitkDataSet * ds, AmitkThreshold * threshold) {
   }
   threshold_update(threshold);
 
+  
   return;
 }
 
@@ -1281,6 +1310,7 @@ static void threshold_update(AmitkThreshold * threshold) {
   threshold_update_arrow(threshold, AMITK_THRESHOLD_ARROW_FULL_MIN);
   threshold_update_arrow(threshold, AMITK_THRESHOLD_ARROW_FULL_MAX);
   threshold_update_type(threshold);
+  threshold_update_absolute_label(threshold);
 
   return;
 

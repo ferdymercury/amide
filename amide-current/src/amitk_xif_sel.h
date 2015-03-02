@@ -1,4 +1,4 @@
-/* amitk_dir_sel.h - this is gtkfilesel, but slightly modified
+/* amitk_xif_sel.h - this is gtkfilesel, but slightly modified
    so that it lists .xif files in the file list, and compiles
    cleanly under AMIDE
 */
@@ -29,8 +29,8 @@
  * GTK+ at ftp://ftp.gtk.org/pub/gtk/. 
  */
 
-#ifndef __AMITK_DIRSEL_H__
-#define __AMITK_DIRSEL_H__
+#ifndef __AMITK_XIF_SEL_H__
+#define __AMITK_XIF_SEL_H__
 
 
 #include <gtk/gtk.h>
@@ -38,18 +38,18 @@
 
 G_BEGIN_DECLS
 
-#define AMITK_TYPE_DIR_SELECTION            (amitk_dir_selection_get_type ())
-#define AMITK_DIR_SELECTION(obj)            (GTK_CHECK_CAST ((obj), AMITK_TYPE_DIR_SELECTION, AmitkDirSelection))
-#define AMITK_DIR_SELECTION_CLASS(klass)    (GTK_CHECK_CLASS_CAST ((klass), AMITK_TYPE_DIR_SELECTION, AmitkDirSelectionClass))
-#define AMITK_IS_DIR_SELECTION(obj)         (GTK_CHECK_TYPE ((obj), AMITK_TYPE_DIR_SELECTION))
-#define AMITK_IS_DIR_SELECTION_CLASS(klass) (GTK_CHECK_CLASS_TYPE ((klass), AMITK_TYPE_DIR_SELECTION))
-#define AMITK_DIR_SELECTION_GET_CLASS(obj)  (GTK_CHECK_GET_CLASS ((obj), AMITK_TYPE_DIR_SELECTION, AmitkDirSelectionClass))
+#define AMITK_TYPE_XIF_SELECTION            (amitk_xif_selection_get_type ())
+#define AMITK_XIF_SELECTION(obj)            (GTK_CHECK_CAST ((obj), AMITK_TYPE_XIF_SELECTION, AmitkXifSelection))
+#define AMITK_XIF_SELECTION_CLASS(klass)    (GTK_CHECK_CLASS_CAST ((klass), AMITK_TYPE_XIF_SELECTION, AmitkXifSelectionClass))
+#define AMITK_IS_XIF_SELECTION(obj)         (GTK_CHECK_TYPE ((obj), AMITK_TYPE_XIF_SELECTION))
+#define AMITK_IS_XIF_SELECTION_CLASS(klass) (GTK_CHECK_CLASS_TYPE ((klass), AMITK_TYPE_XIF_SELECTION))
+#define AMITK_XIF_SELECTION_GET_CLASS(obj)  (GTK_CHECK_GET_CLASS ((obj), AMITK_TYPE_XIF_SELECTION, AmitkXifSelectionClass))
 
 
-typedef struct _AmitkDirSelection       AmitkDirSelection;
-typedef struct _AmitkDirSelectionClass  AmitkDirSelectionClass;
+typedef struct _AmitkXifSelection       AmitkXifSelection;
+typedef struct _AmitkXifSelectionClass  AmitkXifSelectionClass;
 
-struct _AmitkDirSelection
+struct _AmitkXifSelection
 {
   /*< private >*/
   GtkDialog parent_instance;
@@ -82,7 +82,7 @@ struct _AmitkDirSelection
   gchar     *last_selected;
 };
 
-struct _AmitkDirSelectionClass
+struct _AmitkXifSelectionClass
 {
   GtkDialogClass parent_class;
 
@@ -94,9 +94,9 @@ struct _AmitkDirSelectionClass
 };
 
 
-GtkType    amitk_dir_selection_get_type            (void) G_GNUC_CONST;
-GtkWidget* amitk_dir_selection_new                 (const gchar      *title);
-void       amitk_dir_selection_set_filename        (AmitkDirSelection *filesel,
+GtkType    amitk_xif_selection_get_type            (void) G_GNUC_CONST;
+GtkWidget* amitk_xif_selection_new                 (const gchar      *title);
+void       amitk_xif_selection_set_filename        (AmitkXifSelection *filesel,
 						   const gchar      *filename);
 /* This function returns the selected filename in the C runtime's
  * multibyte string encoding, which may or may not be the same as that
@@ -104,19 +104,19 @@ void       amitk_dir_selection_set_filename        (AmitkDirSelection *filesel,
  * The returned string points to a statically allocated buffer and
  * should be copied away.
  */
-G_CONST_RETURN gchar* amitk_dir_selection_get_filename        (AmitkDirSelection *filesel);
+G_CONST_RETURN gchar* amitk_xif_selection_get_filename        (AmitkXifSelection *filesel);
 
-void	   amitk_dir_selection_complete		  (AmitkDirSelection *filesel,
+void	   amitk_xif_selection_complete		  (AmitkXifSelection *filesel,
 						   const gchar	    *pattern);
-void       amitk_dir_selection_show_fileop_buttons (AmitkDirSelection *filesel);
-void       amitk_dir_selection_hide_fileop_buttons (AmitkDirSelection *filesel);
+void       amitk_xif_selection_show_fileop_buttons (AmitkXifSelection *filesel);
+void       amitk_xif_selection_hide_fileop_buttons (AmitkXifSelection *filesel);
 
-gchar**    amitk_dir_selection_get_selections      (AmitkDirSelection *filesel);
+gchar**    amitk_xif_selection_get_selections      (AmitkXifSelection *filesel);
 
-void       amitk_dir_selection_set_select_multiple (AmitkDirSelection *filesel,
+void       amitk_xif_selection_set_select_multiple (AmitkXifSelection *filesel,
 						   gboolean          select_multiple);
-gboolean   amitk_dir_selection_get_select_multiple (AmitkDirSelection *filesel);
+gboolean   amitk_xif_selection_get_select_multiple (AmitkXifSelection *filesel);
 
 G_END_DECLS
 
-#endif /* __AMITK_DIRSEL_H__ */
+#endif /* __AMITK_XIF_SEL_H__ */

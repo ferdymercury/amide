@@ -43,8 +43,13 @@ static void          volume_corner_changed   (AmitkVolume      *volume,
 					      AmitkPoint       *new_corner);
 static AmitkObject * volume_copy             (const AmitkObject * object);
 static void          volume_copy_in_place    (AmitkObject * dest_object, const AmitkObject * src_object);
-static void          volume_write_xml        (const AmitkObject * object, xmlNodePtr nodes);
-static gchar *       volume_read_xml         (AmitkObject * object, xmlNodePtr nodes, gchar * error_buf);
+static void          volume_write_xml        (const AmitkObject *object, 
+					      xmlNodePtr         nodes, 
+					      FILE              *study_file);
+static gchar *       volume_read_xml         (AmitkObject       *object, 
+					      xmlNodePtr         nodes, 
+					      FILE              *study_file,
+					      gchar             *error_buf);
 
 
 static AmitkObjectClass* parent_class;
@@ -160,9 +165,9 @@ static void volume_copy_in_place(AmitkObject * dest_object, const AmitkObject * 
 
 
 
-static void volume_write_xml(const AmitkObject * object, xmlNodePtr nodes) {
+static void volume_write_xml(const AmitkObject * object, xmlNodePtr nodes, FILE * study_file) {
 
-  AMITK_OBJECT_CLASS(parent_class)->object_write_xml(object, nodes);
+  AMITK_OBJECT_CLASS(parent_class)->object_write_xml(object, nodes, study_file);
 
   amitk_point_write_xml(nodes, "corner", AMITK_VOLUME_CORNER(object));
   xml_save_boolean(nodes, "valid", AMITK_VOLUME_VALID(object));
@@ -170,11 +175,11 @@ static void volume_write_xml(const AmitkObject * object, xmlNodePtr nodes) {
   return;
 }
 
-static gchar * volume_read_xml(AmitkObject * object, xmlNodePtr nodes, gchar * error_buf) {
+static gchar * volume_read_xml(AmitkObject * object, xmlNodePtr nodes, FILE * study_file, gchar * error_buf) {
 
   AmitkVolume * volume;
 
-  error_buf = AMITK_OBJECT_CLASS(parent_class)->object_read_xml(object, nodes, error_buf);
+  error_buf = AMITK_OBJECT_CLASS(parent_class)->object_read_xml(object, nodes, study_file, error_buf);
   
   volume = AMITK_VOLUME(object);
 

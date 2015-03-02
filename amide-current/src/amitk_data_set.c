@@ -155,8 +155,13 @@ static void          data_set_finalize               (GObject           *object)
 static void          data_set_space_changed          (AmitkSpace        *space);
 static AmitkObject * data_set_copy                   (const AmitkObject *object);
 static void          data_set_copy_in_place          (AmitkObject * dest_object, const AmitkObject * src_object);
-static void          data_set_write_xml              (const AmitkObject * object, xmlNodePtr nodes);
-static gchar *       data_set_read_xml               (AmitkObject * object, xmlNodePtr nodes, gchar *error_buf);
+static void          data_set_write_xml              (const AmitkObject *object, 
+						      xmlNodePtr         nodes, 
+						      FILE              *study_file);
+static gchar *       data_set_read_xml               (AmitkObject       *object, 
+						      xmlNodePtr         nodes, 
+						      FILE              *study_file,
+						      gchar             *error_buf);
 static void          data_set_invalidate_slice_cache (AmitkDataSet * ds);
 static AmitkVolumeClass * parent_class;
 static guint         data_set_signals[LAST_SIGNAL];
@@ -510,13 +515,14 @@ static void data_set_copy_in_place (AmitkObject * dest_object, const AmitkObject
 
 
 
-static void data_set_write_xml(const AmitkObject * object, xmlNodePtr nodes) {
+static void data_set_write_xml(const AmitkObject * object, xmlNodePtr nodes, FILE * study_file) {
 
   AmitkDataSet * ds;
   gchar * xml_filename;
   gchar * name;
+  guint64 location, size;
 
-  AMITK_OBJECT_CLASS(parent_class)->object_write_xml(object, nodes);
+  AMITK_OBJECT_CLASS(parent_class)->object_write_xml(object, nodes, study_file);
 
   ds = AMITK_DATA_SET(object);
 
@@ -525,23 +531,35 @@ static void data_set_write_xml(const AmitkObject * object, xmlNodePtr nodes) {
   amitk_point_write_xml(nodes, "voxel_size", AMITK_DATA_SET_VOXEL_SIZE(ds));
 
   name = g_strdup_printf("data-set_%s_raw-data",AMITK_OBJECT_NAME(object));
-  xml_filename = amitk_raw_data_write_xml(AMITK_DATA_SET_RAW_DATA(ds), name);
+  amitk_raw_data_write_xml(AMITK_DATA_SET_RAW_DATA(ds), name, study_file, &xml_filename, &location, &size);
   g_free(name);
-  xml_save_string(nodes, "raw_data_file", xml_filename);
-  g_free(xml_filename);
+  if (study_file == NULL) {
+    xml_save_string(nodes, "raw_data_file", xml_filename);
+    g_free(xml_filename);
+  } else {
+    xml_save_location_and_size(nodes, "raw_data_location_and_size", location, size);
+  }
 
   name = g_strdup_printf("data-set_%s_scaling-factors",AMITK_OBJECT_NAME(ds));
-  xml_filename = amitk_raw_data_write_xml(ds->internal_scaling, name);
+  amitk_raw_data_write_xml(ds->internal_scaling, name, study_file, &xml_filename, &location, &size);
   g_free(name);
-  xml_save_string(nodes, "internal_scaling_file", xml_filename);
-  g_free(xml_filename);
+  if (study_file == NULL) {
+    xml_save_string(nodes, "internal_scaling_file", xml_filename);
+    g_free(xml_filename);
+  } else {
+    xml_save_location_and_size(nodes, "internal_scaling_location_and_size", location, size);
+  }
 
   if (ds->distribution != NULL) {
     name = g_strdup_printf("data-set_%s_distribution",AMITK_OBJECT_NAME(ds));
-    xml_filename = amitk_raw_data_write_xml(ds->distribution, name);
+    amitk_raw_data_write_xml(ds->distribution, name, study_file, &xml_filename, &location, &size);
     g_free(name);
-    xml_save_string(nodes, "distribution_file", xml_filename);
-    g_free(xml_filename);
+    if (study_file == NULL) {
+      xml_save_string(nodes, "distribution_file", xml_filename);
+      g_free(xml_filename);
+    } else {
+      xml_save_location_and_size(nodes, "distribution_location_and_size", location, size);
+    }
   }
 
   xml_save_string(nodes, "scaling_type", amitk_scaling_type_get_name(ds->scaling_type));
@@ -570,7 +588,8 @@ static void data_set_write_xml(const AmitkObject * object, xmlNodePtr nodes) {
   return;
 }
 
-static gchar * data_set_read_xml(AmitkObject * object, xmlNodePtr nodes, gchar * error_buf) {
+static gchar * data_set_read_xml(AmitkObject * object, xmlNodePtr nodes, 
+				 FILE * study_file, gchar * error_buf) {
 
   AmitkDataSet * ds;
   AmitkModality i_modality;
@@ -584,9 +603,10 @@ static gchar * data_set_read_xml(AmitkObject * object, xmlNodePtr nodes, gchar *
   AmitkCylinderUnit i_cylinder_unit;
   gchar * temp_string;
   gchar * scan_date;
-  gchar * filename;
+  gchar * filename=NULL;
+  guint64 location, size;
 
-  error_buf = AMITK_OBJECT_CLASS(parent_class)->object_read_xml(object, nodes, error_buf);
+  error_buf = AMITK_OBJECT_CLASS(parent_class)->object_read_xml(object, nodes, study_file, error_buf);
 
   ds = AMITK_DATA_SET(object);
 
@@ -603,22 +623,41 @@ static gchar * data_set_read_xml(AmitkObject * object, xmlNodePtr nodes, gchar *
 
   ds->voxel_size = amitk_point_read_xml(nodes, "voxel_size", &error_buf);
 
-  filename = xml_get_string(nodes, "raw_data_file");
-  ds->raw_data = amitk_raw_data_read_xml(filename, &error_buf, NULL, NULL);
-  g_free(filename);
+  if (study_file == NULL) 
+    filename = xml_get_string(nodes, "raw_data_file");
+  else
+    xml_get_location_and_size(nodes, "raw_data_location_and_size", &location, &size, &error_buf);
 
-  filename = xml_get_string(nodes, "internal_scaling_file");
-  if (ds->internal_scaling != NULL)
-    g_object_unref(ds->internal_scaling);
-  ds->internal_scaling = amitk_raw_data_read_xml(filename, &error_buf, NULL, NULL);
-  g_free(filename);
-
-  filename = xml_get_string(nodes, "distribution_file");
+  ds->raw_data = amitk_raw_data_read_xml(filename, study_file, location, size, &error_buf, NULL, NULL);
   if (filename != NULL) {
-    if (ds->distribution != NULL)
-      g_object_unref(ds->distribution);
-    ds->distribution = amitk_raw_data_read_xml(filename, &error_buf, NULL, NULL);
     g_free(filename);
+    filename = NULL;
+  }
+
+  if (study_file == NULL) 
+    filename = xml_get_string(nodes, "internal_scaling_file");
+  else
+    xml_get_location_and_size(nodes, "internal_scaling_location_and_size", &location, &size, &error_buf);
+
+  if (ds->internal_scaling != NULL) g_object_unref(ds->internal_scaling);
+  ds->internal_scaling = amitk_raw_data_read_xml(filename, study_file, location, size, &error_buf, NULL, NULL);
+  if (filename != NULL) {
+    g_free(filename);
+    filename = NULL;
+  }
+
+  if (xml_node_exists(nodes, "distribution_file") || 
+      xml_node_exists(nodes, "distribution_location_and_size")) {
+    if (study_file == NULL) 
+      filename = xml_get_string(nodes, "distribution_file");
+    else
+      xml_get_location_and_size(nodes, "distribution_location_and_size", &location, &size, &error_buf);
+    if (ds->distribution != NULL) g_object_unref(ds->distribution);
+    ds->distribution = amitk_raw_data_read_xml(filename, study_file, location, size, &error_buf, NULL, NULL);
+    if (filename != NULL) {
+      g_free(filename);
+      filename = NULL;
+    }
   }
 
   /* figure out the scaling type */
@@ -662,7 +701,6 @@ static gchar * data_set_read_xml(AmitkObject * object, xmlNodePtr nodes, gchar *
     g_object_unref(old_scaling);
   }
   /* end legacy cruft */
-
 
   amitk_data_set_set_scale_factor(ds, xml_get_data(nodes, "scale_factor", &error_buf));
   ds->injected_dose = xml_get_data(nodes, "injected_dose", &error_buf);
@@ -837,7 +875,7 @@ AmitkDataSet * amitk_data_set_import_raw_file(const gchar * file_name,
   }
 
   /* read in the data set */
-  ds->raw_data =  amitk_raw_data_import_raw_file(file_name, raw_format, data_dim, file_offset,
+  ds->raw_data =  amitk_raw_data_import_raw_file(file_name, NULL, raw_format, data_dim, file_offset,
 						 update_func, update_data);
   if (ds->raw_data == NULL) {
     g_warning(_("raw_data_read_file failed returning NULL data set"));

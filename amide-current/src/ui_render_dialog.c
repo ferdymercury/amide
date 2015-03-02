@@ -27,13 +27,13 @@
 
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
 
+#ifndef AMIDE_WIN32_HACKS
+#include <libgnome/libgnome.h>
+#endif
 
 #include "ui_common.h"
 #include "ui_render_dialog.h"
 #include "amitk_color_table_menu.h"
-#ifndef AMIDE_WIN32_HACKS
-#include <libgnome/libgnome.h>
-#endif
 
 
 #define GAMMA_CURVE_WIDTH -1 /* sets automatically */

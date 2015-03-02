@@ -149,13 +149,19 @@ AmitkRawData*   amitk_raw_data_new                  (void);
 AmitkRawData*   amitk_raw_data_new_with_data        (AmitkFormat format,
 						     AmitkVoxel dim);
 AmitkRawData *  amitk_raw_data_import_raw_file      (const gchar * file_name, 
+						     FILE * existing_file,
 						     AmitkRawFormat raw_format,
 						     AmitkVoxel dim,
-						     guint file_offset,
+						     long file_offset,
 						     gboolean (*update_func)(),
 						     gpointer update_data);
-gchar *         amitk_raw_data_write_xml            (AmitkRawData  * raw_data, const gchar * name);
+void            amitk_raw_data_write_xml            (AmitkRawData  * raw_data, const gchar * name,
+						     FILE * study_file, gchar ** output_filename, 
+						     guint64 * location, guint64 * size);
 AmitkRawData *  amitk_raw_data_read_xml             (gchar * xml_filename,
+						     FILE * study_file,
+						     guint64 location,
+						     guint64 size,
 						     gchar ** perror_buf,
 						     gboolean (*update_func)(),
 						     gpointer update_data);

@@ -19,7 +19,7 @@
 	manual
     </type>
     <format mime="text/xml" dtd="-//OASIS//DTD DocBook XML V4.1.2//EN"/>
-    <identifier url="file:/usr//share/gnome/help/amide/C/amide.xml"/>
+    <identifier url="file:/usr/local/share/gnome/help/amide/C/amide.xml"/>
     <language code="C"/>
     <rights type="GNU FDL" license.version="1.1" holder="Andy Loening"/>
   </resource>

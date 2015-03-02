@@ -31,7 +31,7 @@
 #include <fcntl.h>
 #include <dirent.h>
 #include <string.h>
-#include "amitk_dir_sel.h"
+#include "amitk_xif_sel.h"
 #include "amitk_threshold.h"
 #include "amitk_canvas.h"
 #include "amitk_tree.h"
@@ -49,6 +49,7 @@
 #include "tb_crop.h"
 #include "tb_fads.h"
 #include "tb_filter.h"
+#include "tb_profile.h"
 #include "tb_roi_analysis.h"
 
 
@@ -60,46 +61,26 @@ static gchar * no_gsl = N_("This wizard requires compiled in support from the GN
 /* function to handle loading in an AMIDE study */
 static void ui_study_cb_open_ok(GtkWidget* widget, gpointer data) {
 
-  GtkWidget * dir_selection = data;
-  const gchar * returned_filename;
-  gchar * open_filename;
-  struct stat file_info;
+  GtkWidget * xif_selection = data;
+  gchar * returned_filename;
   AmitkStudy * study;
   ui_study_t * ui_study;
-  gint length;
 
-  /* get the filename */
-  returned_filename = amitk_dir_selection_get_filename(AMITK_DIR_SELECTION(dir_selection));
-
-  /* remove any trailing directory characters */
-  length = strlen(returned_filename);
-  if ((length >= 1) && (strcmp(returned_filename+length-1, G_DIR_SEPARATOR_S) == 0))
-    open_filename = g_strndup(returned_filename, length-1);
-  else
-    open_filename = g_strndup(returned_filename, length);
-  
-
-  /* get a pointer to ui_study */
-  ui_study = g_object_get_data(G_OBJECT(dir_selection), "ui_study");
-
-  /* check to see that the filename exists and it's a directory */
-  if (stat(open_filename, &file_info) != 0) {
-    g_warning(_("AMIDE study %s does not exist"),open_filename);
-    return;
-  }
-  if (!S_ISDIR(file_info.st_mode)) {
-    g_warning(_("%s is not a directory/AMIDE study"),open_filename);
-    return;
-  }
+  /* get the filename and a pointer to ui_study */
+  returned_filename = ui_common_xif_selection_get_load_name(xif_selection);
+  if (returned_filename == NULL) return;
+  ui_study = g_object_get_data(G_OBJECT(xif_selection), "ui_study");
 
   /* try loading the study into memory */
-  if ((study=amitk_study_load_xml(open_filename)) == NULL) {
-    g_warning(_("error loading study: %s"),open_filename);
+  if ((study=amitk_study_load_xml(returned_filename)) == NULL) {
+    g_warning(_("error loading study: %s"),returned_filename);
+    g_free(returned_filename);
     return;
   }
+  g_free(returned_filename);
 
   /* close the file selection box */
-  ui_common_file_selection_cancel_cb(widget, dir_selection);
+  ui_common_file_selection_cancel_cb(widget, xif_selection);
 
   /* setup the study window */
   if (ui_study->study_virgin)
@@ -107,7 +88,6 @@ static void ui_study_cb_open_ok(GtkWidget* widget, gpointer data) {
   else
     ui_study_create(study);
   g_object_unref(study);
-  g_free(open_filename);
 
   return;
 }
@@ -117,29 +97,31 @@ static void ui_study_cb_open_ok(GtkWidget* widget, gpointer data) {
 void ui_study_cb_open_study(GtkWidget * button, gpointer data) {
 
   ui_study_t * ui_study=data;
-  GtkWidget * dir_selection;
+  GtkWidget * xif_selection;
 
-  dir_selection = amitk_dir_selection_new(_("Open AMIDE File"));
+  xif_selection = amitk_xif_selection_new(_("Open AMIDE XIF File"));
 
   /* don't want anything else going on till this window is gone */
-  gtk_window_set_modal(GTK_WINDOW(dir_selection), TRUE);
+  gtk_window_set_modal(GTK_WINDOW(xif_selection), TRUE);
 
   /* save a pointer to ui_study */
-  g_object_set_data(G_OBJECT(dir_selection), "ui_study", ui_study);
+  g_object_set_data(G_OBJECT(xif_selection), "ui_study", ui_study);
+
+  ui_common_xif_selection_set_filename(xif_selection, NULL);
 
   /* connect the signals */
-  g_signal_connect(G_OBJECT(AMITK_DIR_SELECTION(dir_selection)->ok_button),
-		   "clicked", G_CALLBACK(ui_study_cb_open_ok), dir_selection);
-  g_signal_connect(G_OBJECT(AMITK_DIR_SELECTION(dir_selection)->cancel_button),
-		   "clicked", G_CALLBACK(ui_common_file_selection_cancel_cb),dir_selection);
-  g_signal_connect(G_OBJECT(AMITK_DIR_SELECTION(dir_selection)->cancel_button),
-		   "delete_event", G_CALLBACK(ui_common_file_selection_cancel_cb), dir_selection);
+  g_signal_connect(G_OBJECT(AMITK_XIF_SELECTION(xif_selection)->ok_button),
+		   "clicked", G_CALLBACK(ui_study_cb_open_ok), xif_selection);
+  g_signal_connect(G_OBJECT(AMITK_XIF_SELECTION(xif_selection)->cancel_button),
+		   "clicked", G_CALLBACK(ui_common_file_selection_cancel_cb),xif_selection);
+  g_signal_connect(G_OBJECT(AMITK_XIF_SELECTION(xif_selection)->cancel_button),
+		   "delete_event", G_CALLBACK(ui_common_file_selection_cancel_cb), xif_selection);
 
   /* set the position of the dialog */
-  gtk_window_set_position(GTK_WINDOW(dir_selection), GTK_WIN_POS_MOUSE);
+  gtk_window_set_position(GTK_WINDOW(xif_selection), GTK_WIN_POS_MOUSE);
 
   /* run the dialog */
-  gtk_widget_show(dir_selection);
+  gtk_widget_show(xif_selection);
 
   return;
 }
@@ -156,113 +138,26 @@ void ui_study_cb_new_study(GtkWidget * button, gpointer data) {
 /* function to handle saving */
 static void ui_study_cb_save_as_ok(GtkWidget* widget, gpointer data) {
 
-  GtkWidget * dir_selection = data;
-  GtkWidget * question;
+  GtkWidget * xif_selection = data;
   ui_study_t * ui_study;
   gchar * save_filename;
-  gchar * prev_filename;
-  gchar * temp_string;
-  struct stat file_info;
-  DIR * directory;
-  mode_t mode = 0766;
-  struct dirent * directory_entry;
-  gchar ** frags1=NULL;
-  gchar ** frags2=NULL;
-  gint return_val;
 
   /* get a pointer to ui_study */
-  ui_study = g_object_get_data(G_OBJECT(dir_selection), "ui_study");
+  ui_study = g_object_get_data(G_OBJECT(xif_selection), "ui_study");
 
   /* get the filename */
-  save_filename = g_strdup(amitk_dir_selection_get_filename(AMITK_DIR_SELECTION(dir_selection)));
-
-  /* some sanity checks */
-  if ((strcmp(save_filename, ".") == 0) ||
-      (strcmp(save_filename, "..") == 0) ||
-      (strcmp(save_filename, "") == 0) ||
-      (strcmp(save_filename, "\\") == 0) ||
-      (strcmp(save_filename, "/") == 0)) {
-    g_warning(_("Inappropriate filename: %s"),save_filename);
-    return;
-  }
-
-  /* make sure the filename ends with .xif */
-  g_strreverse(save_filename);
-  frags1 = g_strsplit(save_filename, ".", 2);
-  g_strreverse(save_filename);
-  g_strreverse(frags1[0]);
-  frags2 = g_strsplit(frags1[0], G_DIR_SEPARATOR_S, -1);
-  if (g_ascii_strcasecmp(frags2[0], "xif") != 0) {
-    prev_filename = save_filename;
-    save_filename = g_strdup_printf("%s%s",prev_filename, ".xif");
-    g_free(prev_filename);
-  }    
-  g_strfreev(frags2);
-  g_strfreev(frags1);
-
-  /* see if the filename already exists */
-  if (stat(save_filename, &file_info) == 0) {
-    /* check if it's okay to writeover the file */
-    question = gtk_message_dialog_new(GTK_WINDOW(ui_study->app),
-				      GTK_DIALOG_DESTROY_WITH_PARENT,
-				      GTK_MESSAGE_QUESTION,
-				      GTK_BUTTONS_OK_CANCEL,
-				      _("Overwrite file: %s"), save_filename);
-
-    /* and wait for the question to return */
-    return_val = gtk_dialog_run(GTK_DIALOG(question));
-
-    gtk_widget_destroy(question);
-    if (return_val != GTK_RESPONSE_OK)
-      return; /* we don't want to overwrite the file.... */
-
-    /* and start deleting everything in the filename/directory */
-    if (S_ISDIR(file_info.st_mode)) {
-      directory = opendir(save_filename);
-      while ((directory_entry = readdir(directory)) != NULL) {
-	temp_string = 
-	  g_strdup_printf("%s%s%s", save_filename,G_DIR_SEPARATOR_S, directory_entry->d_name);
-
-	if (g_pattern_match_simple("*.xml",directory_entry->d_name))
-	  if (unlink(temp_string) != 0)
-	    g_warning(_("Couldn't unlink file: %s"),temp_string);
-	if (g_pattern_match_simple("*.dat",directory_entry->d_name)) 
-	  if (unlink(temp_string) != 0)
-	    g_warning(_("Couldn't unlink file: %s"),temp_string);
-
-	g_free(temp_string);
-      }
-
-    } else if (S_ISREG(file_info.st_mode)) {
-      if (unlink(save_filename) != 0)
-	g_warning(_("Couldn't unlink file: %s"),save_filename);
-
-    } else {
-      g_warning(_("Unrecognized file type for file: %s, couldn't delete"),save_filename);
-      return;
-    }
-
-  } else {
-    /* make the directory */
-#if AMIDE_WIN32_HACKS
-    if (mkdir(save_filename) != 0) 
-#else
-    if (mkdir(save_filename, mode) != 0) 
-#endif 
-      {
-	g_warning(_("Couldn't create amide directory: %s"),save_filename);
-	return;
-      }
-  }
+  save_filename = ui_common_xif_selection_get_save_name(xif_selection);
+  if (save_filename == NULL) return;
 
   /* allright, save our study */
-  if (amitk_study_save_xml(ui_study->study, save_filename) == FALSE) {
+  if (amitk_study_save_xml(ui_study->study, save_filename,
+			   ui_study->save_xif_as_directory) == FALSE) {
     g_warning(_("Failure Saving File: %s"),save_filename);
     return;
   }
 
   /* close the file selection box */
-  ui_common_file_selection_cancel_cb(widget, dir_selection);
+  ui_common_file_selection_cancel_cb(widget, xif_selection);
 
   /* indicate no new changes */
   ui_study->study_altered=FALSE;
@@ -275,38 +170,40 @@ static void ui_study_cb_save_as_ok(GtkWidget* widget, gpointer data) {
 void ui_study_cb_save_as(GtkWidget * widget, gpointer data) {
   
   ui_study_t * ui_study = data;
-  GtkWidget * dir_selection;
+  GtkWidget * xif_selection;
   gchar * temp_string;
 
-  dir_selection = amitk_dir_selection_new(_("Save File"));
+  xif_selection = amitk_xif_selection_new(_("Save File"));
 
   /* take a guess at the filename */
-  if (AMITK_STUDY_FILENAME(ui_study->study) == NULL) 
+  if (AMITK_STUDY_FILENAME(ui_study->study) == NULL) {
     temp_string = g_strdup_printf("%s.xif",AMITK_OBJECT_NAME(ui_study->study));
-  else
+    ui_common_xif_selection_set_filename(xif_selection, temp_string);
+  } else {
     temp_string = g_strdup_printf("%s", AMITK_STUDY_FILENAME(ui_study->study));
-  amitk_dir_selection_set_filename(AMITK_DIR_SELECTION(dir_selection), temp_string);
+    amitk_xif_selection_set_filename(AMITK_XIF_SELECTION(xif_selection), temp_string);
+  }
   g_free(temp_string); 
 
   /* save a pointer to ui_study */
-  g_object_set_data(G_OBJECT(dir_selection), "ui_study", ui_study);
+  g_object_set_data(G_OBJECT(xif_selection), "ui_study", ui_study);
 
   /* don't want anything else going on till this window is gone */
-  gtk_window_set_modal(GTK_WINDOW(dir_selection), TRUE);
+  gtk_window_set_modal(GTK_WINDOW(xif_selection), TRUE);
 
   /* connect the signals */
-  g_signal_connect(G_OBJECT(AMITK_DIR_SELECTION(dir_selection)->ok_button), "clicked",
-		   G_CALLBACK(ui_study_cb_save_as_ok), dir_selection);
-  g_signal_connect(G_OBJECT(AMITK_DIR_SELECTION(dir_selection)->cancel_button), "clicked",
-		   G_CALLBACK(ui_common_file_selection_cancel_cb), dir_selection);
-  g_signal_connect(G_OBJECT(AMITK_DIR_SELECTION(dir_selection)->cancel_button), "delete_event",
-		   G_CALLBACK(ui_common_file_selection_cancel_cb), dir_selection);
+  g_signal_connect(G_OBJECT(AMITK_XIF_SELECTION(xif_selection)->ok_button), "clicked",
+		   G_CALLBACK(ui_study_cb_save_as_ok), xif_selection);
+  g_signal_connect(G_OBJECT(AMITK_XIF_SELECTION(xif_selection)->cancel_button), "clicked",
+		   G_CALLBACK(ui_common_file_selection_cancel_cb), xif_selection);
+  g_signal_connect(G_OBJECT(AMITK_XIF_SELECTION(xif_selection)->cancel_button), "delete_event",
+		   G_CALLBACK(ui_common_file_selection_cancel_cb), xif_selection);
 
   /* set the position of the dialog */
-  gtk_window_set_position(GTK_WINDOW(dir_selection), GTK_WIN_POS_MOUSE);
+  gtk_window_set_position(GTK_WINDOW(xif_selection), GTK_WIN_POS_MOUSE);
 
   /* run the dialog */
-  gtk_widget_show(GTK_WIDGET(dir_selection));
+  gtk_widget_show(xif_selection);
 
   return;
 }
@@ -316,7 +213,7 @@ static void ui_study_cb_import_ok(GtkWidget* widget, gpointer data) {
 
   GtkWidget * file_selection = data;
   ui_study_t * ui_study;
-  const gchar * import_filename=NULL;
+  gchar * import_filename;
   AmitkImportMethod import_method;
   int submethod = 0;
   AmitkDataSet * import_ds;
@@ -343,7 +240,8 @@ static void ui_study_cb_import_ok(GtkWidget* widget, gpointer data) {
 
 
   /* get the filename and import */
-  import_filename = gtk_file_selection_get_filename(GTK_FILE_SELECTION(file_selection));
+  import_filename = ui_common_file_selection_get_load_name(file_selection);
+  if (import_filename == NULL) return;
 
 #ifdef AMIDE_DEBUG
   g_print("file to import: %s\n",import_filename);
@@ -398,6 +296,7 @@ static void ui_study_cb_import_ok(GtkWidget* widget, gpointer data) {
       }
 
     } else { /* we hit cancel */
+      g_free(import_filename);
       return;
     }
   }
@@ -427,6 +326,7 @@ static void ui_study_cb_import_ok(GtkWidget* widget, gpointer data) {
 
   /* close the file selection box */
   ui_common_file_selection_cancel_cb(widget, file_selection);
+  g_free(import_filename);
   
   return;
 }
@@ -436,10 +336,10 @@ static void ui_study_cb_import_ok(GtkWidget* widget, gpointer data) {
 void ui_study_cb_import(GtkWidget * widget, gpointer data) {
   
   ui_study_t * ui_study = data;
-  GtkFileSelection * file_selection;
+  GtkWidget * file_selection;
   AmitkImportMethod import_method;
 
-  file_selection = GTK_FILE_SELECTION(gtk_file_selection_new(_("Import File")));
+  file_selection = gtk_file_selection_new(_("Import File"));
 
   /* save a pointer to ui_study */
   g_object_set_data(G_OBJECT(file_selection), "ui_study", ui_study);
@@ -453,22 +353,24 @@ void ui_study_cb_import(GtkWidget * widget, gpointer data) {
 		      g_object_get_data(G_OBJECT(widget), "submethod"));
 #endif
 
+  ui_common_file_selection_set_filename(file_selection, NULL);
+
   /* don't want anything else going on till this window is gone */
   gtk_window_set_modal(GTK_WINDOW(file_selection), TRUE);
 
   /* connect the signals */
-  g_signal_connect(G_OBJECT(file_selection->ok_button), "clicked",
+  g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->ok_button), "clicked",
 		   G_CALLBACK(ui_study_cb_import_ok), file_selection);
-  g_signal_connect(G_OBJECT(file_selection->cancel_button), "clicked",
+  g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->cancel_button), "clicked",
 		   G_CALLBACK(ui_common_file_selection_cancel_cb), file_selection);
-  g_signal_connect(G_OBJECT(file_selection->cancel_button),"delete_event",
+  g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->cancel_button),"delete_event",
 		   G_CALLBACK(ui_common_file_selection_cancel_cb), file_selection);
 
   /* set the position of the dialog */
   gtk_window_set_position(GTK_WINDOW(file_selection), GTK_WIN_POS_MOUSE);
 
   /* run the dialog */
-  gtk_widget_show(GTK_WIDGET(file_selection));
+  gtk_widget_show(file_selection);
 
   return;
 }
@@ -489,8 +391,8 @@ static void ui_study_cb_export_ok(GtkWidget* widget, gpointer data) {
   view = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(file_selection), "view"));
 
   /* get the filename */
-  if ((save_filename = ui_common_file_selection_get_name(file_selection)) == NULL)
-    return; /* inappropriate name or don't want to overwrite */
+  save_filename = ui_common_file_selection_get_save_name(file_selection);
+  if (save_filename == NULL) return; /* inappropriate name or don't want to overwrite */
 
 
   if (AMITK_CANVAS_PIXBUF(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][view]) == NULL) {
@@ -517,7 +419,7 @@ void ui_study_cb_export(GtkWidget * widget, gpointer data) {
   ui_study_t * ui_study = data;
   GList * current_data_sets;
   GList * temp_sets;
-  GtkFileSelection * file_selection;
+  GtkWidget * file_selection;
   gchar * temp_string;
   gchar * data_set_names = NULL;
   AmitkView view;
@@ -530,7 +432,7 @@ void ui_study_cb_export(GtkWidget * widget, gpointer data) {
 								 AMITK_VIEW_MODE_SINGLE, TRUE);
   if (current_data_sets == NULL) return;
 
-  file_selection = GTK_FILE_SELECTION(gtk_file_selection_new(_("Export File")));
+  file_selection = gtk_file_selection_new(_("Export File"));
   view = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "view"));
 
   if (ui_study->canvas[AMITK_VIEW_MODE_SINGLE][view] == NULL) return;
@@ -561,7 +463,7 @@ void ui_study_cb_export(GtkWidget * widget, gpointer data) {
 				view_names[view],
 				lower,
 				upper);
-  gtk_file_selection_set_filename(GTK_FILE_SELECTION(file_selection), temp_string);
+  ui_common_file_selection_set_filename(file_selection, temp_string);
   g_free(data_set_names);
   g_free(temp_string); 
 
@@ -573,18 +475,18 @@ void ui_study_cb_export(GtkWidget * widget, gpointer data) {
   gtk_window_set_modal(GTK_WINDOW(file_selection), TRUE);
 
   /* connect the signals */
-  g_signal_connect(G_OBJECT(file_selection->ok_button), "clicked",
+  g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->ok_button), "clicked",
 		   G_CALLBACK(ui_study_cb_export_ok), file_selection);
-  g_signal_connect(G_OBJECT(file_selection->cancel_button), "clicked",
+  g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->cancel_button), "clicked",
 		   G_CALLBACK(ui_common_file_selection_cancel_cb), file_selection);
-  g_signal_connect(G_OBJECT(file_selection->cancel_button), "delete_event",
+  g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->cancel_button), "delete_event",
 		   G_CALLBACK(ui_common_file_selection_cancel_cb), file_selection);
 
   /* set the position of the dialog */
   gtk_window_set_position(GTK_WINDOW(file_selection), GTK_WIN_POS_MOUSE);
 
   /* run the dialog */
-  gtk_widget_show(GTK_WIDGET(file_selection));
+  gtk_widget_show(file_selection);
 
   amitk_objects_unref(current_data_sets);
   return;
@@ -1021,6 +923,15 @@ void ui_study_cb_filter_selected(GtkWidget * widget, gpointer data) {
   return;
 }
 
+/* user wants to run the profile wizard */
+void ui_study_cb_profile_selected(GtkWidget * widget, gpointer data) {
+  ui_study_t * ui_study = data;
+
+  tb_profile(ui_study->study);
+
+  return;
+}
+
 static gboolean threshold_delete_event(GtkWidget* widget, GdkEvent * event, gpointer data) {
   ui_study_t * ui_study = data;
 
@@ -1055,7 +966,7 @@ void ui_study_cb_threshold_pressed(GtkWidget * button, gpointer data) {
     ui_common_remove_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
     g_signal_connect(G_OBJECT(ui_study->threshold_dialog), "delete_event",
 		     G_CALLBACK(threshold_delete_event), ui_study);
-    gtk_widget_show(GTK_WIDGET(ui_study->threshold_dialog));
+    gtk_widget_show(ui_study->threshold_dialog);
   } else {
     /* pop the window to the top */
     if (ui_study->active_object->dialog)

@@ -40,6 +40,11 @@
 /* defines how many times we want the progress bar to be updated over the course of an action */
 #define AMIDE_UPDATE_DIVIDER 40.0 /* must be float point */
 
+/* file info.  magic string needs to be < 64 bytes */
+#define AMIDE_FILE_VERSION "2.0"
+#define AMIDE_FLAT_FILE_MAGIC_STRING "AMIDE XML Image Format Flat File"
+
+
 /* some basic defines for packing tables */
 #define X_PACKING_OPTIONS GTK_EXPAND
 #define Y_PACKING_OPTIONS GTK_EXPAND
@@ -115,6 +120,9 @@ extern gchar * object_menu_names[];
 extern PangoFontDescription * amitk_fixed_font_desc;
 
 /* external functions */
+
+gboolean amide_is_xif_directory(const gchar * filename, gboolean * plegacy, gchar ** pxml_filename);
+gboolean amide_is_xif_flat_file(const gchar * filename, guint64 * plocation_le, guint64 *psize_le);
 void amitk_append_str(gchar ** pstr, const gchar * format, ...);
 void amide_register_window(gpointer * widget);
 void amide_unregister_window(gpointer * widget);

@@ -2,7 +2,7 @@ dnl ============================================================================
 dnl              Configure script for AMIDE
 dnl ===============================================================================
 AC_PREREQ(2.53)
-AC_INIT([amide],[0.7.11],[amide-users@lists.sourceforge.net])
+AC_INIT([amide],[0.7.12],[amide-users@lists.sourceforge.net])
 
 AC_CONFIG_SRCDIR(src/amide.c)
 AM_CONFIG_HEADER(amide_config.h)
@@ -14,6 +14,7 @@ AM_MAINTAINER_MODE
 AC_PROG_CC
 AM_PROG_LIBTOOL
 AC_PATH_PROGS(M4, gnum4 gm4 m4, m4)
+AC_FUNC_MKDIR
 
 AC_CHECK_HEADERS(unistd.h, AC_DEFINE(HAVE_UNISTD_H))
 
@@ -65,10 +66,10 @@ PKG_CHECK_MODULES(AMIDE_GNOME,[
 	gobject-2.0	>= 2.0.0
 	gtk+-2.0	>= 2.0.0
 	libxml-2.0	>= 2.4.12
+	libgnomecanvas-2.0 >= 2.0.0
 	libgnomeui-2.0  >= 2.0.0
-	libgnomecanvas-2.0 >= 1.113.0
-	gdk-pixbuf-2.0	>= 0.14.0
 ])
+
 AC_SUBST(AMIDE_GNOME_LIBS)
 AC_SUBST(AMIDE_GNOME_CFLAGS)
 
@@ -76,13 +77,16 @@ dnl glib-genmarshal
 AC_PATH_PROG(GLIB_GENMARSHAL, glib-genmarshal)
 
 
-dnl GNOME_COMPILE_WARNINGS
-dnl ALL_LINGUAS=
-dnl AM_GNU_GETTEXT
-
-
-
-
+dnl record if our version of libgnomecanvas can handle anti-aliasing
+PKG_CHECK_MODULES(dummy, 
+	[libgnomecanvas-2.0 >= 2.2.0], 
+	 enable_antialiasing=yes, enable_antialiasing=no)
+if test $enable_antialiasing = yes; then
+	echo "Compiling with libgnomecanvas antialiasing support"
+else
+	echo "Compiling without libgnomecanvas antialiasing support"
+	AC_DEFINE(AMIDE_LIBGNOMECANVAS_OLD, 1, Define to 1 to compile AMIDE without antialiasing)
+fi
 
 
 
@@ -144,10 +148,10 @@ AM_CONDITIONAL(ENABLE_GTK_DOC, test x$enable_gtk_doc = xyes)
 ##############################################################
 
 dnl check for various libraries and programs that we might need
-AC_CHECK_LIB(gsl, gsl_error, FOUND_LIBGSL=yes, FOUND_LIBGSL=no, -lgslcblas -L/sw/lib)
+AM_PATH_GSL(1.1.1, FOUND_LIBGSL=yes, FOUND_LIBGSL=no)
 AC_CHECK_LIB(ecat, matrix_open, FOUND_LIBECAT=yes, FOUND_LIBECAT=no, -L/sw/lib)
-AC_CHECK_LIB(mdc, MdcOpenFile, FOUND_MEDCON=yes, FOUND_MEDCON=no, -L/sw/lib -lglib)
 AC_CHECK_LIB(volpack, vpGetErrorString, FOUND_VOLPACK=yes, FOUND_VOLPACK=no, -lm -L/sw/lib)
+AM_PATH_XMEDCON(0.8.13, FOUND_XMEDCON=yes, FOUND_XMEDCON=no)
 AM_PATH_LIBFAME(0.9.0, FOUND_LIBFAME=yes, FOUND_LIBFAME=no)
 
 
@@ -181,14 +185,12 @@ fi
 dnl let people compile without the GNU Scientific Library
 AC_ARG_ENABLE(
 	libgsl,
-	[  --enable-libgsl	Comple using the GNU Scientific Library [default=yes]],
+	[  --enable-libgsl	Compile with the GNU Scientific Library [default=yes]],
 	enable_libgsl="$enableval",
 	enable_libgsl=yes)
 
 if (test $enable_libgsl = yes) && (test $FOUND_LIBGSL = yes); then
 	echo "Compiling with GNU Scientific Library support"
-	AMIDE_LIBGSL_LIBS="-lgsl -lgslcblas"
-	AC_SUBST(AMIDE_LIBGSL_LIBS)
 	AC_DEFINE(AMIDE_LIBGSL_SUPPORT, 1, Define to 1 to compile with the GNU Scientific Library)
 else
 	echo "Compiling without the GNU Scientific Library"
@@ -222,11 +224,13 @@ AC_ARG_ENABLE(
 	enable_libmdc="$enableval", 
 	enable_libmdc=yes)
 
-if (test $enable_libmdc = yes) && (test $FOUND_MEDCON = yes); then
+if (test $enable_libmdc = yes) && (test $FOUND_XMEDCON = yes); then
 	echo "Compiling with xmedcon/libmdc file support"
-	AMIDE_LIBMDC_LIBS="-lmdc"
-	AC_SUBST(AMIDE_LIBMDC_LIBS)
 	AC_DEFINE(AMIDE_LIBMDC_SUPPORT, 1, Define to 1 to compile with (X)MedCon)
+
+	dnl redefine the xmedcon libs line, as otherwise we'll get errors from linking to glib1
+	XMEDCON_LIBS="-L/usr/local/lib -lmdc"
+	AC_SUBST(XMEDCON_LIBS)
 else
 	echo "Compiling without xmedcon/libmdc file support"
 fi
@@ -258,8 +262,6 @@ AC_ARG_ENABLE(
 
 if (test $enable_libfame = yes) && (test $FOUND_LIBFAME = yes); then
 	echo "Compiling with libfame mpeg encoding support "
-	AMIDE_LIBFAME_LIBS="-lfame"
-	AC_SUBST(AMIDE_LIBFAME_LIBS)
 	AC_DEFINE(AMIDE_LIBFAME_SUPPORT, 1, Define to 1 to compile with Libfame)
 else
 	echo "Compiling without libfame mpeg encoding support"
@@ -298,6 +300,7 @@ omf-install/Makefile
 src/Makefile
 etc/Makefile
 etc/amide-$VERSION-1.info:etc/amide.info.in
+etc/amide-$VERSION-1.iss:etc/amide.iss.in
 etc/amide.spec
 po/Makefile.in])
 AC_OUTPUT 

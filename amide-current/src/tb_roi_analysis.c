@@ -26,11 +26,6 @@
 #include "amide_config.h"
 #include <gtk/gtk.h>
 #include <string.h>
-#include "ui_common.h"
-#include "analysis.h"
-#include "tb_roi_analysis.h"
-
-
 
 #ifndef AMIDE_WIN32_HACKS
 #include <libgnome/libgnome.h>
@@ -40,6 +35,10 @@
   static gboolean calc_on_subfraction=FALSE;
   static gdouble subfraction=0.0;
 #endif
+
+#include "ui_common.h"
+#include "analysis.h"
+#include "tb_roi_analysis.h"
 
 
 #define AMITK_RESPONSE_SAVE_AS 3
@@ -110,8 +109,8 @@ static void export_ok_cb(GtkWidget* widget, gpointer data) {
   /* get a pointer to the analysis */
   roi_analyses = g_object_get_data(G_OBJECT(file_selection), "roi_analyses");
 
-  if ((save_filename = ui_common_file_selection_get_name(file_selection)) == NULL)
-    return; /* inappropriate name or don't want to overwrite */
+  save_filename = ui_common_file_selection_get_save_name(file_selection);
+  if (save_filename == NULL) return; /* inappropriate name or don't want to overwrite */
 
   /* allright, save the data */
   export_analyses(save_filename, roi_analyses);
@@ -126,14 +125,14 @@ static void export_ok_cb(GtkWidget* widget, gpointer data) {
 static void export_data(analysis_roi_t * roi_analyses) {
   
   analysis_roi_t * temp_analyses = roi_analyses;
-  GtkFileSelection * file_selection;
+  GtkWidget * file_selection;
   gchar * temp_string;
   gchar * analysis_name = NULL;
 
   /* sanity checks */
   g_return_if_fail(roi_analyses != NULL);
 
-  file_selection = GTK_FILE_SELECTION(gtk_file_selection_new(_("Export Statistics")));
+  file_selection = gtk_file_selection_new(_("Export Statistics"));
 
   /* take a guess at the filename */
   analysis_name = g_strdup_printf("%s_analysis_{%s",
@@ -149,7 +148,7 @@ static void export_data(analysis_roi_t * roi_analyses) {
   temp_string = g_strdup_printf("%s}.csv",analysis_name);
   g_free(analysis_name);
   analysis_name = temp_string;
-  gtk_file_selection_set_filename(GTK_FILE_SELECTION(file_selection), analysis_name);
+  ui_common_file_selection_set_filename(file_selection, analysis_name);
   g_free(analysis_name);
 
   /* save a pointer to the analyses */
@@ -159,18 +158,18 @@ static void export_data(analysis_roi_t * roi_analyses) {
   gtk_window_set_modal(GTK_WINDOW(file_selection), TRUE);
 
   /* connect the signals */
-  g_signal_connect(G_OBJECT(file_selection->ok_button), "clicked",
+  g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->ok_button), "clicked",
 		   G_CALLBACK(export_ok_cb), file_selection);
-  g_signal_connect(G_OBJECT(file_selection->cancel_button), "clicked",
+  g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->cancel_button), "clicked",
 		   G_CALLBACK(ui_common_file_selection_cancel_cb), file_selection);
-  g_signal_connect(G_OBJECT(file_selection->cancel_button), "delete_event",
+  g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->cancel_button), "delete_event",
 		   G_CALLBACK(ui_common_file_selection_cancel_cb), file_selection);
 
   /* set the position of the dialog */
   gtk_window_set_position(GTK_WINDOW(file_selection), GTK_WIN_POS_MOUSE);
 
   /* run the dialog */
-  gtk_widget_show(GTK_WIDGET(file_selection));
+  gtk_widget_show(file_selection);
 
   return;
 }
@@ -500,7 +499,8 @@ static void add_pages(GtkWidget * notebook, AmitkStudy * study,
       volume_analyses = volume_analyses->next_volume_analysis;
     }
 
-    /* just using the list for display */
+
+    /* if we made the list on this iteration, place the widget*/
     if ((dynamic_data) || (!static_tree_created)) {
       selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (list));
       gtk_tree_selection_set_mode (selection, GTK_SELECTION_NONE);

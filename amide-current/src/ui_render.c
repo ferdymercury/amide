@@ -29,6 +29,14 @@
 
 #include <libgnomecanvas/libgnomecanvas.h>
 #include <libgnomeui/libgnomeui.h>
+
+#ifndef AMIDE_WIN32_HACKS
+#include <libgnome/libgnome.h>
+#else
+  static gboolean strip_highs=FALSE;
+  static gboolean optimize_rendering=TRUE;
+#endif
+
 #include "image.h"
 #include "ui_common.h"
 #include "ui_render.h"
@@ -39,12 +47,6 @@
 #include "pixmaps.h"
 
 
-#ifndef AMIDE_WIN32_HACKS
-#include <libgnome/libgnome.h>
-#else
-  static gboolean strip_highs=FALSE;
-  static gboolean optimize_rendering=TRUE;
-#endif
 
 #define UPDATE_NONE 0
 #define UPDATE_RENDERING 0x1
@@ -373,8 +375,8 @@ static void export_ok_cb(GtkWidget* widget, gpointer data) {
   /* get a pointer to ui_render */
   ui_render = g_object_get_data(G_OBJECT(file_selection), "ui_render");
 
-  if ((save_filename = ui_common_file_selection_get_name(file_selection)) == NULL)
-    return; /* inappropriate name or don't want to overwrite */
+  save_filename = ui_common_file_selection_get_save_name(file_selection);
+  if (save_filename == NULL) return; /* inappropriate name or don't want to overwrite */
 
   if (gdk_pixbuf_save (ui_render->pixbuf, save_filename, "jpeg", NULL, 
 		       "quality", "100", NULL) == FALSE) {
@@ -395,14 +397,14 @@ static void export_cb(GtkWidget * widget, gpointer data) {
 
   ui_render_t * ui_render = data;
   renderings_t * temp_renderings;
-  GtkFileSelection * file_selection;
+  GtkWidget * file_selection;
   gchar * temp_string;
   gchar * data_set_names = NULL;
   static guint save_image_num = 0;
 
   g_return_if_fail(ui_render->pixbuf != NULL);
 
-  file_selection = GTK_FILE_SELECTION(gtk_file_selection_new(_("Export File")));
+  file_selection = gtk_file_selection_new(_("Export File"));
 
   /* take a guess at the filename */
   temp_renderings = ui_render->renderings;
@@ -417,7 +419,7 @@ static void export_cb(GtkWidget * widget, gpointer data) {
   temp_string = g_strdup_printf("Rendering%s{%s}_%d.jpg", 
 				ui_render->stereoscopic ? "_stereo_" : "_", 
 				data_set_names,save_image_num++);
-  gtk_file_selection_set_filename(GTK_FILE_SELECTION(file_selection), temp_string);
+  ui_common_file_selection_set_filename(file_selection, temp_string);
   g_free(data_set_names);
   g_free(temp_string); 
 
@@ -429,18 +431,18 @@ static void export_cb(GtkWidget * widget, gpointer data) {
   // for some reason, this modal's the application permanently...
 
   /* connect the signals */
-  g_signal_connect(G_OBJECT(file_selection->ok_button), "clicked",
+  g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->ok_button), "clicked",
 		   G_CALLBACK(export_ok_cb), file_selection);
-  g_signal_connect(G_OBJECT(file_selection->cancel_button), "clicked",
+  g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->cancel_button), "clicked",
 		   G_CALLBACK(ui_common_file_selection_cancel_cb), file_selection);
-  g_signal_connect(G_OBJECT(file_selection->cancel_button), "delete_event",
+  g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->cancel_button), "delete_event",
 		   G_CALLBACK(ui_common_file_selection_cancel_cb), file_selection);
 
   /* set the position of the dialog */
   gtk_window_set_position(GTK_WINDOW(file_selection), GTK_WIN_POS_MOUSE);
 
   /* run the dialog */
-  gtk_widget_show(GTK_WIDGET(file_selection));
+  gtk_widget_show(file_selection);
 
   return;
 }

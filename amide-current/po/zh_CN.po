@@ -20,7 +20,7 @@ msgstr "高级医学图像察看器"
 
 #: etc/amide.desktop.in.h:2
 msgid "Amide"
-msgstr "Amide"
+msgstr "高级医学图像察看器"
 
 #: etc/amide.desktop.in.h:3
 msgid "Medical Image Examiner"
@@ -2985,32 +2985,32 @@ msgstr ""
 
 #: src/ui_study.c:65
 msgid "shift-ctrl-3"
-msgstr ""
+msgstr "Shift-Ctrl-3"
 
 #. BLANK
 #: src/ui_study.c:73 src/ui_study.c:85
 msgid "move view"
-msgstr ""
+msgstr "移动视图"
 
 #: src/ui_study.c:73
 msgid "shift data set"
-msgstr ""
+msgstr "移动数据集"
 
 #: src/ui_study.c:74 src/ui_study.c:86
 msgid "move view, min. depth"
-msgstr ""
+msgstr "至小深度移动视图"
 
 #: src/ui_study.c:74
 msgid "rotate data set"
-msgstr ""
+msgstr "旋转数据集"
 
 #: src/ui_study.c:75 src/ui_study.c:87
 msgid "change depth"
-msgstr ""
+msgstr "改变深度"
 
 #: src/ui_study.c:75 src/ui_study.c:111
 msgid "add fiducial mark"
-msgstr ""
+msgstr "增加基准标志"
 
 #. DATA SET
 #: src/ui_study.c:77 src/ui_study.c:81 src/ui_study.c:89 src/ui_study.c:103
@@ -3023,7 +3023,7 @@ msgstr "旋转"
 
 #: src/ui_study.c:79
 msgid "scale"
-msgstr ""
+msgstr "缩放"
 
 #: src/ui_study.c:79 src/ui_study.c:91
 msgid "set data set inside roi to zero"
@@ -3035,7 +3035,7 @@ msgstr ""
 
 #: src/ui_study.c:86
 msgid "rotate study"
-msgstr ""
+msgstr "旋转项目"
 
 #: src/ui_study.c:90
 msgid "erase isocontour point"
@@ -3071,7 +3071,7 @@ msgstr "取消"
 #. CANVAS ROTATE OBJECT
 #: src/ui_study.c:109
 msgid "select data set"
-msgstr ""
+msgstr "选择数据集"
 
 #: src/ui_study.c:110 src/ui_study.c:122
 msgid "make active"
@@ -3079,45 +3079,45 @@ msgstr "激活"
 
 #: src/ui_study.c:111
 msgid "pop up data set dialog"
-msgstr ""
+msgstr "弹出数据集对话框"
 
 #: src/ui_study.c:111 src/ui_study.c:127
 msgid "add roi"
-msgstr ""
+msgstr "增加 ROI"
 
 #: src/ui_study.c:112
 msgid "delete data set"
-msgstr ""
+msgstr "删除数据集"
 
 #. TREE_DATA_SET
 #: src/ui_study.c:113
 msgid "select roi"
-msgstr ""
+msgstr "选择 ROI"
 
 #: src/ui_study.c:114
 msgid "center view on roi"
-msgstr ""
+msgstr "以 ROI 为中心的视图"
 
 #: src/ui_study.c:115
 msgid "pop up roi dialog"
-msgstr ""
+msgstr "弹出 ROI 对话框"
 
 #: src/ui_study.c:116
 msgid "delete roi"
-msgstr ""
+msgstr "删除 ROI"
 
 #. TREE_ROI
 #: src/ui_study.c:117
 msgid "select point"
-msgstr ""
+msgstr "选择点"
 
 #: src/ui_study.c:118
 msgid "center view on point"
-msgstr ""
+msgstr "以点为中心的视图"
 
 #: src/ui_study.c:119
 msgid "pop up point dialog"
-msgstr ""
+msgstr "弹出点对话框"
 
 #: src/ui_study.c:120
 msgid "delete mark"
@@ -3216,7 +3216,7 @@ msgstr ""
 
 #: src/ui_study_cb.c:281
 msgid "Save File"
-msgstr ""
+msgstr "保存文件"
 
 #: src/ui_study_cb.c:377
 #, c-format
@@ -3238,15 +3238,15 @@ msgstr ""
 
 #: src/ui_study_cb.c:442
 msgid "Import File"
-msgstr ""
+msgstr "导入文件"
 
 #: src/ui_study_cb.c:497
 msgid "No data sets selected\n"
-msgstr ""
+msgstr "未选定数据集\n"
 
 #: src/ui_study_cb.c:670
 msgid "no active data set to erase from"
-msgstr ""
+msgstr "无当前数据集可删除"
 
 #: src/ui_study_cb.c:679
 #, c-format
@@ -3270,19 +3270,21 @@ msgstr "内部"
 #: src/ui_study_cb.c:793
 #, c-format
 msgid "Do you really want to delete: %s%s"
-msgstr ""
+msgstr "您是否确定删除：%1$s%2$s"
 
 #: src/ui_study_cb.c:796
 msgid ""
 "\n"
 "and it's children"
-msgstr ""
+msgstr "\n"
+"它还是个孩子"
 
 #: src/ui_study_cb.c:1227
 msgid ""
 "There are unsaved changes to the study.\n"
 "Are you sure you wish to quit?"
-msgstr ""
+msgstr "当前项目的变化还未保存。\n"
+"您是否确定推出？"
 
 #: src/ui_study_menus.c:169 src/ui_study_menus.c:222 src/ui_study_menus.c:235
 #: src/ui_study_menus.c:275
@@ -3292,7 +3294,7 @@ msgstr "横断面(_T)"
 #: src/ui_study_menus.c:170
 msgid ""
 "Export the current transaxial view to an image file (JPEG/TIFF/PNG/etc.)"
-msgstr ""
+msgstr "导出当前横断面视图到一个图像文件(JPEG/TIFF/PNG 等)"
 
 #: src/ui_study_menus.c:172 src/ui_study_menus.c:225 src/ui_study_menus.c:238
 #: src/ui_study_menus.c:278
@@ -3301,16 +3303,16 @@ msgstr "头断面(_C)"
 
 #: src/ui_study_menus.c:173
 msgid "Export the current coronal view to an image file (JPEG/TIFF/PNG/etc.)"
-msgstr ""
+msgstr "导出当前头断面视图到一个图像文件(JPEG/TIFF/PNG 等)"
 
 #: src/ui_study_menus.c:175 src/ui_study_menus.c:228 src/ui_study_menus.c:241
 #: src/ui_study_menus.c:281
 msgid "_Sagittal"
-msgstr "径断面(_S)"
+msgstr "竖断面(_S)"
 
 #: src/ui_study_menus.c:176
 msgid "Export the current sagittal view to an image file (JPEG/TIFF/PNG/etc.)"
-msgstr ""
+msgstr "导出当前竖断面视图到一个图像文件(JPEG/TIFF/PNG 等)"
 
 #: src/ui_study_menus.c:183
 msgid "_New Study"
@@ -3326,7 +3328,7 @@ msgstr "导入文件(猜测格式）(_I)"
 
 #: src/ui_study_menus.c:190
 msgid "Import an image data file into this study, guessing at the file type"
-msgstr ""
+msgstr "向当前项目导入一个图像数据文件，猜测数据格式"
 
 #: src/ui_study_menus.c:193
 msgid "Import File (_specify)"
@@ -3334,7 +3336,7 @@ msgstr "导入文件(指定格式）(_s)"
 
 #: src/ui_study_menus.c:194
 msgid "Import an image data file into this study, specifying the import filter"
-msgstr ""
+msgstr "向当前项目导入一个图像数据文件，指定导入方式"
 
 #: src/ui_study_menus.c:197
 msgid "_Export View"
@@ -3342,7 +3344,7 @@ msgstr "导出视图(_E)"
 
 #: src/ui_study_menus.c:198
 msgid "Export one of the views to a data file"
-msgstr ""
+msgstr "将数据集的一幅视图导出"
 
 #: src/ui_study_menus.c:209
 msgid "Add _ROI"
@@ -3354,35 +3356,35 @@ msgstr "新增ROI文件"
 
 #: src/ui_study_menus.c:212
 msgid "Add _Fiducial Mark"
-msgstr ""
+msgstr "增加基准标志(_F)"
 
 #: src/ui_study_menus.c:213
 msgid "Add a new fiducial mark to the active data set"
-msgstr ""
+msgstr "给当前数据集增加新的基准标志"
 
 #: src/ui_study_menus.c:223
 msgid "Look at a series of transaxial views in a single frame"
-msgstr ""
+msgstr "察看一帧的横断面图系列"
 
 #: src/ui_study_menus.c:226
 msgid "Look at a series of coronal views in a single frame"
-msgstr ""
+msgstr "察看一帧的头断面图系列"
 
 #: src/ui_study_menus.c:229
 msgid "Look at a series of sagittal views in a single frame"
-msgstr ""
+msgstr "察看一帧的竖断面图系列"
 
 #: src/ui_study_menus.c:236
 msgid "Look at a times series of a single transaxial view"
-msgstr ""
+msgstr "察看一个横断面视图的时间序列"
 
 #: src/ui_study_menus.c:239
 msgid "Look at a time series of a single coronal view"
-msgstr ""
+msgstr "察看一个头断面视图的时间系列"
 
 #: src/ui_study_menus.c:242
 msgid "Look at a time series of a a signal sagittal view"
-msgstr ""
+msgstr "察看一个竖断面视图的时间系列"
 
 #: src/ui_study_menus.c:249
 msgid "_Space"
@@ -3390,7 +3392,7 @@ msgstr "空间(_S)"
 
 #: src/ui_study_menus.c:250
 msgid "Look at a series of images over a spacial dimension"
-msgstr "从一个轴向顺序查看刨面图"
+msgstr "从一个轴向顺序查看剖面图"
 
 #: src/ui_study_menus.c:252
 msgid "_Time"
@@ -3398,7 +3400,7 @@ msgstr "时间(_T)"
 
 #: src/ui_study_menus.c:253
 msgid "Look at a series of images over time"
-msgstr "从时间顺序查看刨面图"
+msgstr "从时间顺序查看剖面图"
 
 #: src/ui_study_menus.c:261
 msgid "_Series"
@@ -3406,7 +3408,7 @@ msgstr "序列图(_S)"
 
 #: src/ui_study_menus.c:262
 msgid "Look at a series of images"
-msgstr "按序列查看刨面图"
+msgstr "按序列查看剖面图"
 
 #: src/ui_study_menus.c:265
 msgid "_Volume Rendering"
@@ -3418,144 +3420,144 @@ msgstr "生成当前选定对象的三维立体透视图"
 
 #: src/ui_study_menus.c:276
 msgid "Generate a fly through using transaxial slices"
-msgstr ""
+msgstr "依横向产生逐帧察看动画"
 
 #: src/ui_study_menus.c:279
 msgid "Generate a fly through using coronal slices"
-msgstr ""
+msgstr "依头向产生逐帧察看动画"
 
 #: src/ui_study_menus.c:282
 msgid "Generate a fly through using sagittal slices"
-msgstr ""
+msgstr "依竖向产生逐帧察看动画"
 
 #: src/ui_study_menus.c:290
 msgid "_Alignment Wizard"
-msgstr ""
+msgstr "排列向导(_A)"
 
 #: src/ui_study_menus.c:291
 msgid "guides you throw the processing of alignment"
-msgstr ""
+msgstr "逐步指导你做排列处理"
 
 #: src/ui_study_menus.c:294
 msgid "_Crop Active Data Set"
-msgstr ""
+msgstr "裁减当前数据集(_C)"
 
 #: src/ui_study_menus.c:295
 msgid "allows you to crop the active data set"
-msgstr ""
+msgstr "裁减当前数据集"
 
 #: src/ui_study_menus.c:298
 msgid "_Factor Analysis"
-msgstr ""
+msgstr "要素分析(_F)"
 
 #: src/ui_study_menus.c:299
 msgid "allows you to do factor analysis of dynamic data on the active data set"
-msgstr ""
+msgstr "对当前数据集的动态数据做要素分析"
 
 #: src/ui_study_menus.c:302
 msgid "_Filter Active Data Set"
-msgstr ""
+msgstr "过滤处理当前数据集(_F)"
 
 #: src/ui_study_menus.c:303
 msgid "allows you to filter the active data set"
-msgstr ""
+msgstr "过滤处理当前数据集"
 
 #: src/ui_study_menus.c:307
 msgid "Generate _Fly Through"
-msgstr ""
+msgstr "产生逐帧察看动画(_F)"
 
 #: src/ui_study_menus.c:308
 msgid "generate an mpeg fly through of the data sets"
-msgstr ""
+msgstr "从数据集中产生逐帧察看动画"
 
 #: src/ui_study_menus.c:311
 msgid "Calculate _ROI Statistics"
-msgstr ""
+msgstr "计算ROI的统计信息(_R)"
 
 #: src/ui_study_menus.c:312
 msgid "caculate ROI statistics"
-msgstr ""
+msgstr "计算ROI的统计信息"
 
 #: src/ui_study_menus.c:322
 msgid "_Tools"
-msgstr ""
+msgstr "工具(_T)"
 
 #: src/ui_study_menus.c:440
 msgid "Leave crosshairs on canvases"
-msgstr ""
+msgstr "将十字线留在背景上"
 
 #: src/ui_study_menus.c:458
 msgid "Set the thresholds and colormaps for the active data set"
-msgstr ""
+msgstr "设定数据集的伪彩色表和极限"
 
 #: src/ui_study_menus.c:573
 msgid "specify how much to magnify the images"
-msgstr ""
+msgstr "指定图像的放大率"
 
 #. add the slice thickness selector
 #: src/ui_study_menus.c:580
 msgid "thickness (mm):"
-msgstr ""
+msgstr "厚度(毫米)："
 
 #: src/ui_study_menus.c:598
 msgid "specify how thick to make the slices (mm)"
-msgstr ""
+msgstr "指定切片的厚度(毫米)"
 
 #. frame selector
 #: src/ui_study_menus.c:604
 msgid "time:"
-msgstr ""
+msgstr "时间："
 
 #: src/ui_study_menus.c:614
 msgid "the time range over which to view the data (s)"
-msgstr ""
+msgstr "时间范围超出数据的视图(秒)"
 
 #: src/ui_time_dialog.c:50 src/ui_time_dialog.c:489
 msgid "Start (s)"
-msgstr ""
+msgstr "开始(秒)"
 
 #: src/ui_time_dialog.c:51 src/ui_time_dialog.c:507
 msgid "End (s)"
-msgstr ""
+msgstr "结束(秒)"
 
 #: src/ui_time_dialog.c:52
 msgid "Frame #"
-msgstr ""
+msgstr "帧 #"
 
 #: src/ui_time_dialog.c:237
 msgid "can't count frames or allocate memory!"
-msgstr ""
+msgstr "无法计算帧数或者分配内存"
 
 #: src/ui_time_dialog.c:457
 #, c-format
 msgid "%s: Time Dialog"
-msgstr ""
+msgstr "%1$s：时间对话框"
 
 #: src/xml.c:110
 #, c-format
 msgid "Couldn't read time value for %s, substituting %5.3f"
-msgstr ""
+msgstr "无法读取 %1$s 的时间值，代定为%2$5.3f"
 
 #: src/xml.c:132 src/xml.c:162
 msgid "Couldn't allocate space for time data"
-msgstr ""
+msgstr "无法为时间数据分配空间"
 
 #: src/xml.c:160
 #, c-format
 msgid "Couldn't read value for %s, substituting zero"
-msgstr ""
+msgstr "无法读取 %1$s 的值，代定为“零”"
 
 #: src/xml.c:199
 #, c-format
 msgid "Couldn't read value for %s, substituting %5.3f"
-msgstr ""
+msgstr "无法读取 %1$s 的值，代定为%2$5.3f"
 
 #: src/xml.c:242
 #, c-format
 msgid "Couldn't read value for %s, substituting FALSE"
-msgstr ""
+msgstr "无法读取 %1$s 的值，代定为“假”"
 
 #: src/xml.c:270
 #, c-format
 msgid "Couldn't read value for %s, substituting %d"
-msgstr ""
+msgstr "无法读取 %1$s 的值，代定为%2$d"

@@ -43,9 +43,6 @@ AMIDE_DEBUG_CFLAGS = @AMIDE_DEBUG_CFLAGS@
 AMIDE_GNOME_CFLAGS = @AMIDE_GNOME_CFLAGS@
 AMIDE_GNOME_LIBS = @AMIDE_GNOME_LIBS@
 AMIDE_LIBECAT_LIBS = @AMIDE_LIBECAT_LIBS@
-AMIDE_LIBFAME_LIBS = @AMIDE_LIBFAME_LIBS@
-AMIDE_LIBGSL_LIBS = @AMIDE_LIBGSL_LIBS@
-AMIDE_LIBMDC_LIBS = @AMIDE_LIBMDC_LIBS@
 AMIDE_LIBVOLPACK_LIBS = @AMIDE_LIBVOLPACK_LIBS@
 AMIDE_WIN32_HACKS_FALSE = @AMIDE_WIN32_HACKS_FALSE@
 AMIDE_WIN32_HACKS_TRUE = @AMIDE_WIN32_HACKS_TRUE@
@@ -87,6 +84,9 @@ GETTEXT_PACKAGE = @GETTEXT_PACKAGE@
 GLIB_GENMARSHAL = @GLIB_GENMARSHAL@
 GMOFILES = @GMOFILES@
 GMSGFMT = @GMSGFMT@
+GSL_CFLAGS = @GSL_CFLAGS@
+GSL_CONFIG = @GSL_CONFIG@
+GSL_LIBS = @GSL_LIBS@
 GTKDOC = @GTKDOC@
 HAVE_DOCBOOK_FALSE = @HAVE_DOCBOOK_FALSE@
 HAVE_DOCBOOK_TRUE = @HAVE_DOCBOOK_TRUE@
@@ -151,6 +151,9 @@ STRIP = @STRIP@
 USE_NLS = @USE_NLS@
 VERSION = @VERSION@
 XGETTEXT = @XGETTEXT@
+XMEDCON_CFLAGS = @XMEDCON_CFLAGS@
+XMEDCON_CONFIG = @XMEDCON_CONFIG@
+XMEDCON_LIBS = @XMEDCON_LIBS@
 ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_CXX = @ac_ct_CXX@
@@ -171,6 +174,8 @@ build_cpu = @build_cpu@
 build_os = @build_os@
 build_vendor = @build_vendor@
 datadir = @datadir@
+dummy_CFLAGS = @dummy_CFLAGS@
+dummy_LIBS = @dummy_LIBS@
 exec_prefix = @exec_prefix@
 host = @host@
 host_alias = @host_alias@
@@ -208,17 +213,20 @@ CLEANFILES = \
 
 DISTCLEANFILES = \
 	*~ 	\
-	amide-*.info 
+	amide-*.info \
+	amide-*.iss
 
 subdir = etc
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = $(top_builddir)/amide_config.h
-CONFIG_CLEAN_FILES = amide-$VERSION-1.info amide.spec
+CONFIG_CLEAN_FILES = amide-$VERSION-1.info amide-$VERSION-1.iss \
+	amide.spec
 DIST_SOURCES =
 DATA = $(Applications_DATA)
 
-DIST_COMMON = Makefile.am Makefile.in amide.info.in amide.spec.in
+DIST_COMMON = Makefile.am Makefile.in amide.info.in amide.iss.in \
+	amide.spec.in
 all: all-am
 
 .SUFFIXES:
@@ -228,6 +236,8 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ Makefile.am  $(top_srcdir)/configu
 Makefile: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.in  $(top_builddir)/config.status
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__depfiles_maybe)
 amide-$VERSION-1.info: $(top_builddir)/config.status amide.info.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+amide-$VERSION-1.iss: $(top_builddir)/config.status amide.iss.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 amide.spec: $(top_builddir)/config.status amide.spec.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@

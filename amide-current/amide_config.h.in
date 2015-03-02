@@ -9,6 +9,9 @@
 /* Define to 1 to compile with Libfame */
 #undef AMIDE_LIBFAME_SUPPORT
 
+/* Define to 1 to compile AMIDE without antialiasing */
+#undef AMIDE_LIBGNOMECANVAS_OLD
+
 /* Define to 1 to compile with the GNU Scientific Library */
 #undef AMIDE_LIBGSL_SUPPORT
 
@@ -54,6 +57,9 @@
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
+/* Define to 1 if you have the `mkdir' function. */
+#undef HAVE_MKDIR
+
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
 
@@ -74,6 +80,12 @@
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
+
+/* Define to 1 if you have the `_mkdir' function. */
+#undef HAVE__MKDIR
+
+/* Define if mkdir takes only one argument. */
+#undef MKDIR_TAKES_ONE_ARG
 
 /* Name of package */
 #undef PACKAGE

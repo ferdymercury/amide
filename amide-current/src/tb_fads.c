@@ -187,12 +187,12 @@ static gchar * get_filename(tb_fads_t * tb_fads) {
 
   /* take a guess at the filename */
   analysis_name = g_strdup_printf("%s_fads_analysis.csv",AMITK_OBJECT_NAME(tb_fads->data_set));
-  gtk_file_selection_set_filename(GTK_FILE_SELECTION(fs), analysis_name);
+  ui_common_file_selection_set_filename(fs, analysis_name);
   g_free(analysis_name);
 
   /* run the dialog */
   response_id = gtk_dialog_run(GTK_DIALOG(fs));
-  save_filename = g_strdup(ui_common_file_selection_get_name(fs));
+  save_filename = ui_common_file_selection_get_save_name(fs);
   gtk_widget_destroy(GTK_WIDGET(fs));
 
   if (response_id == GTK_RESPONSE_OK)

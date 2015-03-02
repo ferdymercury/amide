@@ -86,8 +86,8 @@ struct _AmitkObjectClass
   gboolean (* object_selection_changed) (AmitkObject * object);
   AmitkObject * (* object_copy)         (const AmitkObject * object);
   void (* object_copy_in_place)         (AmitkObject * dest_object, const AmitkObject * src_object);
-  void (* object_write_xml)             (const AmitkObject * object, xmlNodePtr nodes);
-  gchar * (* object_read_xml)           (AmitkObject * object, xmlNodePtr nodes, gchar * error_buf);
+  void (* object_write_xml)             (const AmitkObject * object, xmlNodePtr nodes, FILE * study_file);
+  gchar * (* object_read_xml)           (AmitkObject * object, xmlNodePtr nodes, FILE * study_file, gchar * error_buf);
   void (* object_add_child)             (AmitkObject * object, AmitkObject * child);
   void (* object_remove_child)          (AmitkObject * object, AmitkObject * child);
        
@@ -99,8 +99,15 @@ struct _AmitkObjectClass
 
 GType	        amitk_object_get_type	             (void);
 AmitkObject *   amitk_object_new                     (void);
-gchar *         amitk_object_write_xml               (AmitkObject * object);
-AmitkObject *   amitk_object_read_xml                (gchar * xml_filename,
+void            amitk_object_write_xml               (AmitkObject * object,
+						      FILE * study_file,
+						      gchar ** output_filename,
+						      guint64 * location,
+						      guint64 * size);
+AmitkObject *   amitk_object_read_xml                (gchar * xml_filename, 
+						      FILE * study_file, 
+						      guint64 location,
+						      guint64 size, 
 						      gchar ** perror_buf);
 AmitkObject *   amitk_object_copy                    (const AmitkObject * object);
 void            amitk_object_copy_in_place           (AmitkObject * dest_object,
@@ -152,8 +159,11 @@ GList *         amitk_objects_get_of_type            (GList * objects,
 gboolean        amitk_objects_has_type               (GList * objects, 
 						      const AmitkObjectType type,
 						      const gboolean recurse);
-void            amitk_objects_write_xml              (GList * objects, xmlNodePtr node_list);
-GList *         amitk_objects_read_xml               (xmlNodePtr node_list, 
+void            amitk_objects_write_xml              (GList * objects, 
+						      xmlNodePtr node_list,
+						      FILE * study_file);
+GList *         amitk_objects_read_xml               (xmlNodePtr node_list,
+						      FILE * study_file,
 						      gchar **perror_buf);
 
 const gchar *   amitk_object_type_get_name           (const AmitkObjectType type);

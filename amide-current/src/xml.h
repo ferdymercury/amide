@@ -43,6 +43,8 @@ amide_data_t xml_get_data(xmlNodePtr nodes, const gchar * descriptor, gchar **pe
 amide_real_t xml_get_real(xmlNodePtr node, const gchar * descriptor, gchar **perror_buf);
 gboolean xml_get_boolean(xmlNodePtr nodes, const gchar * descriptor, gchar **perror_buf);
 gint xml_get_int(xmlNodePtr nodes, const gchar * descriptor, gchar **perror_buf);
+void xml_get_location_and_size(xmlNodePtr nodes, const gchar * descriptor, 
+			       guint64 * location, guint64 * size, gchar **perror_buf);
 void xml_save_string(xmlNodePtr node, const gchar * descriptor, const gchar * string);
 void xml_save_time(xmlNodePtr node, const gchar * descriptor, const amide_time_t num);
 void xml_save_times(xmlNodePtr node, const gchar * descriptor, const amide_time_t * numbers, const int num);
@@ -50,6 +52,9 @@ void xml_save_data(xmlNodePtr node, const gchar * descriptor, const amide_data_t
 void xml_save_real(xmlNodePtr node, const gchar * descriptor, const amide_real_t num);
 void xml_save_boolean(xmlNodePtr node, const gchar * descriptor, const gboolean value);
 void xml_save_int(xmlNodePtr node, const gchar * descriptor, const int num);
+void xml_save_location_and_size(xmlNodePtr node, const gchar * descriptor, 
+				const guint64 location, const guint64 size);
+xmlDocPtr xml_open_doc(gchar * filename, FILE * study_file, guint64 location, guint64 size, gchar ** perror_buf);
 
 #endif /* __XML_H__ */
 

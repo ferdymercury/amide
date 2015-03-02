@@ -29,6 +29,7 @@
 #include "amide.h"
 #include "ui_common.h"
 #include "amitk_space.h"
+#include "amitk_xif_sel.h"
 #include "pixmaps.h"
 #ifdef AMIDE_LIBGSL_SUPPORT
 #include <gsl/gsl_version.h>
@@ -68,34 +69,48 @@ GdkCursor * ui_common_cursor[NUM_CURSORS];
 /* internal variables */
 static gboolean ui_common_cursors_initialized = FALSE;
 static GList * ui_common_cursor_stack=NULL;
+static gchar * last_path_used=NULL;
 
-gchar * ui_common_file_selection_get_name(GtkWidget * file_selection) {
 
-  const gchar * save_filename;
+/* returns TRUE for OK */
+gboolean ui_common_check_filename(const gchar * filename) {
+
+  if ((strcmp(filename, ".") == 0) ||
+      (strcmp(filename, "..") == 0) ||
+      (strcmp(filename, "") == 0) ||
+      (strcmp(filename, "\\") == 0) ||
+      (strcmp(filename, "/") == 0)) {
+    return FALSE;
+  } else
+    return TRUE;
+}
+
+
+
+static gchar * save_name_common(GtkWidget * file_selection, const gchar * filename) {
+
   struct stat file_info;
   GtkWidget * question;
   gint return_val;
 
-  save_filename = gtk_file_selection_get_filename(GTK_FILE_SELECTION(file_selection));
-
   /* sanity checks */
-  if ((strcmp(save_filename, ".") == 0) ||
-      (strcmp(save_filename, "..") == 0) ||
-      (strcmp(save_filename, "") == 0) ||
-      (strcmp(save_filename, "\\") == 0) ||
-      (strcmp(save_filename, "/") == 0)) {
-    g_warning(_("Inappropriate filename: %s"),save_filename);
+  if (!ui_common_check_filename(filename)) {
+    g_warning(_("Inappropriate filename: %s"),filename);
     return NULL;
   }
 
+  if (last_path_used != NULL) g_free(last_path_used);
+  last_path_used = g_strdup(filename);
+
+
   /* check with user if filename already exists */
-  if (stat(save_filename, &file_info) == 0) {
+  if (stat(filename, &file_info) == 0) {
     /* check if it's okay to writeover the file */
     question = gtk_message_dialog_new(GTK_WINDOW(file_selection),
 				      GTK_DIALOG_DESTROY_WITH_PARENT,
 				      GTK_MESSAGE_QUESTION,
 				      GTK_BUTTONS_OK_CANCEL,
-				      _("Overwrite file: %s"), save_filename);
+				      _("Overwrite file: %s"), filename);
 
     /* and wait for the question to return */
     return_val = gtk_dialog_run(GTK_DIALOG(question));
@@ -108,8 +123,133 @@ gchar * ui_common_file_selection_get_name(GtkWidget * file_selection) {
     /* unlinking the file doesn't occur here */
   }
 
-  return g_strdup(save_filename);
+  return g_strdup(filename);
 }
+
+gchar * ui_common_file_selection_get_save_name(GtkWidget * file_selection) {
+  const gchar * filename;
+  filename = gtk_file_selection_get_filename(GTK_FILE_SELECTION(file_selection));
+  return save_name_common(file_selection, filename);
+}
+
+gchar * ui_common_xif_selection_get_save_name(GtkWidget * xif_selection) {
+  const gchar * filename;
+  gchar * save_filename;
+  gchar * prev_filename;
+  gchar ** frags1=NULL;
+  gchar ** frags2=NULL;
+
+  filename = amitk_xif_selection_get_filename(AMITK_XIF_SELECTION(xif_selection));
+
+  /* make sure the filename ends with .xif */
+  save_filename = g_strdup(filename);
+  g_strreverse(save_filename);
+  frags1 = g_strsplit(save_filename, ".", 2);
+  g_strreverse(save_filename);
+  g_strreverse(frags1[0]);
+  frags2 = g_strsplit(frags1[0], G_DIR_SEPARATOR_S, -1);
+  if (g_ascii_strcasecmp(frags2[0], "xif") != 0) {
+    prev_filename = save_filename;
+    save_filename = g_strdup_printf("%s%s",prev_filename, ".xif");
+    g_free(prev_filename);
+  }    
+  g_strfreev(frags2);
+  g_strfreev(frags1);
+
+  prev_filename = save_filename;
+  save_filename = save_name_common(xif_selection, prev_filename);
+  g_free(prev_filename);
+
+  return save_filename;
+}
+
+
+
+
+
+
+
+static gchar * load_name_common(const gchar * filename) {
+
+  /* sanity checks */
+  if (!ui_common_check_filename(filename)) {
+    g_warning(_("Inappropriate filename: %s"),filename);
+    return NULL;
+  }
+
+  if (last_path_used != NULL) g_free(last_path_used);
+  last_path_used = g_strdup(filename);
+
+  return g_strdup(filename);
+}
+
+gchar * ui_common_file_selection_get_load_name(GtkWidget * file_selection) {
+  const gchar * filename;
+  filename = gtk_file_selection_get_filename(GTK_FILE_SELECTION(file_selection));
+  return load_name_common(filename);
+}
+
+gchar * ui_common_xif_selection_get_load_name(GtkWidget * xif_selection) {
+  const gchar * filename;
+  filename = amitk_xif_selection_get_filename(AMITK_XIF_SELECTION(xif_selection));
+  return load_name_common(filename);
+}
+
+
+
+
+
+static gchar * set_filename_common(gchar * suggested_name) {
+
+  gchar * dir_string;
+  gchar * base_string;
+  gchar * return_string;
+
+  if (last_path_used != NULL)
+    dir_string = g_path_get_dirname(last_path_used);
+  else
+    dir_string = NULL;
+
+  if (suggested_name != NULL) {
+    base_string = g_path_get_basename(suggested_name);
+    return_string = g_strdup_printf("%s/%s", dir_string, base_string);
+    g_free(base_string);
+  } else {
+    return_string = g_strdup_printf("%s/",dir_string);
+  }
+
+  if (dir_string != NULL) g_free(dir_string);
+
+  return return_string;
+}
+
+
+void ui_common_file_selection_set_filename(GtkWidget * file_selection, gchar * suggested_name) {
+  gchar * temp_string;
+  temp_string = set_filename_common(suggested_name);
+
+  if (temp_string != NULL) {
+    gtk_file_selection_set_filename(GTK_FILE_SELECTION(file_selection), temp_string);
+    g_free(temp_string); 
+  }
+
+  return;
+}
+
+
+void ui_common_xif_selection_set_filename(GtkWidget * xif_selection, gchar * suggested_name) {
+  gchar * temp_string;
+  temp_string = set_filename_common(suggested_name);
+    
+  if (temp_string != NULL) {
+    amitk_xif_selection_set_filename(AMITK_XIF_SELECTION(xif_selection), temp_string);
+    g_free(temp_string); 
+  }
+
+  return;
+}
+
+
 
 /* function to close a file selection widget */
 void ui_common_file_selection_cancel_cb(GtkWidget* widget, gpointer data) {

@@ -91,6 +91,7 @@ typedef struct ui_study_t {
   gboolean canvas_maintain_size;
   gint canvas_target_empty_area;
   gboolean dont_prompt_for_save_on_exit;
+  gboolean save_xif_as_directory;
   AmitkColorTable default_color_table[AMITK_MODALITY_NUM];
 
   gboolean study_altered;

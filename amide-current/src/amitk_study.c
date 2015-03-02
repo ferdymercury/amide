@@ -78,9 +78,11 @@ static void          study_finalize            (GObject             *object);
 static AmitkObject * study_copy                (const AmitkObject   *object);
 static void          study_copy_in_place       (AmitkObject * dest_object, const AmitkObject * src_object);
 static void          study_write_xml           (const AmitkObject   *object, 
-						xmlNodePtr           nodes);
+						xmlNodePtr           nodes,
+						FILE                *study_file);
 static gchar *       study_read_xml            (AmitkObject         *object,
 						xmlNodePtr           nodes,
+						FILE                *study_file,
 						gchar               *error_buf);
 static void          study_recalc_voxel_dim    (AmitkStudy          *study);
 static void          study_add_child           (AmitkObject         *object,
@@ -292,13 +294,14 @@ static void study_copy_in_place(AmitkObject * dest_object, const AmitkObject * s
 
 
 
-static void study_write_xml(const AmitkObject * object, xmlNodePtr nodes) {
+static void study_write_xml(const AmitkObject * object,xmlNodePtr nodes,  FILE *study_file) {
+
 
   AmitkStudy * study;
   AmitkView i_view;
   gchar * temp_string;
 
-  AMITK_OBJECT_CLASS(parent_class)->object_write_xml(object, nodes);
+  AMITK_OBJECT_CLASS(parent_class)->object_write_xml(object, nodes, study_file);
 
   study = AMITK_STUDY(object);
 
@@ -320,7 +323,8 @@ static void study_write_xml(const AmitkObject * object, xmlNodePtr nodes) {
   return;
 }
 
-static gchar * study_read_xml(AmitkObject * object, xmlNodePtr nodes, gchar * error_buf) {
+static gchar * study_read_xml(AmitkObject * object, xmlNodePtr nodes, 
+			      FILE * study_file, gchar * error_buf) {
 
   AmitkStudy * study;
   gchar * creation_date;
@@ -330,7 +334,7 @@ static gchar * study_read_xml(AmitkObject * object, xmlNodePtr nodes, gchar * er
   AmitkView i_view;
   gboolean all_false;
 
-  error_buf = AMITK_OBJECT_CLASS(parent_class)->object_read_xml(object, nodes, error_buf);
+  error_buf = AMITK_OBJECT_CLASS(parent_class)->object_read_xml(object, nodes, study_file, error_buf);
 
   study = AMITK_STUDY(object);
 
@@ -387,7 +391,6 @@ static gchar * study_read_xml(AmitkObject * object, xmlNodePtr nodes, gchar * er
   if (all_false)
     for (i_view = 0; i_view < AMITK_VIEW_NUM; i_view++) study->canvas_visible[i_view] = TRUE;
   
-
   return error_buf;
 }
 
@@ -634,46 +637,49 @@ void amitk_study_set_canvas_target(AmitkStudy * study, const gboolean always_on)
 
 
 /* function to load in a study from disk in xml format */
-AmitkStudy * amitk_study_load_xml(const gchar * study_directory) {
+AmitkStudy * amitk_study_load_xml(const gchar * study_filename) {
 
   AmitkStudy * study;
-  gchar * old_dir;
-  gchar * cur_dir;
-  gchar * xml_filename=NULL;
-  struct stat file_info;
-  DIR * directory;
-  struct dirent * directory_entry;
+  gchar * old_dir=NULL;
+  gchar * load_filename=NULL;
   gchar * error_buf=NULL;
-  
-  
-  /* switch into our new directory */
-  old_dir = g_get_current_dir();
-  if (chdir(study_directory) != 0) {
-    g_warning(_("Couldn't change directories in loading study"));
+  gboolean xif_directory=FALSE;
+  gboolean legacy1=FALSE;
+  FILE * study_file=NULL;
+  guint64 location_le, size_le;
+  guint64 location, size;
+
+  /* are we dealing with a xif directory */
+  if (amide_is_xif_directory(study_filename, &legacy1, &load_filename)) {
+    xif_directory=TRUE;
+
+    /* switch into our new directory */
+    old_dir = g_get_current_dir();
+    if (chdir(study_filename) != 0) {
+      g_warning(_("Couldn't change directories in loading study"));
+      return NULL;
+    }
+
+  } else if (amide_is_xif_flat_file(study_filename, &location_le, &size_le)){ /* flat file */
+    if ((study_file = fopen(study_filename, "rb")) == NULL) {
+      g_warning(_("Couldn't open file %s\n"), study_filename);
+      return NULL;
+    }
+  } else {
+    g_warning("Not a XIF study file: %s\n", study_filename);
     return NULL;
   }
+  location = GUINT64_FROM_LE(location_le);
+  size = GUINT64_FROM_LE(size_le);
 
-  /* check for legacy .xif file (< 2.0 version) */
-  if (stat("Study.xml", &file_info) == 0) {
+  /* load in the study */
+  if (legacy1)
     study = legacy_load_xml(&error_buf);
-  } else {
+  else 
+    study = AMITK_STUDY(amitk_object_read_xml(load_filename, study_file, location, size, &error_buf));
 
-    /* figure out the name of the study file */
-    cur_dir = g_get_current_dir();
-    directory = opendir(cur_dir);
-    g_free(cur_dir);
-    
-    /* currently, only looks at the first study_*.xml file... there should be only one anyway */
-    while (((directory_entry = readdir(directory)) != NULL) && (xml_filename == NULL))
-      if (g_pattern_match_simple("study_*.xml", directory_entry->d_name))
-	xml_filename = g_strdup(directory_entry->d_name);
-    
-    closedir(directory);
-    
-    /* load in the study */
-    study = AMITK_STUDY(amitk_object_read_xml(xml_filename, &error_buf));
-    g_free(xml_filename);
-  }
+  if (load_filename != NULL) g_free(load_filename);
+  if (study_file != NULL) fclose(study_file);
 
   /* display accumulated warning messages */
   if (error_buf != NULL) {
@@ -681,17 +687,24 @@ AmitkStudy * amitk_study_load_xml(const gchar * study_directory) {
     g_free(error_buf);
   }
 
-  /* remember the name of the directory for convience */
-  amitk_study_set_filename(study, study_directory);
-
-  /* and return to the old directory */
-  if (chdir(old_dir) != 0) {
-    g_warning(_("Couldn't return to previous directory in load study"));
-    g_object_unref(study);
-    study = NULL;
+  /* remember the name of the file/directory for convience */
+  if (study != NULL)
+    amitk_study_set_filename(study, study_filename);
+    
+  if (xif_directory) {
+    /* and return to the old directory */
+    if (chdir(old_dir) != 0) {
+      g_warning(_("Couldn't return to previous directory in load study"));
+      if (study != NULL) g_object_unref(study);
+      study = NULL;
+    }
+    
+    g_free(old_dir);
   }
 
-  g_free(old_dir);
+
+
+
   return study;
 }
 
@@ -699,28 +712,111 @@ AmitkStudy * amitk_study_load_xml(const gchar * study_directory) {
 
 
 /* function to writeout the study to disk in an xif file */
-gboolean amitk_study_save_xml(AmitkStudy * study, const gchar * study_directory) {
+gboolean amitk_study_save_xml(AmitkStudy * study, const gchar * study_filename,
+			      gboolean save_as_directory) {
 
-  gchar * old_dir;
+  gchar * old_dir=NULL;
+  struct stat file_info;
+  gchar * temp_string;
+  DIR * directory;
+  mode_t mode = 0766;
+  struct dirent * directory_entry;
+  guint64 location, size;
+  guint64 location_le, size_le;
+  FILE * study_file=NULL;
 
-  /* switch into our new directory */
-  old_dir = g_get_current_dir();
-  if (chdir(study_directory) != 0) {
-    g_warning(_("Couldn't change directories in writing study, study not saved"));
-    return FALSE;
+
+  /* see if the filename already exists, remove stuff if needed */
+  if (stat(study_filename, &file_info) == 0) {
+
+    /* and start deleting everything in the filename/directory */
+    if (S_ISDIR(file_info.st_mode)) {
+      directory = opendir(study_filename);
+      while ((directory_entry = readdir(directory)) != NULL) {
+	temp_string = 
+	  g_strdup_printf("%s%s%s", study_filename,G_DIR_SEPARATOR_S, directory_entry->d_name);
+
+	if ((g_pattern_match_simple("*.xml",directory_entry->d_name)) ||
+	    (g_pattern_match_simple("*.dat",directory_entry->d_name)))
+	  if (unlink(temp_string) != 0)
+	    g_warning(_("Couldn't unlink file: %s"),temp_string);
+
+	g_free(temp_string);
+      }
+      if (!save_as_directory) /* get rid of the directory too if we're overwriting with a file*/
+	if (rmdir(study_filename) != 0) {
+	  g_warning(_("Couldn't remove directory: %s"), study_filename);
+	  return FALSE;
+	}
+
+    } else if (S_ISREG(file_info.st_mode)) {
+      if (unlink(study_filename) != 0) {
+	g_warning(_("Couldn't unlink file: %s"),study_filename);
+	return FALSE;
+      }
+
+    } else {
+      g_warning(_("Unrecognized file type for file: %s, couldn't delete"),study_filename);
+      return FALSE;
+    }
+  } 
+
+  if (save_as_directory) {
+    if (stat(study_filename, &file_info) != 0) {
+      /* make the directory if needed */
+#ifdef MKDIR_TAKES_ONE_ARG /* win32 */
+      if (mkdir(study_filename) != 0) 
+#else /* unix */
+      if (mkdir(study_filename, mode) != 0) 
+#endif 
+	{
+	  g_warning(_("Couldn't create amide directory: %s"),study_filename);
+	  return FALSE;
+	}
+    }
   }
 
-  amitk_object_write_xml(AMITK_OBJECT(study));
+  /* remember the name of the xif file/directory of this study */
+  amitk_study_set_filename(study, study_filename);
 
-  /* and return to the old directory */
-  if (chdir(old_dir) != 0) {
-    g_warning(_("Couldn't return to previous directory in writing study"));
-    return FALSE;
+
+  /* get into the output directory/create output file */
+  if (save_as_directory) {
+    old_dir = g_get_current_dir();
+    if (chdir(study_filename) != 0) {
+      g_warning(_("Couldn't change directories in writing study, study not saved"));
+      return FALSE;
+    }
+  } else { /* flat file */
+    if ((study_file = fopen(study_filename, "wb")) == NULL) {
+      g_warning(_("Couldn't open file %s\n"), study_filename);
+      return FALSE;
+    }
+    fprintf(study_file, "%s Version %s", 
+	    AMIDE_FLAT_FILE_MAGIC_STRING,
+	    AMIDE_FILE_VERSION);
+    fseek(study_file, 64+2*sizeof(guint64), SEEK_SET);
   }
-  g_free(old_dir);
 
-  /* remember the name of the directory of this study */
-  amitk_study_set_filename(study, study_directory);
+  /* save the study */
+  amitk_object_write_xml(AMITK_OBJECT(study), study_file, NULL, &location, &size);
+
+  if (save_as_directory) {
+    if (chdir(old_dir) != 0) {
+      g_warning(_("Couldn't return to previous directory in load study"));
+      g_object_unref(study);
+      study = NULL;
+    }
+  } else { /* flat file */
+    /* record location of study object xml, always little endian */
+    fseek(study_file, 64, SEEK_SET);
+    location_le = GUINT64_TO_LE(location);
+    size_le = GUINT64_TO_LE(size);
+    fwrite(&location_le, 1, sizeof(guint64), study_file);
+    fwrite(&size_le, 1, sizeof(guint64), study_file);
+    fclose(study_file);
+  }
+
 
   return TRUE;
 }

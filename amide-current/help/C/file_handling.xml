@@ -90,11 +90,19 @@
 
 <sect2 id="xif_files"><title>XIF Files</title>
 
- <para> AMIDE saves studies in an extensible XML based directory
-  format called XIF (Xml Image Format).  These data directories
-  characteristically end with ".xif", and appear as files within
-  AMIDE.</para>
-  
+ <para> AMIDE saves studies in an extensible XML based format called
+  XIF (Xml Image Format).  This format can be stored as either a
+  single file (flat file format XIF) or as a XIF directory.  The flat
+  file format is the default, and simplifies file moving and handling.
+  The directory format on the other hand allows easy access to the raw
+  study data external to the AMIDE program, and will be of interest to
+  developers.  Which of these two formats you wish to save in can be
+  selected from the preferences dialog.</para>
+
+ <para> In any case, these files or directories will
+  characteristically end with ".xif", and are treated identically
+  within the AMIDE program.</para>
+
  <sect3><title>Opening Studies</title>
   
   <para> From the main window, select "File->Open", and a file
@@ -124,7 +132,7 @@
  </sect3>
 
 
- <sect3><title>XIF Format</title>
+ <sect3><title>XIF Directory Format</title>
 
   <para> Although admittedly annoying from a data transfer standpoint,
     using a directory structure for saving study information has the
@@ -132,7 +140,7 @@
     accessible using standard command-line utilities and text-based
     tools. </para>
 
-  <para> Each XIF directory contains a file called "Study.xml" which
+  <para> Each XIF directory contains a file called "study_*.xml" which
     contains the basic study parameters.  Additional files can also be
     found in the XIF directory, such as ROI_*.xml files which contain
     ROI's, and data-set_*.xml files and their corresponding
@@ -142,6 +150,28 @@
     big endian, per plane/per frame/single scale factor), and is
     determined by the format of the originally imported data. </para>
  </sect3>
+
+ <sect3><title>XIF Flat File Format</title>
+
+  <para> The flat file format is basically a concatenation of the
+  information enclosed within the directory format.  It is not meant
+  to be editable or developer friendly.  Instead, it allows easy
+  manigment of studies for casual users.  If you wish to access the
+  information in a XIF flat file external to AMIDE, you'll be much
+  better off resaving the data as in XIF directory format.</para>
+
+  <para> The format is as follows: The first 64 bytes of the file
+  contain a magic string for format identification.  The next 16 bytes
+  contain 2 64bit unsigned little endian integers, the first one being
+  the location of the study xml data within the file, and the second
+  integer being the size of this xml data.  Within the study xml data,
+  is encased the information as to where in the file the children's
+  xml data is.  And within the children's xml data, is enclosed the
+  location information of the raw data and subchildren.
+  </para>
+
+ </sect3>
+
 </sect2>
 
 

@@ -994,7 +994,11 @@ void ui_series_create(AmitkStudy * study, AmitkObject * active_object,
   gnome_app_set_contents(app, GTK_WIDGET(packing_table));
 
   /* setup the canvas */
+#ifdef AMIDE_LIBGNOMECANVAS_OLD
+  ui_series->canvas = GNOME_CANVAS(gnome_canvas_new());
+#else
   ui_series->canvas = GNOME_CANVAS(gnome_canvas_new_aa());
+#endif
   update_immediate(ui_series); /* fill in the canvas */
   gtk_table_attach(GTK_TABLE(packing_table), 
 		   GTK_WIDGET(ui_series->canvas), 0,1,1,2,

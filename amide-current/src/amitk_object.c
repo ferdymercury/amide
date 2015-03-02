@@ -66,8 +66,13 @@ static void          object_transform_axes      (AmitkSpace * space,
 						 AmitkPoint * center_of_rotation);
 static AmitkObject * object_copy                (const AmitkObject * object);
 static void          object_copy_in_place       (AmitkObject * dest_object, const AmitkObject * src_object);
-static void          object_write_xml           (const AmitkObject * object, xmlNodePtr nodes);
-static gchar *       object_read_xml            (AmitkObject * object, xmlNodePtr nodes, gchar * error_buf);
+static void          object_write_xml           (const AmitkObject * object, 
+						 xmlNodePtr           nodes,
+						 FILE                *study_file);
+static gchar *       object_read_xml            (AmitkObject         *object, 
+						 xmlNodePtr           nodes, 
+						 FILE                *study_file,
+						 gchar               *error_buf);
 static void          object_add_child           (AmitkObject * object, AmitkObject * child);
 static void          object_remove_child        (AmitkObject * object, AmitkObject * child);
 
@@ -161,17 +166,18 @@ static void object_class_init (AmitkObjectClass * class) {
   		  G_TYPE_FROM_CLASS(class),
   		  G_SIGNAL_RUN_LAST,
   		  G_STRUCT_OFFSET(AmitkObjectClass, object_write_xml),
-  		  NULL, NULL, amitk_marshal_NONE__POINTER,
-		  G_TYPE_NONE, 1,
-		  G_TYPE_POINTER);
+  		  NULL, NULL, amitk_marshal_NONE__POINTER_POINTER,
+		  G_TYPE_NONE, 2,
+		  G_TYPE_POINTER, G_TYPE_POINTER);
   object_signals[OBJECT_READ_XML] =
     g_signal_new ("object_read_xml",
   		  G_TYPE_FROM_CLASS(class),
   		  G_SIGNAL_RUN_LAST,
   		  G_STRUCT_OFFSET(AmitkObjectClass, object_read_xml),
-    		  NULL, NULL, amitk_marshal_POINTER__POINTER_POINTER,
-  		  G_TYPE_POINTER, 2,
-  		  G_TYPE_POINTER, G_TYPE_POINTER); /* for some reason, G_TYPE_STRING is a no no */
+    		  NULL, NULL, amitk_marshal_POINTER__POINTER_POINTER_POINTER,
+  		  G_TYPE_POINTER, 3,
+  		  G_TYPE_POINTER, G_TYPE_POINTER, 
+		  G_TYPE_POINTER); /* for some reason, G_TYPE_STRING is a no no */
   object_signals[OBJECT_ADD_CHILD] =
     g_signal_new ("object_add_child",
   		  G_TYPE_FROM_CLASS(class),
@@ -367,7 +373,7 @@ void object_copy_in_place(AmitkObject * dest_object, const AmitkObject * src_obj
   return;
 }
 
-static void object_write_xml (const AmitkObject * object, xmlNodePtr nodes) {
+static void object_write_xml (const AmitkObject * object, xmlNodePtr nodes, FILE * study_file) {
 
   xmlNodePtr children_nodes;
   AmitkSelection i_selection;
@@ -375,7 +381,7 @@ static void object_write_xml (const AmitkObject * object, xmlNodePtr nodes) {
   amitk_space_write_xml(nodes, "coordinate_space", AMITK_SPACE(object));
 
   children_nodes = xmlNewChild(nodes, NULL, "children", NULL);
-  amitk_objects_write_xml(AMITK_OBJECT_CHILDREN(object), children_nodes);
+  amitk_objects_write_xml(AMITK_OBJECT_CHILDREN(object), children_nodes, study_file);
 
   for (i_selection = 0; i_selection < AMITK_SELECTION_NUM; i_selection++)
     xml_save_boolean(nodes, amitk_selection_get_name(i_selection),
@@ -384,7 +390,8 @@ static void object_write_xml (const AmitkObject * object, xmlNodePtr nodes) {
   return;
 }
 
-static gchar * object_read_xml (AmitkObject * object, xmlNodePtr nodes, gchar *error_buf) {
+static gchar * object_read_xml (AmitkObject * object, xmlNodePtr nodes,
+				FILE *study_file, gchar *error_buf) {
 
   AmitkSpace * space;
   xmlNodePtr children_nodes;
@@ -396,7 +403,7 @@ static gchar * object_read_xml (AmitkObject * object, xmlNodePtr nodes, gchar *e
   g_object_unref(space);
 
   children_nodes = xml_get_node(nodes, "children");
-  children = amitk_objects_read_xml(children_nodes->children, &error_buf);
+  children = amitk_objects_read_xml(children_nodes->children, study_file, &error_buf);
   amitk_object_add_children(object, children);
   children = amitk_objects_unref(children);
 
@@ -435,18 +442,24 @@ AmitkObject * amitk_object_new (void) {
   return object;
 }
 
-gchar * amitk_object_write_xml(AmitkObject * object) {
 
-  gchar * xml_filename;
+
+/* if study_file is NULL, we're saving as a directory, 
+   and output_filename will be set (if not NULL),
+   otherwise location will be set */
+void amitk_object_write_xml(AmitkObject * object, FILE * study_file, 
+			    gchar ** output_filename, guint64 * plocation, guint64 *psize) {
+
+  gchar * xml_filename=NULL;
   const gchar * object_name;
   guint count;
   struct stat file_info;
   xmlDocPtr doc;
   xmlNodePtr nodes;
 
-  AMITK_IS_OBJECT(object);
+  g_return_if_fail(AMITK_IS_OBJECT(object));
 
-  /* make a guess as to our filename */
+
   if (AMITK_IS_DATA_SET(object))
     object_name = amitk_object_type_get_name(AMITK_OBJECT_TYPE_DATA_SET);
   else if (AMITK_IS_STUDY(object))
@@ -458,44 +471,64 @@ gchar * amitk_object_write_xml(AmitkObject * object) {
   else if (AMITK_IS_VOLUME(object))
     object_name = amitk_object_type_get_name(AMITK_OBJECT_TYPE_VOLUME);
   else
-    g_return_val_if_reached(NULL);
-
-  count = 1;
-  xml_filename = g_strdup_printf("%s_%s.xml", object_name, AMITK_OBJECT_NAME(object));
-
-  /* see if this file already exists */
-  while (stat(xml_filename, &file_info) == 0) {
-    g_free(xml_filename);
-    count++;
-    xml_filename = g_strdup_printf("%s_%s_%d.xml", object_name, AMITK_OBJECT_NAME(object), count);
+    g_return_if_reached();
+  
+  if (study_file == NULL) { 
+    /* if we're saving in directory format, come up with a filename for this object */
+    count = 1;
+    xml_filename = g_strdup_printf("%s_%s.xml", object_name, AMITK_OBJECT_NAME(object));
+    
+    /* see if this file already exists */
+    while (stat(xml_filename, &file_info) == 0) {
+      g_free(xml_filename);
+      count++;
+      xml_filename = g_strdup_printf("%s_%s_%d.xml", object_name, AMITK_OBJECT_NAME(object), count);
+    }
+    /* and we now have a unique filename */
+#ifdef AMIDE_DEBUG
+    g_print("\t- saving object %s in %s\n",AMITK_OBJECT_NAME(object), xml_filename);
+#endif
+  } else {
+#ifdef AMIDE_DEBUG
+    g_print("\t- saving object %s\n",AMITK_OBJECT_NAME(object));
+#endif
   }
 
-  /* and we now have a unique filename */
-#ifdef AMIDE_DEBUG
-  g_print("\t- saving object %s in %s\n",AMITK_OBJECT_NAME(object), xml_filename);
-#endif
 
-  /* write the roi xml file */
+
+  /* write the xml file */
   doc = xmlNewDoc("1.0");
 
   doc->children = xmlNewDocNode(doc, NULL, "amide_data_file_version", AMIDE_FILE_VERSION);
 
   nodes = xmlNewChild(doc->children, NULL, object_name, AMITK_OBJECT_NAME(object));
-  g_signal_emit(G_OBJECT(object), object_signals[OBJECT_WRITE_XML], 0, nodes);
+  g_signal_emit(G_OBJECT(object), object_signals[OBJECT_WRITE_XML], 0, nodes, study_file);
 
   /* and save */
-  xmlSaveFile(xml_filename, doc);
+  if (study_file == NULL) { /* save as directory */
+    xmlSaveFile(xml_filename, doc);
+
+    if (output_filename != NULL) *output_filename = xml_filename;
+    else g_free(xml_filename);
+
+  } else {
+    *plocation = ftell(study_file);
+    xmlDocDump(study_file, doc);
+    *psize = ftell(study_file)-*plocation;
+  }
 
   /* and we're done */
   xmlFreeDoc(doc);
 
-  return xml_filename;
+
+  return;
 }
 
 
 
 
-AmitkObject * amitk_object_read_xml(gchar * xml_filename, gchar ** perror_buf) {
+AmitkObject * amitk_object_read_xml(gchar * xml_filename, FILE * study_file, guint64 location,
+				    guint64 size, gchar ** perror_buf) {
 
   AmitkObject * new_object;
   xmlDocPtr doc;
@@ -505,22 +538,15 @@ AmitkObject * amitk_object_read_xml(gchar * xml_filename, gchar ** perror_buf) {
   xmlNodePtr object_node;
   gchar * version;
   gchar * name;
-  gchar * error_str;
   AmitkObjectType i_type, type;
 
-  /* parse the xml file */
-  if ((doc = xmlParseFile(xml_filename)) == NULL) {
-    error_str = g_strdup_printf(_("Couldn't Parse AMIDE xml file:\t%s"), xml_filename);
-    amitk_append_str(perror_buf, error_str);
-    g_free(error_str);
-    return NULL;
-  }
+
+  if ((doc = xml_open_doc(xml_filename, study_file, location, size, perror_buf))==NULL)
+    return NULL; /* error message appended by function */
 
   /* get the root of our document */
   if ((doc_nodes = xmlDocGetRootElement(doc)) == NULL) {
-    error_str = g_strdup_printf(_("AMIDE xml file doesn't appear to have a root:\n\t%s"), xml_filename);
-    amitk_append_str(perror_buf, error_str);
-    g_free(error_str);
+    amitk_append_str(perror_buf, _("AMIDE xml file doesn't appear to have a root."));
     return NULL;
   }
   version_node = doc_nodes->children;
@@ -573,7 +599,7 @@ AmitkObject * amitk_object_read_xml(gchar * xml_filename, gchar ** perror_buf) {
 	  amitk_object_type_get_name(type), version);
 #endif
 
-  g_signal_emit(G_OBJECT(new_object), object_signals[OBJECT_READ_XML], 0, object_node, *perror_buf, perror_buf);
+  g_signal_emit(G_OBJECT(new_object), object_signals[OBJECT_READ_XML], 0, object_node, study_file, *perror_buf, perror_buf);
 
   g_free(version);
 
@@ -1050,40 +1076,54 @@ gboolean amitk_objects_has_type(GList * objects, const AmitkObjectType type, con
   return TRUE;
 }
 
-void amitk_objects_write_xml(GList * objects, xmlNodePtr node_list) {
+void amitk_objects_write_xml(GList * objects, xmlNodePtr node_list, FILE * study_file) {
 
-  gchar * object_filename;
+  gchar * object_filename=NULL;;
+  guint64 location;
+  guint64 size;
 
   if (objects == NULL) return;
 
-  object_filename = amitk_object_write_xml(objects->data);
-  xmlNewChild(node_list, NULL, "object_file", object_filename);
-  g_free(object_filename);
+  amitk_object_write_xml(objects->data, study_file, &object_filename, 
+			 &location, &size);
+
+  if (study_file == NULL) 
+    xmlNewChild(node_list, NULL, "object_file", object_filename);
+  else 
+    xml_save_location_and_size(node_list, "object_location_and_size", location, size);
+
+
+
+  if (object_filename != NULL) g_free(object_filename);
 
   /* and recurse */
-  amitk_objects_write_xml(objects->next, node_list);
+  amitk_objects_write_xml(objects->next, node_list, study_file);
   
   return;
 }
 
-GList * amitk_objects_read_xml(xmlNodePtr node_list, gchar **perror_buf) {
+GList * amitk_objects_read_xml(xmlNodePtr node_list, FILE * study_file, gchar **perror_buf) {
 
   GList * objects;
   AmitkObject * object;
-  gchar * filename;
+  gchar * filename=NULL;
+  guint64 location;
+  guint64 size;
 
   if (node_list == NULL) return NULL;
 
   /* recurse */
-  objects = amitk_objects_read_xml(node_list->next, perror_buf);
+  objects = amitk_objects_read_xml(node_list->next, study_file, perror_buf);
 
   /* and add this node */
-  filename = xml_get_string(node_list, "object_file");
-  object = amitk_object_read_xml(filename, perror_buf);
-  g_free(filename);
+  if (study_file == NULL)
+    filename = xml_get_string(node_list, "object_file");
+  else
+    xml_get_location_and_size(node_list, "object_location_and_size", &location, &size, perror_buf);
 
-  if (object != NULL)
-    objects = g_list_prepend(objects, object);
+  object = amitk_object_read_xml(filename, study_file, location, size, perror_buf);
+  if (object != NULL) objects = g_list_prepend(objects, object);
+  if (filename != NULL) g_free(filename);
   
   return objects;
 }

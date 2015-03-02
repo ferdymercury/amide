@@ -1,6 +1,6 @@
-/* amitk_dir_sel.c - this is gtkfilesel, but slightly modified
-   so that it lists .xif files in the file list, and compiles
-   cleanly under AMIDE
+/* amitk_xif_sel.c - this is gtkfilesel, but slightly modified
+   so that it lists .xif files and directories in the file list, 
+   and compiles cleanly under AMIDE
 */
 
 /* GTK - The GIMP Toolkit
@@ -30,8 +30,8 @@
  */
 
 #include "amide_config.h"
-#include "amide_intl.h"
-#include "amitk_dir_sel.h"
+#include "amide.h"
+#include "amitk_xif_sel.h"
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -348,52 +348,52 @@ static gint compare_cmpl_dir(const void* a, const void* b);
 static void update_cmpl(PossibleCompletion* poss,
 			CompletionState* cmpl_state);
 
-static void amitk_dir_selection_class_init    (AmitkDirSelectionClass *klass);
-static void amitk_dir_selection_set_property  (GObject         *object,
+static void amitk_xif_selection_class_init    (AmitkXifSelectionClass *klass);
+static void amitk_xif_selection_set_property  (GObject         *object,
 					      guint            prop_id,
 					      const GValue    *value,
 					      GParamSpec      *pspec);
-static void amitk_dir_selection_get_property  (GObject         *object,
+static void amitk_xif_selection_get_property  (GObject         *object,
 					      guint            prop_id,
 					      GValue          *value,
 					      GParamSpec      *pspec);
-static void amitk_dir_selection_init          (AmitkDirSelection      *filesel);
-static void amitk_dir_selection_finalize      (GObject               *object);
-static void amitk_dir_selection_destroy       (GtkObject             *object);
-static void amitk_dir_selection_map           (GtkWidget             *widget);
-static gint amitk_dir_selection_key_press     (GtkWidget             *widget,
+static void amitk_xif_selection_init          (AmitkXifSelection      *filesel);
+static void amitk_xif_selection_finalize      (GObject               *object);
+static void amitk_xif_selection_destroy       (GtkObject             *object);
+static void amitk_xif_selection_map           (GtkWidget             *widget);
+static gint amitk_xif_selection_key_press     (GtkWidget             *widget,
 					      GdkEventKey           *event,
 					      gpointer               user_data);
-static gint amitk_dir_selection_insert_text   (GtkWidget             *widget,
+static gint amitk_xif_selection_insert_text   (GtkWidget             *widget,
 					      const gchar           *new_text,
 					      gint                   new_text_length,
 					      gint                  *position,
 					      gpointer               user_data);
-static void amitk_dir_selection_update_fileops (AmitkDirSelection     *filesel);
+static void amitk_xif_selection_update_fileops (AmitkXifSelection     *filesel);
 
-static void amitk_dir_selection_file_activate (GtkTreeView       *tree_view,
+static void amitk_xif_selection_file_activate (GtkTreeView       *tree_view,
 					      GtkTreePath       *path,
 					      GtkTreeViewColumn *column,
 					      gpointer           user_data);
-static void amitk_dir_selection_file_changed  (GtkTreeSelection  *selection,
+static void amitk_xif_selection_file_changed  (GtkTreeSelection  *selection,
 					      gpointer           user_data);
-static void amitk_dir_selection_dir_activate  (GtkTreeView       *tree_view,
+static void amitk_xif_selection_dir_activate  (GtkTreeView       *tree_view,
 					      GtkTreePath       *path,
 					      GtkTreeViewColumn *column,
 					      gpointer           user_data);
 
-static void amitk_dir_selection_populate      (AmitkDirSelection      *fs,
+static void amitk_xif_selection_populate      (AmitkXifSelection      *fs,
 					      gchar                 *rel_path,
 					      gboolean               try_complete,
 					      gboolean               reset_entry);
-static void amitk_dir_selection_abort         (AmitkDirSelection      *fs);
+static void amitk_xif_selection_abort         (AmitkXifSelection      *fs);
 
-static void amitk_dir_selection_update_history_menu (AmitkDirSelection       *fs,
+static void amitk_xif_selection_update_history_menu (AmitkXifSelection       *fs,
 						    gchar                  *current_dir);
 
-static void amitk_dir_selection_create_dir  (GtkWidget *widget, gpointer data);
-static void amitk_dir_selection_delete_file (GtkWidget *widget, gpointer data);
-static void amitk_dir_selection_rename_file (GtkWidget *widget, gpointer data);
+static void amitk_xif_selection_create_dir  (GtkWidget *widget, gpointer data);
+static void amitk_xif_selection_delete_file (GtkWidget *widget, gpointer data);
+static void amitk_xif_selection_rename_file (GtkWidget *widget, gpointer data);
 
 static void free_selected_names (GPtrArray *names);
 
@@ -463,7 +463,7 @@ static gint cmpl_errno;
  * translation had to be made.
  */
 static int
-translate_win32_path (AmitkDirSelection *filesel)
+translate_win32_path (AmitkXifSelection *filesel)
 {
   int updated = 0;
   const gchar *path;
@@ -485,7 +485,7 @@ translate_win32_path (AmitkDirSelection *filesel)
 #endif
 
 GType
-amitk_dir_selection_get_type (void)
+amitk_xif_selection_get_type (void)
 {
   static GType file_selection_type = 0;
 
@@ -493,26 +493,26 @@ amitk_dir_selection_get_type (void)
     {
       static const GTypeInfo filesel_info =
       {
-	sizeof (AmitkDirSelectionClass),
+	sizeof (AmitkXifSelectionClass),
 	NULL,		/* base_init */
 	NULL,		/* base_finalize */
-	(GClassInitFunc) amitk_dir_selection_class_init,
+	(GClassInitFunc) amitk_xif_selection_class_init,
 	NULL,		/* class_finalize */
 	NULL,		/* class_data */
-	sizeof (AmitkDirSelection),
+	sizeof (AmitkXifSelection),
 	0,		/* n_preallocs */
-	(GInstanceInitFunc) amitk_dir_selection_init,
+	(GInstanceInitFunc) amitk_xif_selection_init,
 	NULL   /* value table */
       };
 
-      file_selection_type = g_type_register_static (GTK_TYPE_DIALOG, "AmitkDirSelection", &filesel_info, 0);
+      file_selection_type = g_type_register_static (GTK_TYPE_DIALOG, "AmitkXifSelection", &filesel_info, 0);
     }
 
   return file_selection_type;
 }
 
 static void
-amitk_dir_selection_class_init (AmitkDirSelectionClass *class)
+amitk_xif_selection_class_init (AmitkXifSelectionClass *class)
 {
   GObjectClass *gobject_class;
   GtkObjectClass *object_class;
@@ -524,9 +524,9 @@ amitk_dir_selection_class_init (AmitkDirSelectionClass *class)
 
   parent_class = g_type_class_peek_parent (class);
 
-  gobject_class->finalize = amitk_dir_selection_finalize;
-  gobject_class->set_property = amitk_dir_selection_set_property;
-  gobject_class->get_property = amitk_dir_selection_get_property;
+  gobject_class->finalize = amitk_xif_selection_finalize;
+  gobject_class->set_property = amitk_xif_selection_set_property;
+  gobject_class->get_property = amitk_xif_selection_get_property;
    
   g_object_class_install_property (gobject_class,
                                    PROP_FILENAME,
@@ -551,33 +551,33 @@ amitk_dir_selection_class_init (AmitkDirSelectionClass *class)
 							 FALSE,
 							 G_PARAM_READABLE |
 							 G_PARAM_WRITABLE));
-  object_class->destroy = amitk_dir_selection_destroy;
-  widget_class->map = amitk_dir_selection_map;
+  object_class->destroy = amitk_xif_selection_destroy;
+  widget_class->map = amitk_xif_selection_map;
 }
 
-static void amitk_dir_selection_set_property (GObject         *object,
+static void amitk_xif_selection_set_property (GObject         *object,
 					     guint            prop_id,
 					     const GValue    *value,
 					     GParamSpec      *pspec)
 {
-  AmitkDirSelection *filesel;
+  AmitkXifSelection *filesel;
 
-  filesel = AMITK_DIR_SELECTION (object);
+  filesel = AMITK_XIF_SELECTION (object);
 
   switch (prop_id)
     {
     case PROP_FILENAME:
-      amitk_dir_selection_set_filename (filesel,
+      amitk_xif_selection_set_filename (filesel,
                                        g_value_get_string (value));
       break;
     case PROP_SHOW_FILEOPS:
       if (g_value_get_boolean (value))
-	 amitk_dir_selection_show_fileop_buttons (filesel);
+	 amitk_xif_selection_show_fileop_buttons (filesel);
       else
-	 amitk_dir_selection_hide_fileop_buttons (filesel);
+	 amitk_xif_selection_hide_fileop_buttons (filesel);
       break;
     case PROP_SELECT_MULTIPLE:
-      amitk_dir_selection_set_select_multiple (filesel, g_value_get_boolean (value));
+      amitk_xif_selection_set_select_multiple (filesel, g_value_get_boolean (value));
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -585,20 +585,20 @@ static void amitk_dir_selection_set_property (GObject         *object,
     }
 }
 
-static void amitk_dir_selection_get_property (GObject         *object,
+static void amitk_xif_selection_get_property (GObject         *object,
 					     guint            prop_id,
 					     GValue          *value,
 					     GParamSpec      *pspec)
 {
-  AmitkDirSelection *filesel;
+  AmitkXifSelection *filesel;
 
-  filesel = AMITK_DIR_SELECTION (object);
+  filesel = AMITK_XIF_SELECTION (object);
 
   switch (prop_id)
     {
     case PROP_FILENAME:
       g_value_set_string (value,
-                          amitk_dir_selection_get_filename(filesel));
+                          amitk_xif_selection_get_filename(filesel));
       break;
 
     case PROP_SHOW_FILEOPS:
@@ -610,7 +610,7 @@ static void amitk_dir_selection_get_property (GObject         *object,
 				   filesel->fileop_ren_file));
       break;
     case PROP_SELECT_MULTIPLE:
-      g_value_set_boolean (value, amitk_dir_selection_get_select_multiple (filesel));
+      g_value_set_boolean (value, amitk_xif_selection_get_select_multiple (filesel));
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -626,7 +626,7 @@ grab_default (GtkWidget *widget)
 }
      
 static void
-amitk_dir_selection_init (AmitkDirSelection *filesel)
+amitk_xif_selection_init (AmitkXifSelection *filesel)
 {
   GtkWidget *entry_vbox;
   GtkWidget *label;
@@ -659,7 +659,7 @@ amitk_dir_selection_init (AmitkDirSelection *filesel)
 		      FALSE, FALSE, 0);
   gtk_widget_show (filesel->button_area);
   
-  amitk_dir_selection_show_fileop_buttons (filesel);
+  amitk_xif_selection_show_fileop_buttons (filesel);
 
   /* hbox for pulldown menu */
   pulldown_hbox = gtk_hbox_new (TRUE, 5);
@@ -716,7 +716,7 @@ amitk_dir_selection_init (AmitkDirSelection *filesel)
   gtk_widget_set_size_request(filesel->dir_list, 
 			      DIR_LIST_WIDTH, DIR_LIST_HEIGHT);
   g_signal_connect (G_OBJECT(filesel->dir_list), "row_activated",
-		    G_CALLBACK (amitk_dir_selection_dir_activate), filesel);
+		    G_CALLBACK (amitk_xif_selection_dir_activate), filesel);
 
   /*  gtk_clist_column_titles_passive (GTK_CLIST (filesel->dir_list)); */
 
@@ -738,11 +738,11 @@ amitk_dir_selection_init (AmitkDirSelection *filesel)
   filesel->file_list = gtk_tree_view_new_with_model (GTK_TREE_MODEL (model));
   g_object_unref (model);
 
-  column = gtk_tree_view_column_new_with_attributes (_("Files"),
+  column = gtk_tree_view_column_new_with_attributes (_("XIF Files"),
 						     gtk_cell_renderer_text_new (),
 						     "text", FILE_COLUMN,
 						     NULL);
-  label = gtk_label_new_with_mnemonic (_("_Files"));
+  label = gtk_label_new_with_mnemonic (_("XIF _Files"));
   gtk_label_set_mnemonic_widget (GTK_LABEL (label), filesel->file_list);
   gtk_widget_show (label);
   gtk_tree_view_column_set_widget (column, label);
@@ -752,9 +752,9 @@ amitk_dir_selection_init (AmitkDirSelection *filesel)
   gtk_widget_set_size_request (filesel->file_list, 
 			       FILE_LIST_WIDTH, FILE_LIST_HEIGHT);
   g_signal_connect (G_OBJECT(filesel->file_list), "row_activated",
-		    G_CALLBACK (amitk_dir_selection_file_activate), filesel);
+		    G_CALLBACK (amitk_xif_selection_file_activate), filesel);
   g_signal_connect (G_OBJECT(gtk_tree_view_get_selection (GTK_TREE_VIEW (filesel->file_list))), "changed",
-		    G_CALLBACK (amitk_dir_selection_file_changed), filesel);
+		    G_CALLBACK (amitk_xif_selection_file_changed), filesel);
 
   /* gtk_clist_column_titles_passive (GTK_CLIST (filesel->file_list)); */
 
@@ -803,11 +803,11 @@ amitk_dir_selection_init (AmitkDirSelection *filesel)
 
   filesel->selection_entry = gtk_entry_new ();
   g_signal_connect(G_OBJECT (filesel->selection_entry), "key_press_event",
-		   G_CALLBACK(amitk_dir_selection_key_press), filesel);
+		   G_CALLBACK(amitk_xif_selection_key_press), filesel);
   g_signal_connect(G_OBJECT (filesel->selection_entry), "insert_text",
-		   G_CALLBACK(amitk_dir_selection_insert_text), NULL);
+		   G_CALLBACK(amitk_xif_selection_insert_text), NULL);
   g_signal_connect_swapped (G_OBJECT(filesel->selection_entry), "changed",
-			    G_CALLBACK (amitk_dir_selection_update_fileops), filesel);
+			    G_CALLBACK (amitk_xif_selection_update_fileops), filesel);
   g_signal_connect_swapped (G_OBJECT (filesel->selection_entry), "focus_in_event",
 			    G_CALLBACK(grab_default),
 			    G_OBJECT (filesel->ok_button));
@@ -830,7 +830,7 @@ amitk_dir_selection_init (AmitkDirSelection *filesel)
     }
   else
     {
-      amitk_dir_selection_populate (filesel, "", FALSE, TRUE);
+      amitk_xif_selection_populate (filesel, "", FALSE, TRUE);
     }
 
   gtk_widget_grab_focus (filesel->selection_entry);
@@ -882,7 +882,7 @@ uri_list_extract_first_uri (const gchar* uri_list)
 }
 
 static void
-dnd_really_drop  (GtkWidget *dialog, gint response_id, AmitkDirSelection *fs)
+dnd_really_drop  (GtkWidget *dialog, gint response_id, AmitkXifSelection *fs)
 {
   gchar *filename;
   
@@ -890,7 +890,7 @@ dnd_really_drop  (GtkWidget *dialog, gint response_id, AmitkDirSelection *fs)
     {
       filename = g_object_get_data (G_OBJECT (dialog), "gtk-fs-dnd-filename");
 
-      amitk_dir_selection_set_filename (fs, filename);
+      amitk_xif_selection_set_filename (fs, filename);
     }
   
   gtk_widget_destroy (dialog);
@@ -938,7 +938,7 @@ filenames_dropped (GtkWidget        *widget,
   if ((hostname == NULL) ||
       (res == 0 && strcmp (hostname, this_hostname) == 0) ||
       (strcmp (hostname, "localhost") == 0))
-    amitk_dir_selection_set_filename (AMITK_DIR_SELECTION (widget),
+    amitk_xif_selection_set_filename (AMITK_XIF_SELECTION (widget),
 				     filename);
   else
     {
@@ -988,7 +988,7 @@ filenames_drag_get (GtkWidget        *widget,
 		    GtkSelectionData *selection_data,
 		    guint             info,
 		    guint             time,
-		    AmitkDirSelection *filesel)
+		    AmitkXifSelection *filesel)
 {
   const gchar *file;
   gchar *uri_list;
@@ -996,7 +996,7 @@ filenames_drag_get (GtkWidget        *widget,
   int res;
   GError *error;
 
-  file = amitk_dir_selection_get_filename (filesel);
+  file = amitk_xif_selection_get_filename (filesel);
 
   if (file)
     {
@@ -1030,7 +1030,7 @@ filenames_drag_get (GtkWidget        *widget,
 }
 
 static void
-file_selection_setup_dnd (AmitkDirSelection *filesel)
+file_selection_setup_dnd (AmitkXifSelection *filesel)
 {
   GtkWidget *eventbox;
   static const GtkTargetEntry drop_types[] = {
@@ -1065,11 +1065,11 @@ file_selection_setup_dnd (AmitkDirSelection *filesel)
 }
 
 GtkWidget*
-amitk_dir_selection_new (const gchar *title)
+amitk_xif_selection_new (const gchar *title)
 {
-  AmitkDirSelection *filesel;
+  AmitkXifSelection *filesel;
 
-  filesel = g_object_new (AMITK_TYPE_DIR_SELECTION, NULL);
+  filesel = g_object_new (AMITK_TYPE_XIF_SELECTION, NULL);
   gtk_window_set_title (GTK_WINDOW (filesel), title);
   gtk_dialog_set_has_separator (GTK_DIALOG (filesel), FALSE);
 
@@ -1079,16 +1079,16 @@ amitk_dir_selection_new (const gchar *title)
 }
 
 void
-amitk_dir_selection_show_fileop_buttons (AmitkDirSelection *filesel)
+amitk_xif_selection_show_fileop_buttons (AmitkXifSelection *filesel)
 {
-  g_return_if_fail (AMITK_IS_DIR_SELECTION (filesel));
+  g_return_if_fail (AMITK_IS_XIF_SELECTION (filesel));
     
   /* delete, create directory, and rename */
   if (!filesel->fileop_c_dir) 
     {
       filesel->fileop_c_dir = gtk_button_new_with_mnemonic (_("_New Folder"));
       g_signal_connect (G_OBJECT (filesel->fileop_c_dir), "clicked",
-			G_CALLBACK(amitk_dir_selection_create_dir), filesel);
+			G_CALLBACK(amitk_xif_selection_create_dir), filesel);
       gtk_box_pack_start (GTK_BOX (filesel->button_area), 
 			  filesel->fileop_c_dir, TRUE, TRUE, 0);
       gtk_widget_show (filesel->fileop_c_dir);
@@ -1098,7 +1098,7 @@ amitk_dir_selection_show_fileop_buttons (AmitkDirSelection *filesel)
     {
       filesel->fileop_del_file = gtk_button_new_with_mnemonic (_("De_lete File"));
       g_signal_connect (G_OBJECT (filesel->fileop_del_file), "clicked",
-			G_CALLBACK(amitk_dir_selection_delete_file), filesel);
+			G_CALLBACK(amitk_xif_selection_delete_file), filesel);
       gtk_box_pack_start (GTK_BOX (filesel->button_area), 
 			  filesel->fileop_del_file, TRUE, TRUE, 0);
       gtk_widget_show (filesel->fileop_del_file);
@@ -1108,21 +1108,21 @@ amitk_dir_selection_show_fileop_buttons (AmitkDirSelection *filesel)
     {
       filesel->fileop_ren_file = gtk_button_new_with_mnemonic (_("_Rename File"));
       g_signal_connect (G_OBJECT (filesel->fileop_ren_file), "clicked",
-			G_CALLBACK(amitk_dir_selection_rename_file), filesel);
+			G_CALLBACK(amitk_xif_selection_rename_file), filesel);
       gtk_box_pack_start (GTK_BOX (filesel->button_area), 
 			  filesel->fileop_ren_file, TRUE, TRUE, 0);
       gtk_widget_show (filesel->fileop_ren_file);
     }
   
-  amitk_dir_selection_update_fileops (filesel);
+  amitk_xif_selection_update_fileops (filesel);
   
   g_object_notify (G_OBJECT (filesel), "show_fileops");
 }
 
 void       
-amitk_dir_selection_hide_fileop_buttons (AmitkDirSelection *filesel)
+amitk_xif_selection_hide_fileop_buttons (AmitkXifSelection *filesel)
 {
-  g_return_if_fail (AMITK_IS_DIR_SELECTION (filesel));
+  g_return_if_fail (AMITK_IS_XIF_SELECTION (filesel));
     
   if (filesel->fileop_ren_file)
     {
@@ -1147,7 +1147,7 @@ amitk_dir_selection_hide_fileop_buttons (AmitkDirSelection *filesel)
 
 /**
  * amitk_file_selection_set_filename:
- * @dirsel: a #AmitkFileSelection.
+ * @xifsel: a #AmitkFileSelection.
  * @dirname:  a string to set as the default directory name.
  * 
  * Sets a default path for the file requestor. If dirname includes a
@@ -1158,14 +1158,14 @@ amitk_dir_selection_hide_fileop_buttons (AmitkDirSelection *filesel)
  * may not be UTF-8. See g_filename_from_utf8().
  **/
 void
-amitk_dir_selection_set_filename (AmitkDirSelection *filesel,
+amitk_xif_selection_set_filename (AmitkXifSelection *filesel,
 				 const gchar      *filename)
 {
   gchar *buf;
   const char *name, *last_slash;
   char *filename_utf8;
 
-  g_return_if_fail (AMITK_IS_DIR_SELECTION (filesel));
+  g_return_if_fail (AMITK_IS_XIF_SELECTION (filesel));
   g_return_if_fail (filename != NULL);
 
   filename_utf8 = g_filename_to_utf8 (filename, -1, NULL, NULL, NULL);
@@ -1185,7 +1185,7 @@ amitk_dir_selection_set_filename (AmitkDirSelection *filesel,
       name = last_slash + 1;
     }
 
-  amitk_dir_selection_populate (filesel, buf, FALSE, TRUE);
+  amitk_xif_selection_populate (filesel, buf, FALSE, TRUE);
 
   if (filesel->selection_entry)
     gtk_entry_set_text (GTK_ENTRY (filesel->selection_entry), name);
@@ -1196,8 +1196,8 @@ amitk_dir_selection_set_filename (AmitkDirSelection *filesel,
 }
 
 /**
- * amitk_dir_selection_get_filename:
- * @filesel: a #AmitkDirSelection
+ * amitk_xif_selection_get_filename:
+ * @filesel: a #AmitkXifSelection
  * 
  * This function returns the selected filename in the on-disk encoding
  * (see g_filename_from_utf8()), which may or may not be the same as that
@@ -1210,14 +1210,14 @@ amitk_dir_selection_set_filename (AmitkDirSelection *filesel,
  * Return value: currently-selected filename in the on-disk encoding.
  **/
 G_CONST_RETURN gchar*
-amitk_dir_selection_get_filename (AmitkDirSelection *filesel)
+amitk_xif_selection_get_filename (AmitkXifSelection *filesel)
 {
   static const gchar nothing[2] = "";
   static gchar something[MAXPATHLEN*2];
   char *sys_filename;
   const char *text;
 
-  g_return_val_if_fail (AMITK_IS_DIR_SELECTION (filesel), nothing);
+  g_return_val_if_fail (AMITK_IS_XIF_SELECTION (filesel), nothing);
 
 #ifdef G_WITH_CYGWIN
   translate_win32_path (filesel);
@@ -1237,27 +1237,27 @@ amitk_dir_selection_get_filename (AmitkDirSelection *filesel)
 }
 
 void
-amitk_dir_selection_complete (AmitkDirSelection *filesel,
+amitk_xif_selection_complete (AmitkXifSelection *filesel,
 			     const gchar      *pattern)
 {
-  g_return_if_fail (AMITK_IS_DIR_SELECTION (filesel));
+  g_return_if_fail (AMITK_IS_XIF_SELECTION (filesel));
   g_return_if_fail (pattern != NULL);
 
   if (filesel->selection_entry)
     gtk_entry_set_text (GTK_ENTRY (filesel->selection_entry), pattern);
-  amitk_dir_selection_populate (filesel, (gchar*) pattern, TRUE, TRUE);
+  amitk_xif_selection_populate (filesel, (gchar*) pattern, TRUE, TRUE);
 }
 
 static void
-amitk_dir_selection_destroy (GtkObject *object)
+amitk_xif_selection_destroy (GtkObject *object)
 {
-  AmitkDirSelection *filesel;
+  AmitkXifSelection *filesel;
   GList *list;
   HistoryCallbackArg *callback_arg;
   
-  g_return_if_fail (AMITK_IS_DIR_SELECTION (object));
+  g_return_if_fail (AMITK_IS_XIF_SELECTION (object));
   
-  filesel = AMITK_DIR_SELECTION (object);
+  filesel = AMITK_XIF_SELECTION (object);
   
   if (filesel->fileop_dialog)
     {
@@ -1301,20 +1301,20 @@ amitk_dir_selection_destroy (GtkObject *object)
 }
 
 static void
-amitk_dir_selection_map (GtkWidget *widget)
+amitk_xif_selection_map (GtkWidget *widget)
 {
-  AmitkDirSelection *filesel = AMITK_DIR_SELECTION (widget);
+  AmitkXifSelection *filesel = AMITK_XIF_SELECTION (widget);
 
   /* Refresh the contents */
-  amitk_dir_selection_populate (filesel, "", FALSE, FALSE);
+  amitk_xif_selection_populate (filesel, "", FALSE, FALSE);
   
   GTK_WIDGET_CLASS (parent_class)->map (widget);
 }
 
 static void
-amitk_dir_selection_finalize (GObject *object)
+amitk_xif_selection_finalize (GObject *object)
 {
-  AmitkDirSelection *filesel = AMITK_DIR_SELECTION (object);
+  AmitkXifSelection *filesel = AMITK_XIF_SELECTION (object);
 
   g_free (filesel->fileop_file);
 
@@ -1324,7 +1324,7 @@ amitk_dir_selection_finalize (GObject *object)
 /* Begin file operations callbacks */
 
 static void
-amitk_dir_selection_fileop_error (AmitkDirSelection *fs,
+amitk_xif_selection_fileop_error (AmitkXifSelection *fs,
 				 gchar            *error_message)
 {
   GtkWidget *dialog;
@@ -1350,12 +1350,12 @@ amitk_dir_selection_fileop_error (AmitkDirSelection *fs,
 }
 
 static void
-amitk_dir_selection_fileop_destroy (GtkWidget *widget,
+amitk_xif_selection_fileop_destroy (GtkWidget *widget,
 				   gpointer   data)
 {
-  AmitkDirSelection *fs = data;
+  AmitkXifSelection *fs = data;
 
-  g_return_if_fail (AMITK_IS_DIR_SELECTION (fs));
+  g_return_if_fail (AMITK_IS_XIF_SELECTION (fs));
   
   fs->fileop_dialog = NULL;
 }
@@ -1370,7 +1370,7 @@ entry_is_empty (GtkEntry *entry)
 }
 
 static void
-amitk_dir_selection_fileop_entry_changed (GtkEntry   *entry,
+amitk_xif_selection_fileop_entry_changed (GtkEntry   *entry,
 					 GtkWidget  *button)
 {
   gtk_widget_set_sensitive (button, !entry_is_empty (entry));
@@ -1379,10 +1379,10 @@ amitk_dir_selection_fileop_entry_changed (GtkEntry   *entry,
 
 
 static void
-amitk_dir_selection_create_dir_confirmed (GtkWidget *widget,
+amitk_xif_selection_create_dir_confirmed (GtkWidget *widget,
 					 gpointer   data)
 {
-  AmitkDirSelection *fs = data;
+  AmitkXifSelection *fs = data;
   const gchar *dirname;
   gchar *path;
   gchar *full_path;
@@ -1391,7 +1391,7 @@ amitk_dir_selection_create_dir_confirmed (GtkWidget *widget,
   GError *error = NULL;
   CompletionState *cmpl_state;
   
-  g_return_if_fail (AMITK_IS_DIR_SELECTION (fs));
+  g_return_if_fail (AMITK_IS_XIF_SELECTION (fs));
 
   dirname = gtk_entry_get_text (GTK_ENTRY (fs->fileop_entry));
   cmpl_state = (CompletionState*) fs->cmpl_state;
@@ -1406,7 +1406,7 @@ amitk_dir_selection_create_dir_confirmed (GtkWidget *widget,
       else
 	buf = g_strdup_printf (_("Error creating folder \"%s\": %s\n%s"), dirname, error->message,
 			       _("You probably used symbols not allowed in filenames."));
-      amitk_dir_selection_fileop_error (fs, buf);
+      amitk_xif_selection_fileop_error (fs, buf);
       g_error_free (error);
       goto out;
     }
@@ -1415,7 +1415,7 @@ amitk_dir_selection_create_dir_confirmed (GtkWidget *widget,
     {
       buf = g_strdup_printf (_("Error creating folder \"%s\": %s\n"), dirname,
 			     g_strerror (errno));
-      amitk_dir_selection_fileop_error (fs, buf);
+      amitk_xif_selection_fileop_error (fs, buf);
     }
 
  out:
@@ -1423,20 +1423,20 @@ amitk_dir_selection_create_dir_confirmed (GtkWidget *widget,
   g_free (sys_full_path);
   
   gtk_widget_destroy (fs->fileop_dialog);
-  amitk_dir_selection_populate (fs, "", FALSE, FALSE);
+  amitk_xif_selection_populate (fs, "", FALSE, FALSE);
 }
   
 static void
-amitk_dir_selection_create_dir (GtkWidget *widget,
+amitk_xif_selection_create_dir (GtkWidget *widget,
 			       gpointer   data)
 {
-  AmitkDirSelection *fs = data;
+  AmitkXifSelection *fs = data;
   GtkWidget *label;
   GtkWidget *dialog;
   GtkWidget *vbox;
   GtkWidget *button;
 
-  g_return_if_fail (AMITK_IS_DIR_SELECTION (fs));
+  g_return_if_fail (AMITK_IS_XIF_SELECTION (fs));
 
   if (fs->fileop_dialog)
     return;
@@ -1445,7 +1445,7 @@ amitk_dir_selection_create_dir (GtkWidget *widget,
   dialog = gtk_dialog_new ();
   fs->fileop_dialog = dialog;
   g_signal_connect (G_OBJECT (dialog), "destroy", 
-		    G_CALLBACK(amitk_dir_selection_fileop_destroy), fs);
+		    G_CALLBACK(amitk_xif_selection_fileop_destroy), fs);
   gtk_window_set_title (GTK_WINDOW (dialog), _("New Folder"));
   gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_MOUSE);
   gtk_window_set_transient_for (GTK_WINDOW (dialog), GTK_WINDOW (fs));
@@ -1489,10 +1489,10 @@ amitk_dir_selection_create_dir (GtkWidget *widget,
   button = gtk_button_new_with_mnemonic (_("C_reate"));
   gtk_widget_set_sensitive (button, FALSE);
   g_signal_connect (button, "clicked",
-		    G_CALLBACK (amitk_dir_selection_create_dir_confirmed),
+		    G_CALLBACK (amitk_xif_selection_create_dir_confirmed),
 		    fs);
   g_signal_connect (fs->fileop_entry, "changed",
-                    G_CALLBACK (amitk_dir_selection_fileop_entry_changed),
+                    G_CALLBACK (amitk_xif_selection_fileop_entry_changed),
 		    button);
   gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area),
 		     button, TRUE, TRUE, 0);
@@ -1503,11 +1503,11 @@ amitk_dir_selection_create_dir (GtkWidget *widget,
 }
 
 static void
-amitk_dir_selection_delete_file_response (GtkDialog *dialog, 
+amitk_xif_selection_delete_file_response (GtkDialog *dialog, 
                                          gint       response_id,
                                          gpointer   data)
 {
-  AmitkDirSelection *fs = data;
+  AmitkXifSelection *fs = data;
   CompletionState *cmpl_state;
   gchar *path;
   gchar *full_path;
@@ -1515,7 +1515,7 @@ amitk_dir_selection_delete_file_response (GtkDialog *dialog,
   GError *error = NULL;
   gchar *buf;
   
-  g_return_if_fail (AMITK_IS_DIR_SELECTION (fs));
+  g_return_if_fail (AMITK_IS_XIF_SELECTION (fs));
 
   if (response_id != GTK_RESPONSE_OK)
     {
@@ -1538,7 +1538,7 @@ amitk_dir_selection_delete_file_response (GtkDialog *dialog,
 			       fs->fileop_file, error->message,
 			       _("It probably contains symbols not allowed in filenames."));
       
-      amitk_dir_selection_fileop_error (fs, buf);
+      amitk_xif_selection_fileop_error (fs, buf);
       g_error_free (error);
       goto out;
     }
@@ -1547,7 +1547,7 @@ amitk_dir_selection_delete_file_response (GtkDialog *dialog,
     {
       buf = g_strdup_printf (_("Error deleting file \"%s\": %s"),
 			     fs->fileop_file, g_strerror (errno));
-      amitk_dir_selection_fileop_error (fs, buf);
+      amitk_xif_selection_fileop_error (fs, buf);
     }
   
  out:
@@ -1555,18 +1555,18 @@ amitk_dir_selection_delete_file_response (GtkDialog *dialog,
   g_free (sys_full_path);
   
   gtk_widget_destroy (fs->fileop_dialog);
-  amitk_dir_selection_populate (fs, "", FALSE, TRUE);
+  amitk_xif_selection_populate (fs, "", FALSE, TRUE);
 }
 
 static void
-amitk_dir_selection_delete_file (GtkWidget *widget,
+amitk_xif_selection_delete_file (GtkWidget *widget,
 				gpointer   data)
 {
-  AmitkDirSelection *fs = data;
+  AmitkXifSelection *fs = data;
   GtkWidget *dialog;
   const gchar *filename;
   
-  g_return_if_fail (AMITK_IS_DIR_SELECTION (fs));
+  g_return_if_fail (AMITK_IS_XIF_SELECTION (fs));
 
   if (fs->fileop_dialog)
     return;
@@ -1591,7 +1591,7 @@ amitk_dir_selection_delete_file (GtkWidget *widget,
                             _("Really delete file \"%s\" ?"), filename);
 
   g_signal_connect (G_OBJECT (dialog), "destroy",
-		    G_CALLBACK(amitk_dir_selection_fileop_destroy), fs);
+		    G_CALLBACK(amitk_xif_selection_fileop_destroy), fs);
   gtk_window_set_title (GTK_WINDOW (dialog), _("Delete File"));
   gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_MOUSE);
   
@@ -1604,17 +1604,17 @@ amitk_dir_selection_delete_file (GtkWidget *widget,
   gtk_dialog_set_default_response (GTK_DIALOG (dialog), GTK_RESPONSE_CANCEL);
 
   g_signal_connect (G_OBJECT (dialog), "response",
-                    G_CALLBACK (amitk_dir_selection_delete_file_response),
+                    G_CALLBACK (amitk_xif_selection_delete_file_response),
                     fs);
   
   gtk_widget_show (dialog);
 }
 
 static void
-amitk_dir_selection_rename_file_confirmed (GtkWidget *widget,
+amitk_xif_selection_rename_file_confirmed (GtkWidget *widget,
 					  gpointer   data)
 {
-  AmitkDirSelection *fs = data;
+  AmitkXifSelection *fs = data;
   gchar *buf;
   const gchar *file;
   gchar *path;
@@ -1625,7 +1625,7 @@ amitk_dir_selection_rename_file_confirmed (GtkWidget *widget,
   CompletionState *cmpl_state;
   GError *error = NULL;
   
-  g_return_if_fail (AMITK_IS_DIR_SELECTION (fs));
+  g_return_if_fail (AMITK_IS_XIF_SELECTION (fs));
 
   file = gtk_entry_get_text (GTK_ENTRY (fs->fileop_entry));
   cmpl_state = (CompletionState*) fs->cmpl_state;
@@ -1643,7 +1643,7 @@ amitk_dir_selection_rename_file_confirmed (GtkWidget *widget,
 	buf = g_strdup_printf (_("Error renaming file to \"%s\": %s\n%s"),
 			       new_filename, error->message,
 			       _("You probably used symbols not allowed in filenames."));
-      amitk_dir_selection_fileop_error (fs, buf);
+      amitk_xif_selection_fileop_error (fs, buf);
       g_error_free (error);
       goto out1;
     }
@@ -1657,7 +1657,7 @@ amitk_dir_selection_rename_file_confirmed (GtkWidget *widget,
 	buf = g_strdup_printf (_("Error renaming file \"%s\": %s\n%s"),
 			       old_filename, error->message,
 			       _("It probably contains symbols not allowed in filenames."));
-      amitk_dir_selection_fileop_error (fs, buf);
+      amitk_xif_selection_fileop_error (fs, buf);
       g_error_free (error);
       goto out2;
     }
@@ -1667,11 +1667,11 @@ amitk_dir_selection_rename_file_confirmed (GtkWidget *widget,
       buf = g_strdup_printf (_("Error renaming file \"%s\" to \"%s\": %s"),
 			     sys_old_filename, sys_new_filename,
 			     g_strerror (errno));
-      amitk_dir_selection_fileop_error (fs, buf);
+      amitk_xif_selection_fileop_error (fs, buf);
       goto out2;
     }
   
-  amitk_dir_selection_populate (fs, "", FALSE, FALSE);
+  amitk_xif_selection_populate (fs, "", FALSE, FALSE);
   gtk_entry_set_text (GTK_ENTRY (fs->selection_entry), file);
   
  out2:
@@ -1686,17 +1686,17 @@ amitk_dir_selection_rename_file_confirmed (GtkWidget *widget,
 }
   
 static void
-amitk_dir_selection_rename_file (GtkWidget *widget,
+amitk_xif_selection_rename_file (GtkWidget *widget,
 				gpointer   data)
 {
-  AmitkDirSelection *fs = data;
+  AmitkXifSelection *fs = data;
   GtkWidget *label;
   GtkWidget *dialog;
   GtkWidget *vbox;
   GtkWidget *button;
   gchar *buf;
   
-  g_return_if_fail (AMITK_IS_DIR_SELECTION (fs));
+  g_return_if_fail (AMITK_IS_XIF_SELECTION (fs));
 
   if (fs->fileop_dialog)
 	  return;
@@ -1709,7 +1709,7 @@ amitk_dir_selection_rename_file (GtkWidget *widget,
   /* main dialog */
   fs->fileop_dialog = dialog = gtk_dialog_new ();
   g_signal_connect (G_OBJECT (dialog), "destroy",
-		    G_CALLBACK(amitk_dir_selection_fileop_destroy), fs);
+		    G_CALLBACK(amitk_xif_selection_fileop_destroy), fs);
   gtk_window_set_title (GTK_WINDOW (dialog), _("Rename File"));
   gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_MOUSE);
   gtk_window_set_transient_for (GTK_WINDOW (dialog), GTK_WINDOW (fs));
@@ -1757,9 +1757,9 @@ amitk_dir_selection_rename_file (GtkWidget *widget,
 
   button = gtk_button_new_with_mnemonic (_("_Rename"));
   g_signal_connect (G_OBJECT (button), "clicked",
-		    G_CALLBACK(amitk_dir_selection_rename_file_confirmed), fs);
+		    G_CALLBACK(amitk_xif_selection_rename_file_confirmed), fs);
   g_signal_connect (fs->fileop_entry, "changed",
-		    G_CALLBACK (amitk_dir_selection_fileop_entry_changed),
+		    G_CALLBACK (amitk_xif_selection_fileop_entry_changed),
 		    button);
 
   gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area),
@@ -1771,7 +1771,7 @@ amitk_dir_selection_rename_file (GtkWidget *widget,
 }
 
 static gint
-amitk_dir_selection_insert_text (GtkWidget   *widget,
+amitk_xif_selection_insert_text (GtkWidget   *widget,
 				const gchar *new_text,
 				gint         new_text_length,
 				gint        *position,
@@ -1794,7 +1794,7 @@ amitk_dir_selection_insert_text (GtkWidget   *widget,
 }
 
 static void
-amitk_dir_selection_update_fileops (AmitkDirSelection *fs)
+amitk_xif_selection_update_fileops (AmitkXifSelection *fs)
 {
   gboolean sensitive;
 
@@ -1812,11 +1812,11 @@ amitk_dir_selection_update_fileops (AmitkDirSelection *fs)
 
 
 static gint
-amitk_dir_selection_key_press (GtkWidget   *widget,
+amitk_xif_selection_key_press (GtkWidget   *widget,
 			      GdkEventKey *event,
 			      gpointer     user_data)
 {
-  AmitkDirSelection *fs;
+  AmitkXifSelection *fs;
   char *text;
 
   g_return_val_if_fail (widget != NULL, FALSE);
@@ -1825,13 +1825,13 @@ amitk_dir_selection_key_press (GtkWidget   *widget,
   if ((event->keyval == GDK_Tab || event->keyval == GDK_KP_Tab) &&
       (event->state & gtk_accelerator_get_default_mod_mask ()) == 0)
     {
-      fs = AMITK_DIR_SELECTION (user_data);
+      fs = AMITK_XIF_SELECTION (user_data);
 #ifdef G_WITH_CYGWIN
       translate_win32_path (fs);
 #endif
       text = g_strdup (gtk_entry_get_text (GTK_ENTRY (fs->selection_entry)));
 
-      amitk_dir_selection_populate (fs, text, TRUE, TRUE);
+      amitk_xif_selection_populate (fs, text, TRUE, TRUE);
 
       g_free (text);
 
@@ -1842,14 +1842,14 @@ amitk_dir_selection_key_press (GtkWidget   *widget,
 }
 
 static void
-amitk_dir_selection_history_callback (GtkWidget *widget,
+amitk_xif_selection_history_callback (GtkWidget *widget,
 				     gpointer   data)
 {
-  AmitkDirSelection *fs = data;
+  AmitkXifSelection *fs = data;
   HistoryCallbackArg *callback_arg;
   GList *list;
 
-  g_return_if_fail (AMITK_IS_DIR_SELECTION (fs));
+  g_return_if_fail (AMITK_IS_XIF_SELECTION (fs));
 
   list = fs->history_list;
   
@@ -1858,7 +1858,7 @@ amitk_dir_selection_history_callback (GtkWidget *widget,
     
     if (callback_arg->menu_item == widget)
       {
-	amitk_dir_selection_populate (fs, callback_arg->directory, FALSE, FALSE);
+	amitk_xif_selection_populate (fs, callback_arg->directory, FALSE, FALSE);
 	break;
       }
     
@@ -1867,7 +1867,7 @@ amitk_dir_selection_history_callback (GtkWidget *widget,
 }
 
 static void 
-amitk_dir_selection_update_history_menu (AmitkDirSelection *fs,
+amitk_xif_selection_update_history_menu (AmitkXifSelection *fs,
 					gchar            *current_directory)
 {
   HistoryCallbackArg *callback_arg;
@@ -1877,7 +1877,7 @@ amitk_dir_selection_update_history_menu (AmitkDirSelection *fs,
   gint dir_len;
   gint i;
   
-  g_return_if_fail (AMITK_IS_DIR_SELECTION (fs));
+  g_return_if_fail (AMITK_IS_XIF_SELECTION (fs));
   g_return_if_fail (current_directory != NULL);
   
   list = fs->history_list;
@@ -1935,7 +1935,7 @@ amitk_dir_selection_update_history_menu (AmitkDirSelection *fs,
 	  fs->history_list = g_list_append (fs->history_list, callback_arg);
 	  
 	  g_signal_connect (G_OBJECT (menu_item), "activate",
-			    G_CALLBACK( amitk_dir_selection_history_callback),
+			    G_CALLBACK( amitk_xif_selection_history_callback),
 			    (gpointer) fs);
 	  gtk_menu_shell_append (GTK_MENU_SHELL (fs->history_menu), menu_item);
 	  gtk_widget_show (menu_item);
@@ -1978,12 +1978,12 @@ get_real_filename (gchar    *filename,
 }
 
 static void
-amitk_dir_selection_file_activate (GtkTreeView       *tree_view,
+amitk_xif_selection_file_activate (GtkTreeView       *tree_view,
 				  GtkTreePath       *path,
 				  GtkTreeViewColumn *column,
 				  gpointer           user_data)
 {
-  AmitkDirSelection *fs = AMITK_DIR_SELECTION (user_data);
+  AmitkXifSelection *fs = AMITK_XIF_SELECTION (user_data);
   GtkTreeModel *model = gtk_tree_view_get_model (tree_view);
   GtkTreeIter iter;  
   gchar *filename;
@@ -1999,12 +1999,12 @@ amitk_dir_selection_file_activate (GtkTreeView       *tree_view,
 }
 
 static void
-amitk_dir_selection_dir_activate (GtkTreeView       *tree_view,
+amitk_xif_selection_dir_activate (GtkTreeView       *tree_view,
 				 GtkTreePath       *path,
 				 GtkTreeViewColumn *column,
 				 gpointer           user_data)
 {
-  AmitkDirSelection *fs = AMITK_DIR_SELECTION (user_data);
+  AmitkXifSelection *fs = AMITK_XIF_SELECTION (user_data);
   GtkTreeModel *model = gtk_tree_view_get_model (tree_view);
   GtkTreeIter iter;
   gchar *filename;
@@ -2012,7 +2012,7 @@ amitk_dir_selection_dir_activate (GtkTreeView       *tree_view,
   gtk_tree_model_get_iter (model, &iter, path);
   gtk_tree_model_get (model, &iter, DIR_COLUMN, &filename, -1);
   filename = get_real_filename (filename, TRUE);
-  amitk_dir_selection_populate (fs, filename, FALSE, FALSE);
+  amitk_xif_selection_populate (fs, filename, FALSE, FALSE);
   g_free (filename);
 }
 
@@ -2065,7 +2065,7 @@ escape_underscores (const gchar *str)
 }
 
 static void
-amitk_dir_selection_populate (AmitkDirSelection *fs,
+amitk_xif_selection_populate (AmitkXifSelection *fs,
 			     gchar            *rel_path,
 			     gboolean          try_complete,
 			     gboolean          reset_entry)
@@ -2076,13 +2076,14 @@ amitk_dir_selection_populate (AmitkDirSelection *fs,
   GtkListStore *dir_model;
   GtkListStore *file_model;
   gchar* filename;
+  gchar* full_filename;
   gchar* rem_path = rel_path;
   gchar* sel_text;
   gint did_recurse = FALSE;
   gint possible_count = 0;
   gint selection_index = -1;
   
-  g_return_if_fail (AMITK_IS_DIR_SELECTION (fs));
+  g_return_if_fail (AMITK_IS_XIF_SELECTION (fs));
 
   cmpl_state = (CompletionState*) fs->cmpl_state;
   poss = cmpl_completion_matches (rel_path, &rem_path, cmpl_state);
@@ -2090,7 +2091,7 @@ amitk_dir_selection_populate (AmitkDirSelection *fs,
   if (!cmpl_state_okay (cmpl_state))
     {
       /* Something went wrong. */
-      amitk_dir_selection_abort (fs);
+      amitk_xif_selection_abort (fs);
       return;
     }
 
@@ -2116,37 +2117,32 @@ amitk_dir_selection_populate (AmitkDirSelection *fs,
 
           filename = cmpl_this_completion (poss);
 
-          if (cmpl_is_directory (poss))
-            {
-              if (strcmp (filename, "." G_DIR_SEPARATOR_S) != 0 &&
-                  strcmp (filename, ".." G_DIR_SEPARATOR_S) != 0) 
-		{
+	  if (strcmp (filename, "." G_DIR_SEPARATOR_S) != 0 &&
+	      strcmp (filename, ".." G_DIR_SEPARATOR_S) != 0)  {
 
-		gchar * temp;
-		gchar ** frags1;
-		gchar ** frags2;
-		gboolean xif_directory;
-	  
-		/* figure out if it ends with .xif */
-		temp = g_strdup(filename);
-		g_strreverse(temp);
-		frags1 = g_strsplit(temp, ".", 2);
-		g_free(temp);
-		g_strreverse(frags1[0]);
-		frags2 = g_strsplit(frags1[0], G_DIR_SEPARATOR_S, -1);
-		xif_directory =  (g_ascii_strcasecmp(frags2[0], "xif") == 0);
-		g_strfreev(frags2);
-		g_strfreev(frags1);
-		
-		if (!xif_directory) {
-		  gtk_list_store_append (dir_model, &iter);
-		  gtk_list_store_set (dir_model, &iter, DIR_COLUMN, filename, -1);
-		} else { /* .xif directory */
-		  gtk_list_store_append (file_model, &iter);
-		  gtk_list_store_set (file_model, &iter, DIR_COLUMN, filename, -1);
-		}
-	      }
-            }
+	    full_filename = g_strconcat(rel_path, filename, NULL);
+	    if ( amide_is_xif_flat_file(full_filename, NULL, NULL) ||
+		 amide_is_xif_directory(full_filename, NULL, NULL)) {
+	      gchar * temp_str;
+	      gint length;
+
+	      /* remove any trailing directory characters */
+	      length = strlen(filename);
+	      if ((length >= 1) && (strcmp(filename+length-1, G_DIR_SEPARATOR_S) == 0))
+		length--;
+	      temp_str = g_strndup(filename, length);
+
+	      gtk_list_store_append (file_model, &iter);
+	      gtk_list_store_set (file_model, &iter, DIR_COLUMN, temp_str, -1);
+	      g_free(temp_str);
+
+
+	    } else { 
+	      gtk_list_store_append (dir_model, &iter);
+	      gtk_list_store_set (dir_model, &iter, DIR_COLUMN, filename, -1);
+	    }
+	    g_free(full_filename);
+	  }
 	}
 
       poss = cmpl_next_completion (cmpl_state);
@@ -2178,7 +2174,7 @@ amitk_dir_selection_populate (AmitkDirSelection *fs,
 
               did_recurse = TRUE;
 
-              amitk_dir_selection_populate (fs, dir_name, TRUE, TRUE);
+              amitk_xif_selection_populate (fs, dir_name, TRUE, TRUE);
 
               g_free (dir_name);
             }
@@ -2220,14 +2216,14 @@ amitk_dir_selection_populate (AmitkDirSelection *fs,
 
       if (fs->history_pulldown) 
 	{
-	  amitk_dir_selection_update_history_menu (fs, cmpl_reference_position (cmpl_state));
+	  amitk_xif_selection_update_history_menu (fs, cmpl_reference_position (cmpl_state));
 	}
       
     }
 }
 
 static void
-amitk_dir_selection_abort (AmitkDirSelection *fs)
+amitk_xif_selection_abort (AmitkXifSelection *fs)
 {
   gchar err_buf[256];
 
@@ -2240,22 +2236,22 @@ amitk_dir_selection_abort (AmitkDirSelection *fs)
 }
 
 /**
- * amitk_dir_selection_set_select_multiple:
- * @filesel: a #AmitkDirSelection
+ * amitk_xif_selection_set_select_multiple:
+ * @filesel: a #AmitkXifSelection
  * @select_multiple: whether or not the user is allowed to select multiple
  * files in the file list.
  *
  * Sets whether the user is allowed to select multiple files in the file list.
- * Use amitk_dir_selection_get_selections () to get the list of selected files.
+ * Use amitk_xif_selection_get_selections () to get the list of selected files.
  **/
 void
-amitk_dir_selection_set_select_multiple (AmitkDirSelection *filesel,
+amitk_xif_selection_set_select_multiple (AmitkXifSelection *filesel,
 					gboolean          select_multiple)
 {
   GtkTreeSelection *sel;
   GtkSelectionMode mode;
 
-  g_return_if_fail (AMITK_IS_DIR_SELECTION (filesel));
+  g_return_if_fail (AMITK_IS_XIF_SELECTION (filesel));
 
   sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (filesel->file_list));
 
@@ -2270,21 +2266,21 @@ amitk_dir_selection_set_select_multiple (AmitkDirSelection *filesel,
 }
 
 /**
- * amitk_dir_selection_get_select_multiple:
- * @filesel: a #AmitkDirSelection
+ * amitk_xif_selection_get_select_multiple:
+ * @filesel: a #AmitkXifSelection
  *
  * Determines whether or not the user is allowed to select multiple files in
- * the file list. See amitk_dir_selection_set_select_multiple().
+ * the file list. See amitk_xif_selection_set_select_multiple().
  *
  * Return value: %TRUE if the user is allowed to select multiple files in the
  * file list
  **/
 gboolean
-amitk_dir_selection_get_select_multiple (AmitkDirSelection *filesel)
+amitk_xif_selection_get_select_multiple (AmitkXifSelection *filesel)
 {
   GtkTreeSelection *sel;
 
-  g_return_val_if_fail (AMITK_IS_DIR_SELECTION (filesel), FALSE);
+  g_return_val_if_fail (AMITK_IS_XIF_SELECTION (filesel), FALSE);
 
   sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (filesel->file_list));
   return (gtk_tree_selection_get_mode (sel) == GTK_SELECTION_MULTIPLE);
@@ -2316,10 +2312,10 @@ free_selected_names (GPtrArray *names)
 }
 
 static void
-amitk_dir_selection_file_changed (GtkTreeSelection *selection,
+amitk_xif_selection_file_changed (GtkTreeSelection *selection,
 				 gpointer          user_data)
 {
-  AmitkDirSelection *fs = AMITK_DIR_SELECTION (user_data);
+  AmitkXifSelection *fs = AMITK_XIF_SELECTION (user_data);
   GPtrArray *new_names;
   gchar *filename;
   const gchar *entry;
@@ -2436,13 +2432,13 @@ maybe_clear_entry:
 }
 
 /**
- * amitk_dir_selection_get_selections:
- * @filesel: a #AmitkDirSelection
+ * amitk_xif_selection_get_selections:
+ * @filesel: a #AmitkXifSelection
  *
  * Retrieves the list of file selections the user has made in the dialog box.
  * This function is intended for use when the user can select multiple files
  * in the file list. The first file in the list is equivalent to what
- * amitk_dir_selection_get_filename() would return.
+ * amitk_xif_selection_get_filename() would return.
  *
  * The filenames are in the encoding of g_filename_from_utf8(), which may or 
  * may not be the same as that used by GTK+ (UTF-8). To convert to UTF-8, call
@@ -2454,7 +2450,7 @@ maybe_clear_entry:
  * g_strfreev() to free it.
  **/
 gchar **
-amitk_dir_selection_get_selections (AmitkDirSelection *filesel)
+amitk_xif_selection_get_selections (AmitkXifSelection *filesel)
 {
   GPtrArray *names;
   gchar **selections;
@@ -2463,9 +2459,9 @@ amitk_dir_selection_get_selections (AmitkDirSelection *filesel)
   gint i, count;
   gboolean unselected_entry;
 
-  g_return_val_if_fail (AMITK_IS_DIR_SELECTION (filesel), NULL);
+  g_return_val_if_fail (AMITK_IS_XIF_SELECTION (filesel), NULL);
 
-  filename = g_strdup (amitk_dir_selection_get_filename (filesel));
+  filename = g_strdup (amitk_xif_selection_get_filename (filesel));
 
   if (strlen (filename) == 0)
     {

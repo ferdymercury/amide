@@ -164,7 +164,8 @@ static AmitkRawData * data_set_load_xml(gchar * data_set_xml_filename, gchar **p
 #ifdef AMIDE_DEBUG
   g_print("reading data from file %s\n", data_set_raw_filename);
 #endif
-  new_data_set = amitk_raw_data_import_raw_file(data_set_raw_filename, raw_data_format, dim, 0, NULL, NULL);
+  new_data_set = amitk_raw_data_import_raw_file(data_set_raw_filename, NULL, raw_data_format, 
+						dim, 0, NULL, NULL);
    
   /* and we're done */
   g_free(data_set_raw_filename);
@@ -379,7 +380,8 @@ static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename, AmitkInterpol
     amitk_data_set_set_scale_factor(new_volume,  xml_get_data(nodes, "conversion", perror_buf));
     
     /* now load in the raw data */
-    new_volume->raw_data = amitk_raw_data_import_raw_file(raw_data_filename, raw_data_format, temp_dim, 0, NULL, NULL);
+    new_volume->raw_data = amitk_raw_data_import_raw_file(raw_data_filename, NULL, raw_data_format, 
+							  temp_dim, 0, NULL, NULL);
     
     g_free(raw_data_filename);
     /* -------- end legacy cruft -------- */

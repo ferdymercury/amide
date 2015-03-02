@@ -57,9 +57,15 @@ typedef enum {
 
 
 /* external functions */
+gboolean ui_common_check_filename(const gchar * filename);
 void ui_common_entry_name_cb(gchar * entry_string, gpointer data);
 void ui_common_file_selection_cancel_cb(GtkWidget* widget, gpointer data);
-gchar * ui_common_file_selection_get_name(GtkWidget * file_selection);
+gchar * ui_common_file_selection_get_save_name(GtkWidget * file_selection);
+gchar * ui_common_xif_selection_get_save_name(GtkWidget * xif_selection);
+gchar * ui_common_file_selection_get_load_name(GtkWidget * file_selection);
+gchar * ui_common_xif_selection_get_load_name(GtkWidget * xif_selection);
+void ui_common_file_selection_set_filename(GtkWidget * file_selection, gchar * suggested_name);
+void ui_common_xif_selection_set_filename(GtkWidget * xif_selection, gchar * suggested_name);
 void ui_common_about_cb(GtkWidget * button, gpointer data);
 void ui_common_draw_view_axis(GnomeCanvas * canvas, gint row, gint column, 
 			      AmitkView view, AmitkLayout layout, 

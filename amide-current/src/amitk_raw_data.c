@@ -236,15 +236,22 @@ AmitkRawData* amitk_raw_data_new_with_data(AmitkFormat format, AmitkVoxel dim) {
 
 
 /* reads the contents of a raw data file into an amide raw data structure,
-   note: file_offset is bytes for a binary file, lines for an ascii file
+
+   notes: 
+
+   1. file_offset is bytes for a binary file, lines for an ascii file
+   2. either file_name, of existing_file need to be specified.  
+      If existing_file is not being used, it must be NULL
 */
 AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name, 
+					      FILE * existing_file,
 					      AmitkRawFormat raw_format,
 					      AmitkVoxel dim,
-					      guint file_offset,
+					      long file_offset,
 					      gboolean (*update_func)(),
 					      gpointer update_data) {
 
+  FILE * new_file_pointer=NULL;
   FILE * file_pointer=NULL;
   void * file_buffer=NULL;
   size_t bytes_per_slice=0;
@@ -258,13 +265,10 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
   gint divider;
   gboolean continue_work = TRUE;
 
-  if (file_name == NULL) {
-    g_warning(_("raw_data_read called with no filename"));
-    goto error_condition;
-  }
+  g_return_val_if_fail((file_name != NULL) || (existing_file != NULL), NULL);
 
   if (update_func != NULL) {
-    temp_string = g_strdup_printf(_("Reading: %s"), file_name);
+    temp_string = g_strdup_printf(_("Reading: %s"), (file_name != NULL) ? file_name : "raw data");
     continue_work = (*update_func)(update_data, temp_string, (gdouble) 0.0);
     g_free(temp_string);
   }
@@ -278,30 +282,34 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
   }
 
   /* open the raw data file for reading */
-  if (raw_format == AMITK_RAW_FORMAT_ASCII_8_NE) {
-    if ((file_pointer = fopen(file_name, "r")) == NULL) {
-      g_warning(_("couldn't open raw data file %s"), file_name);
-      goto error_condition;
+  if (existing_file == NULL) {
+    if (raw_format == AMITK_RAW_FORMAT_ASCII_8_NE) {
+      if ((new_file_pointer = fopen(file_name, "r")) == NULL) {
+	g_warning(_("couldn't open raw data file %s"), file_name);
+	goto error_condition;
+      }
+    } else { /* note, rb==r on any POSIX compliant system (i.e. Linux). */
+      if ((new_file_pointer = fopen(file_name, "rb")) == NULL) {
+	g_warning(_("couldn't open raw data file %s"), file_name);
+	goto error_condition;
+      }
     }
-  } else { /* note, rb==r on any POSIX compliant system (i.e. Linux). */
-    if ((file_pointer = fopen(file_name, "rb")) == NULL) {
-      g_warning(_("couldn't open raw data file %s"), file_name);
-      goto error_condition;
-    }
+    file_pointer = new_file_pointer;
+  } else {
+    file_pointer = existing_file;
   }
   
   /* jump forward by the given offset */
   if (raw_format == AMITK_RAW_FORMAT_ASCII_8_NE) {
     for (j=0; j<file_offset; j++)
       if ((error_code = fscanf(file_pointer, "%*f")) < 0) { /*EOF is usually -1 */
-	g_warning(_("could not step forward %d elements in raw data file:\n\t%s\n\treturned error: %d"),
-		  j+1, file_name, error_code);
+	g_warning(_("could not step forward %d elements in raw data file:\n\treturned error: %d"),
+		  j+1, error_code);
 	goto error_condition;
     }
   } else { /* binary */
     if (fseek(file_pointer, file_offset, SEEK_SET) != 0) {
-      g_warning(_("could not seek forward %d bytes in raw data file:\n\t%s"),
-		file_offset, file_name);
+      g_warning(_("could not seek forward %ld bytes in raw data file"),file_offset);
       goto error_condition;
     }
   }
@@ -332,8 +340,7 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
       if (raw_format != AMITK_RAW_FORMAT_ASCII_8_NE) { /* ASCII handled in the loop below */
 	bytes_read = fread(file_buffer, 1, bytes_per_slice, file_pointer );
 	if (bytes_read != bytes_per_slice) {
-	  g_warning(_("read wrong number of elements from raw data file:\n\t%s\n\texpected %d\tgot %d"), 
-		    file_name, bytes_per_slice, bytes_read);
+	  g_warning(_("read wrong # of elements from raw data, expected %d, got %d"), bytes_per_slice, bytes_read);
 	  goto error_condition;
 	}
       }
@@ -356,12 +363,11 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
 	}
 	
 	if (error_code < 0) { /* EOF = -1 (usually) */
-	  g_warning(_("could not read ascii file after %d elements, file or parameters are erroneous:\n\t%s"),
+	  g_warning(_("could not read ascii file after %d elements, file or parameters are erroneous"),
 		    i.x + 
 		    dim.x*i.y +
 		    dim.x*dim.y*i.z +
-		    dim.x*dim.y*dim.z*i.t,
-		    file_name);
+		    dim.x*dim.y*dim.z*i.t);
 	  goto error_condition;
 	}
 	
@@ -668,8 +674,8 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
 
  exit_condition:
 
-  if (file_pointer != NULL)
-    fclose(file_pointer);
+  if (new_file_pointer != NULL)
+    fclose(new_file_pointer);
 
   if (file_buffer != NULL)
     g_free(file_buffer);
@@ -684,80 +690,106 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
 
 /* function to write out the information content of a raw_data set into an xml
    file.  Returns a string containing the name of the file. */
-gchar * amitk_raw_data_write_xml(AmitkRawData * raw_data, const gchar * name) {
+void amitk_raw_data_write_xml(AmitkRawData * raw_data, const gchar * name, 
+			      FILE *study_file, gchar ** output_filename, guint64 * plocation,
+			      guint64 * psize) {
 
-  gchar * xml_filename;
-  gchar * raw_filename;
+  gchar * xml_filename=NULL;
+  gchar * raw_filename=NULL;
   guint count;
   struct stat file_info;
   xmlDocPtr doc;
   FILE * file_pointer;
+  guint64 location, size;
 
-  /* make a guess as to our filename */
-  count = 1;
-  xml_filename = g_strdup_printf("%s.xml", name);
-  raw_filename = g_strdup_printf("%s.dat", name);
 
-  /* see if this file already exists */
-  while ((stat(xml_filename, &file_info) == 0) ||(stat(raw_filename, &file_info) == 0)) {
-    g_free(xml_filename);
-    g_free(raw_filename);
-    count++;
-    xml_filename = g_strdup_printf("%s_%d.xml", name, count);
-    raw_filename = g_strdup_printf("%s_%d.dat", name, count);
-  }
+  if (study_file == NULL) {
+    /* make a guess as to our filename */
+    count = 1;
+    xml_filename = g_strdup_printf("%s.xml", name);
+    raw_filename = g_strdup_printf("%s.dat", name);
 
-  /* and we now have unique filenames */
+    /* see if this file already exists */
+    while ((stat(xml_filename, &file_info) == 0) ||(stat(raw_filename, &file_info) == 0)) {
+      g_free(xml_filename);
+      g_free(raw_filename);
+      count++;
+      xml_filename = g_strdup_printf("%s_%d.xml", name, count);
+      raw_filename = g_strdup_printf("%s_%d.dat", name, count);
+    }
+
+    /* and we now have unique filenames */
 #ifdef AMIDE_DEBUG
-  g_print("\t- saving raw data in file %s\n",xml_filename);
+    g_print("\t- saving raw data in file %s\n",xml_filename);
 #endif
 
-  /* write the xml file */
+    /* Note, "wb" is same as "w" on Unix, but not in Windows */
+    if ((file_pointer = fopen(raw_filename, "wb")) == NULL) {
+      g_warning(_("couldn't save raw data file: %s"),raw_filename);
+      g_free(xml_filename);
+      g_free(raw_filename);
+      return;
+    }
+  } else {
+    file_pointer = study_file;
+  }
+  
+  /* write it on out.  */
+  location = ftell(file_pointer);
+  if (fwrite(raw_data->data, 
+	     amitk_format_sizes[AMITK_RAW_DATA_FORMAT(raw_data)],
+	     amitk_raw_data_num_voxels(raw_data), 
+	     file_pointer) != amitk_raw_data_num_voxels(raw_data)) {
+    g_warning(_("incomplete save of raw data file: %s"),raw_filename);
+    g_free(xml_filename);
+    g_free(raw_filename);
+    if (study_file == NULL) fclose(file_pointer);
+    return;
+  }
+  size = ftell(file_pointer)-location;
+  if (study_file == NULL) fclose(file_pointer);
+
+
+
+  /* write the xml portion */
   doc = xmlNewDoc("1.0");
   doc->children = xmlNewDocNode(doc, NULL, "raw_data", name);
   amitk_voxel_write_xml(doc->children, "dim", raw_data->dim);
   xml_save_string(doc->children,"raw_format", 
 		  amitk_raw_format_get_name(amitk_format_to_raw_format(raw_data->format)));
 
-  /* store the name of our associated data file */
-  xml_save_string(doc->children, "raw_data_file", raw_filename);
+  /* store the info on our associated data */
+  if (study_file == NULL) {
+    xml_save_string(doc->children, "raw_data_file", raw_filename);
+    g_free(raw_filename);
+  } else {
+    xml_save_location_and_size(doc->children, "raw_data_location_and_size", location, size);
+  }
 
   /* and save */
-  xmlSaveFile(xml_filename, doc);
+  if (study_file == NULL) {
+    xmlSaveFile(xml_filename, doc);
+    if (output_filename != NULL) *output_filename = xml_filename;
+    else g_free(xml_filename);
+  } else {
+    *plocation = ftell(study_file);
+    xmlDocDump(study_file, doc);
+    *psize = ftell(study_file)-*plocation;
+  }
 
   /* and we're done with the xml stuff*/
   xmlFreeDoc(doc);
 
-  /* now to save the raw data */
 
-  /* write it on out.  */
-  /* Note, "wb" is same as "w" on Unix, but not in Windows */
-  if ((file_pointer = fopen(raw_filename, "wb")) == NULL) {
-    g_warning(_("couldn't save raw data file: %s"),raw_filename);
-    g_free(xml_filename);
-    g_free(raw_filename);
-    return NULL;
-  }
-
-  if (fwrite(raw_data->data, 
-	     amitk_format_sizes[AMITK_RAW_DATA_FORMAT(raw_data)],
-	     amitk_raw_data_num_voxels(raw_data), 
-	     file_pointer) != amitk_raw_data_num_voxels(raw_data)) {
-    g_warning(_("incomplete save of raw data file: %s"),raw_filename);
-    fclose(file_pointer);
-    g_free(xml_filename);
-    g_free(raw_filename);
-    return NULL;
-  }
-  fclose(file_pointer);
-
-  g_free(raw_filename);
-  return xml_filename;
+  return;
 }
 
 
 /* function to load in a raw data xml file */
 AmitkRawData * amitk_raw_data_read_xml(gchar * xml_filename,
+				       FILE * study_file,
+				       guint64 location,
+				       guint64 size,
 				       gchar ** perror_buf,
 				       gboolean (*update_func)(),
 				       gpointer update_data) {
@@ -767,14 +799,14 @@ AmitkRawData * amitk_raw_data_read_xml(gchar * xml_filename,
   xmlNodePtr nodes;
   AmitkRawFormat i_raw_format, raw_format;
   gchar * temp_string;
-  gchar * raw_filename;
+  gchar * raw_filename=NULL;
+  guint64 offset, dummy;
+  long offset_long=0;
   AmitkVoxel dim;
 
-  /* parse the xml file */
-  if ((doc = xmlParseFile(xml_filename)) == NULL) {
-    amitk_append_str(perror_buf,_("Couldn't Parse AMIDE raw_data xml file %s"),xml_filename);
-    return NULL;
-  }
+
+  if ((doc = xml_open_doc(xml_filename, study_file, location, size, perror_buf)) == NULL)
+    return NULL; /* function already appends the error message */
 
   /* get the root of our document */
   if ((nodes = xmlDocGetRootElement(doc)) == NULL) {
@@ -806,17 +838,32 @@ AmitkRawData * amitk_raw_data_read_xml(gchar * xml_filename,
 
   g_free(temp_string);
 
-  /* get the name of our associated data file */
-  raw_filename = xml_get_string(nodes, "raw_data_file");
-
-  /* now load in the raw data */
+  /* get the filename or location of our associated data */
+  if (study_file == NULL) {
+    raw_filename = xml_get_string(nodes, "raw_data_file");
+    /* now load in the raw data */
 #ifdef AMIDE_DEBUG
-  g_print("reading data from file %s\n", raw_filename);
+    g_print("reading data from file %s\n", raw_filename);
 #endif
-  raw_data = amitk_raw_data_import_raw_file(raw_filename, raw_format, dim, 0, update_func, update_data);
+  } else {
+    xml_get_location_and_size(nodes, "raw_data_location_and_size", &offset, &dummy, perror_buf);
+
+    /* check for file size problems */
+    if (sizeof(long) < sizeof(guint64))
+      if ((offset>>32) > 0) {
+	amitk_append_str(perror_buf, _("File to large to read on 32bit platform."));
+	return NULL;
+      }
+    offset_long = offset;
+  }
+
+
+  raw_data = amitk_raw_data_import_raw_file(raw_filename, study_file, raw_format, dim, offset_long, 
+					    update_func, update_data);
+
    
   /* and we're done */
-  g_free(raw_filename);
+  if (raw_filename != NULL) g_free(raw_filename);
   xmlFreeDoc(doc);
 
   return raw_data;

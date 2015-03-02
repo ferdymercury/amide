@@ -3,10 +3,14 @@ misc list of things todo:
 for next release?
 -----------------
 
-* ability to import and export AIR .air files
+* test flat file xif on big endian architecture
 
-* be able to change how much you step when clicking on the slider?
 * be able to generate line profiles.  You specify 2 points...
+  -page 1, list of points (pick 1)
+  -page 2, list of points (pick 1)
+  -page 3, graph of line profile, option to save
+
+* ability to import and export AIR .air files
 * histogram for roi's
   - probably an option on the ROI stat's pop-up
 
@@ -14,17 +18,15 @@ for next release?
 	-roi analysis
 	-loading in data sets
 
-doc todo
---------
-complete rewrite of help documentation
-
 
 windows todo
 ------------
+* will have to figure out how to get libfame's m4 file working
 * preferences aren't currently saved between amide sessions
 * get popt working, then can have file associations with .xif files
 	-specify icon for .xif files
-
+* zdial on rendering doesn't work
+* figure out how to lose the black text window 
 
 factor analysis things:
 -----------------------       
@@ -48,17 +50,12 @@ big things:
 	-study would have an output units variable
 	-each data set, can specify it's original units, and (if needed), a scaling factor to output unit
 	-ui_preferences would change default units
+	-need gobject based approach, so widgets can listen for change
 * add a data sets list item,
 	-would allow reading in multi-bed data sets
 * calculating PV correction.  
 	Correction factors could be calculated for each volume's 
 	resolution and then cached.
-* allow option to save .xif file as flat file
-	make the entire study tree one xml tree, rather than separate files
-	instead of storing binary data filenames, have locations in single file
-	xmlDocDump () this to the end of the binary data
-	first entry in binary file pointer to the xml data
-	add amitkdir ability to identify these files also
 * multi-step undo/redo, look into how other GTK apps do it
 	-once this is done, drop the enact/cancel bit of shifting data sets and study's
 	  as we can now just undo such a change
@@ -77,6 +74,7 @@ small things:
 * would changing the icons to .png files allow anti-aliasing? better icons?
 * fix zooming of off angle roi's on the canvas
 * should all voxel's that an roi edge passes through be displayed?
+        -would mean creating roi canvas object as pixmap, similar to isocontour
 * implement help buttons on most of the dialogs
 	-gnome_druid has an add help button function
 * rendering movie generation should allow rotating around one axis, then another, then another
@@ -89,7 +87,7 @@ small things:
 
 pre 1.0 things:
 --------------
-* change all dialog boxes to verbs
+* try to change dialog box buttons to verbs
 * rewrite documentation
 * start commenting the widgets, run gtk-doc to generate documentation
 * check README's, INSTALL guides, etc.
@@ -116,8 +114,6 @@ probably post 1.0 things:
 * preset thresholds (bone window, fat window, etc.)
 * could probably subclass isocontour's from AmitkRoi -> AimtkIsocontourRoi
 	also probably get rid of amitk_roi_variable_types.c... not worth the performance improvement
-* guppi interface for drawing graphs of ROI statistics
-	guppi needs to stabilize first, and needs to get incorporated into standard distributions
 
 
 things dependent on other things: 
@@ -127,6 +123,7 @@ things dependent on other things:
 	1- Disable interaction with ESD (enlightenment sound daemon).
            If amide crashed, ESD was locking files....  This is as of
 	   fink 0.5.2, OS X 10.2.5
+
 
 * anti-aliased canvases doesn't support GDK line styles (as of libgnomecanvas 2.2.0)
         -ui_preferences_dialog, and amitk_object_dialog have commented out code for
@@ -179,5 +176,14 @@ things dependent on other things:
 	xmedcon if a file is loaded in this way.  However, loading in the same
 	file by specifying it on the command line works....
 
+* libmdc currently links against glib1.  When (X)MedCon switches to
+	GTK2/GLib2, remove the line in configure.in that overwrites
+	the XMEDCON_LIBS entry.  Also, XMEDCON_CFLAGS can probably
+	be includes in src/Makefile.am
+
+* drawing graphics of ROI statistics, etc.
+	Can't use Guppi, it's unmaintained and deprecated.  Hopefully the 
+	gnumeric project will come out with a library for drawing charts/etc 
+	at some point in the future.
 
 

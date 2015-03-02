@@ -2394,7 +2394,11 @@ static void canvas_update_setup(AmitkCanvas * canvas) {
 
     canvas->label = gtk_label_new(view_names[canvas->view]);
 
+#ifdef AMIDE_LIBGNOMECANVAS_OLD
+    canvas->canvas = gnome_canvas_new();
+#else
     canvas->canvas = gnome_canvas_new_aa();
+#endif
 
     canvas->scrollbar_adjustment = gtk_adjustment_new(0.5, 0, 1, 1, 1, 1); /* junk values */
     g_signal_connect(canvas->scrollbar_adjustment, "value_changed", 

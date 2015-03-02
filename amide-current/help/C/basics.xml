@@ -467,7 +467,11 @@
        With the "Don't prompt for 'save changes' on exit" option, you
        can tell the program to not prompt you to save changes done on
        the study when exiting an AMIDE session.
-      </para></listitem>
+      </para>
+      <para> The second option 'save .XIF file as directory' allows
+      AMIDE's XIF file's to be saved in a directory structure, instead
+      of as a single flat file (the default).  This option is of
+      interest mainly to developers</para></listitem>
     </varlistentry>
 
     </variablelist>
