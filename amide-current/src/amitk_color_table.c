@@ -1,7 +1,7 @@
 /* amitk_color_table.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2012 Andy Loening
+ * Copyright (C) 2000-2014 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -162,7 +162,6 @@ rgba_t amitk_color_table_lookup(amide_data_t datum, AmitkColorTable which,
     rgba.r = 0xFF-rgba.r;
     rgba.g = 0xFF-rgba.g;
     rgba.b = 0xFF-rgba.b;
-    rgba.a = 0xFF-rgba.a; 
     break;
   case AMITK_COLOR_TABLE_RED_TEMP:
     /* this may not be exactly right.... */
@@ -399,14 +398,6 @@ rgba_t amitk_color_table_outline_color(AmitkColorTable which, gboolean highlight
   rgba_t rgba, normal_rgba, highlight_rgba;
 
   switch(which) {
-  case AMITK_COLOR_TABLE_BWB_LINEAR:
-    normal_rgba = amitk_color_table_outline_color(AMITK_COLOR_TABLE_BW_LINEAR, FALSE);
-    highlight_rgba = amitk_color_table_outline_color(AMITK_COLOR_TABLE_BW_LINEAR, TRUE);
-    break;
-  case AMITK_COLOR_TABLE_WBW_LINEAR:
-    normal_rgba = amitk_color_table_outline_color(AMITK_COLOR_TABLE_WB_LINEAR, FALSE);
-    highlight_rgba = amitk_color_table_outline_color(AMITK_COLOR_TABLE_WB_LINEAR, TRUE);
-    break;
   case AMITK_COLOR_TABLE_RED_TEMP:
   case AMITK_COLOR_TABLE_INV_RED_TEMP:
     normal_rgba = amitk_color_table_lookup(1.0, which, 0.0,1.0);
@@ -443,6 +434,17 @@ rgba_t amitk_color_table_outline_color(AmitkColorTable which, gboolean highlight
   case AMITK_COLOR_TABLE_HOT_METAL:
   case AMITK_COLOR_TABLE_INV_HOT_METAL:
     normal_rgba = amitk_color_table_lookup(1.0, which, 0.0,1.0);
+    normal_rgba.r = 0x00;
+    normal_rgba.g = 0xFF;
+    normal_rgba.b = 0x80;
+    highlight_rgba.r = 0x00;
+    highlight_rgba.g = 0xFF;
+    highlight_rgba.b = 0xFF;
+    highlight_rgba.a = normal_rgba.a;
+    break;
+  case AMITK_COLOR_TABLE_HOT_METAL_CONTOUR:
+  case AMITK_COLOR_TABLE_INV_HOT_METAL_CONTOUR:
+    normal_rgba = amitk_color_table_lookup(0.5, which, 0.0,1.0);
     normal_rgba.r = 0x00;
     normal_rgba.g = 0xFF;
     normal_rgba.b = 0x80;
@@ -495,6 +497,16 @@ rgba_t amitk_color_table_outline_color(AmitkColorTable which, gboolean highlight
     highlight_rgba.b = 0x00;
     highlight_rgba.a = normal_rgba.a;
     break;
+  case AMITK_COLOR_TABLE_WBW_LINEAR:
+    normal_rgba = amitk_color_table_lookup(0.5, which, 0.0,1.0);
+    normal_rgba.r = 0xFF;
+    normal_rgba.g = 0x00;
+    normal_rgba.b = 0x00;
+    highlight_rgba.r = 0xF0;
+    highlight_rgba.g = 0xF0;
+    highlight_rgba.b = 0x00;
+    highlight_rgba.a = normal_rgba.a;
+    break;
   case AMITK_COLOR_TABLE_WB_LINEAR:
     normal_rgba = amitk_color_table_lookup(1.0, which, 0.0,1.0);
     normal_rgba.r = 0xFF;
@@ -502,6 +514,16 @@ rgba_t amitk_color_table_outline_color(AmitkColorTable which, gboolean highlight
     normal_rgba.b = 0x00;
     highlight_rgba.r = 0xF0;
     highlight_rgba.g = 0xF0;
+    highlight_rgba.b = 0x00;
+    highlight_rgba.a = normal_rgba.a;
+    break;
+  case AMITK_COLOR_TABLE_BWB_LINEAR:
+    normal_rgba = amitk_color_table_lookup(0.5, which, 0.0,1.0);
+    normal_rgba.r = 0xFF;
+    normal_rgba.g = 0x00;
+    normal_rgba.b = 0x00;
+    highlight_rgba.r = 0xFF;
+    highlight_rgba.g = 0xFF;
     highlight_rgba.b = 0x00;
     highlight_rgba.a = normal_rgba.a;
     break;

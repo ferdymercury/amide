@@ -1,6 +1,5 @@
-ACLOCAL_AMFLAGS = \
-	-I m4
-##	-I /usr/local/share/aclocal \
+ACLOCAL_AMFLAGS = -I m4
+
 
 if DISABLE_DOC
 HELPDIR = 

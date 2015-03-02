@@ -1,7 +1,7 @@
 /* dcmtk_interface.cc
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2005-2012 Andy Loening
+ * Copyright (C) 2005-2014 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -727,7 +727,9 @@ void transfer_slice(AmitkDataSet * ds, AmitkDataSet * slice_ds, AmitkVoxel i) {
   num_bytes_to_transfer =  amitk_raw_format_calc_num_bytes(AMITK_DATA_SET_DIM(slice_ds), AMITK_DATA_SET_FORMAT(slice_ds));
 
   ds_pointer = amitk_raw_data_get_pointer(AMITK_DATA_SET_RAW_DATA(ds), i);
+  g_return_if_fail(ds_pointer != NULL);
   slice_pointer = amitk_raw_data_get_pointer(AMITK_DATA_SET_RAW_DATA(slice_ds), zero_voxel);
+  g_return_if_fail(slice_pointer != NULL);
   memcpy(ds_pointer, slice_pointer, num_bytes_to_transfer);
 	  
   /* copy the scaling factors */
@@ -940,6 +942,7 @@ static AmitkDataSet * import_slices_as_dataset(GList * slices,
   amide_real_t true_thickness=0.0;
   amide_real_t old_thickness=0.0;
   AmitkPoint voxel_size;
+  gboolean figured_out_dimz=FALSE;
 
   g_return_val_if_fail(slices != NULL, NULL);
 
@@ -970,19 +973,22 @@ static AmitkDataSet * import_slices_as_dataset(GList * slices,
       x = div(dim.z, num_gates);
 
     if (x.rem == 0) {
-      dim.z = x.quot;
+      /* ideal case, things make sense */
       if (num_frames > 1) 
 	dim.t = num_frames;
       else /* (num_gates > 1) */
 	dim.g = num_gates;
+      dim.z = x.quot;
+      figured_out_dimz = TRUE;
+    }
 
-    } else {
 
-      /* inconsistency in our data set.... */
-      if (num_slices > 1)  
-	x = div(dim.z, num_slices);
+    if ((!figured_out_dimz) && (num_slices > 1)) {
+      /* inconsistency in our data set.... let's assume num_gates or num frames off, and 
+	 see if we can use the num_slices parameter to recover */
+      x = div(dim.z, num_slices);
 
-      if ((num_slices > 1) && (x.rem == 0)) {
+      if (x.rem == 0) {
 	/* try to recover based on what the DICOM file thinks is the number of slices per frame */
 	amitk_append_str_with_newline(perror_buf, 
 				      _("Cannot evenly divide the number of slices (%d) by the number of reported %s (%d) for data set %s - will try with %d %s"), 
@@ -997,26 +1003,36 @@ static AmitkDataSet * import_slices_as_dataset(GList * slices,
 	else /* (num_gates > 1) */
 	  dim.g = x.quot;
 	dim.z = num_slices;
-
-      } else {
-	amitk_append_str_with_newline(perror_buf, 
-				      _("Cannot evenly divide the number of slices (%d) by the number of %s (%d) for data set %s - will load first %d slices"), 
-				      dim.z,
-				      num_frames > 1 ? _("frames") : _("gates"), 
-				      num_frames > 1 ? num_frames : num_gates,
-				      AMITK_OBJECT_NAME(slice_ds),
-				      (x.quot > 0) ? x.quot : dim.z);
-
-	/* failure */
-	if (num_frames > 1) 
-	  dim.t = num_frames = 1;
-	else /* (num_gates > 1) */
-	  dim.g = num_gates = 1;
-	if (x.quot > 0)
-	  dim.z = x.quot;
+	figured_out_dimz = TRUE;
       }
     }
+
+    if (!figured_out_dimz) {
+      /* still have inconsistency in our data set....  */
+
+      /* if we have a num_slices parameter, we'll end up using that */
+      if (num_slices > 1)
+	x.quot = num_slices;
+
+      amitk_append_str_with_newline(perror_buf, 
+				    _("Cannot evenly divide the number of slices (%d) by the number of %s (%d) for data set %s - will load first %d slices"), 
+				    dim.z,
+				    num_frames > 1 ? _("frames") : _("gates"), 
+				    num_frames > 1 ? num_frames : num_gates,
+				    AMITK_OBJECT_NAME(slice_ds),
+				    (x.quot > 0) ? x.quot : dim.z);
+      
+      /* failure */
+      if (num_frames > 1) 
+	dim.t = num_frames = 1;
+      else /* (num_gates > 1) */
+	dim.g = num_gates = 1;
+      if (x.quot > 0)
+	dim.z = x.quot;
+      figured_out_dimz = TRUE;
+    }
   } /* dynamic/gated data */
+
 
   ds = AMITK_DATA_SET(amitk_object_copy(AMITK_OBJECT(slice_ds)));
       

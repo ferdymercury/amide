@@ -1,7 +1,7 @@
 /* amitk_data_set.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2012 Andy Loening
+ * Copyright (C) 2000-2014 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -104,7 +104,8 @@ G_BEGIN_DECLS
 #define AMITK_DATA_SET_DISTRIBUTION_SIZE 256
 
 typedef enum {
-  AMITK_OPERATION_UNARY_THRESHOLD,
+  AMITK_OPERATION_UNARY_RESCALE,
+  AMITK_OPERATION_UNARY_REMOVE_NEGATIVES,
   AMITK_OPERATION_UNARY_NUM
 } AmitkOperationUnary;
 
@@ -113,6 +114,7 @@ typedef enum {
   AMITK_OPERATION_BINARY_SUB,
   AMITK_OPERATION_BINARY_MULTIPLY,
   AMITK_OPERATION_BINARY_DIVISION,
+  AMITK_OPERATION_BINARY_T2STAR,
   AMITK_OPERATION_BINARY_NUM
 } AmitkOperationBinary;
 
@@ -604,6 +606,7 @@ AmitkDataSet * amitk_data_sets_math_binary           (AmitkDataSet * ds1,
 						      AmitkDataSet * ds2, 
 						      AmitkOperationBinary operation,
 						      amide_data_t parameter0,
+						      amide_data_t parameter1,
 						      gboolean by_frame,
 						      gboolean maintain_ds1_dim,
 						      AmitkUpdateFunc update_func,

@@ -1,7 +1,7 @@
 /* raw_data_import.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2012 Andy Loening
+ * Copyright (C) 2001-2014 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -39,7 +39,7 @@
 typedef struct raw_data_info_t {
   gchar * filename;
   gchar * name;
-  guint total_file_size;
+  gsize total_file_size;
   AmitkRawFormat raw_format;
   AmitkVoxel data_dim;
   AmitkPoint voxel_size;
@@ -449,7 +449,7 @@ static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
   gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 3,5,
  		   table_row, table_row+1, GTK_FILL | GTK_EXPAND, 0, X_PADDING, Y_PADDING);
   /* how many bytes we're currently reading from the file */
-  temp_string = g_strdup_printf("%d", raw_data_info->total_file_size);
+  temp_string = g_strdup_printf("%lu", raw_data_info->total_file_size);
   label = gtk_label_new(temp_string);
   gtk_misc_set_alignment(GTK_MISC(label), 0.0, 0.5);
   g_free(temp_string);

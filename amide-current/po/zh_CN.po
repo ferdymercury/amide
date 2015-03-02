@@ -2637,7 +2637,7 @@ msgstr ""
 
 #: ../src/image.c:304
 msgid ""
-"couldn't allocate memory for rgba16_data for transfering rendering to image"
+"couldn't allocate memory for rgba16_data for transferring rendering to image"
 msgstr ""
 
 #: ../src/image.c:381

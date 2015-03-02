@@ -1,7 +1,7 @@
 /* tb_profile.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2003-2012 Andy Loening
+ * Copyright (C) 2003-2014 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -368,7 +368,7 @@ static void save_profiles(const gchar * save_filename, tb_profile_t * tb_profile
   }
 
   results = results_as_string(tb_profile);
-  fprintf(file_pointer, results);
+  fprintf(file_pointer, "%s", results);
   g_free(results);
 
   fclose(file_pointer);

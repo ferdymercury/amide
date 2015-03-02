@@ -1,7 +1,7 @@
 /* amitk_common.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2004-2012 Andy Loening
+ * Copyright (C) 2004-2014 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -169,6 +169,14 @@ gint amitk_spin_button_scientific_output (GtkSpinButton *spin_button, gpointer d
   return TRUE; /* non-zero forces the default output function not to run */
 }
 
+/* this function exists, because double or triple clicking on the arrows in a spin button goes into 
+   an endless loop if that spin button is in a toolbar, at least in gtk as of version 2.24.22. */
+gint amitk_spin_button_discard_double_or_triple_click(GtkWidget *widget, GdkEventButton *event, gpointer func_data) {
+  if ((event->type==GDK_2BUTTON_PRESS || event->type==GDK_3BUTTON_PRESS))
+    return TRUE;
+  else
+    return FALSE;
+}
 
 /* The following function should return a pixbuf representing the currently shown data 
    on the canvas (within the specified height/width at the given offset).  

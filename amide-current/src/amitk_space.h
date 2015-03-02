@@ -1,7 +1,7 @@
 /* amitk_space.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2012 Andy Loening
+ * Copyright (C) 2000-2014 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -145,12 +145,12 @@ void            amitk_space_set_view_space          (AmitkSpace * set_space,
 
   
 /* functions that need to be fast, they do no error checking */
-inline AmitkPoint     amitk_space_b2s           (const AmitkSpace * space, AmitkPoint in_rp);
-inline AmitkPoint     amitk_space_s2b           (const AmitkSpace * space, const AmitkPoint in_rp);
+AmitkPoint     amitk_space_b2s           (const AmitkSpace * space, AmitkPoint in_rp);
+AmitkPoint     amitk_space_s2b           (const AmitkSpace * space, const AmitkPoint in_rp);
 #define amitk_space_s2s(in_space, out_space, in) (amitk_space_b2s((out_space), amitk_space_s2b((in_space), (in))))
 
-inline AmitkPoint     amitk_space_s2b_dim       (const AmitkSpace * space, const AmitkPoint in_rp);
-inline AmitkPoint     amitk_space_b2s_dim       (const AmitkSpace * space, const AmitkPoint in_rp);
+AmitkPoint     amitk_space_s2b_dim       (const AmitkSpace * space, const AmitkPoint in_rp);
+AmitkPoint     amitk_space_b2s_dim       (const AmitkSpace * space, const AmitkPoint in_rp);
 #define amitk_space_s2s_dim(in_space, out_space, in) (amitk_space_b2s_dim((out_space), amitk_space_s2b_dim((in_space), (in))))
 
 

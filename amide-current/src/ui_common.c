@@ -1,7 +1,7 @@
 /* ui_common.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2012 Andy Loening
+ * Copyright (C) 2001-2014 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -131,7 +131,7 @@ static void about_cb(GtkAction *action, gpointer * caller) {
 		       _("libmdc: Medical Imaging File library by Erik Nolf (version "),MDC_VERSION,")\n",
 #endif
 #ifdef AMIDE_LIBDCMDATA_SUPPORT
-		       _("libdcmdata: OFFIS DICOM Toolkit DCMTK (C) 1993-2004, OFFIS e.V. (version "),dcmtk_version,")\n",
+		       _("libdcmdata: OFFIS DICOM Toolkit DCMTK (C) OFFIS e.V. (version "),dcmtk_version,")\n",
 #endif
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
 		       _("libvolpack: Volume Rendering library by Philippe Lacroute (version "),VP_VERSION,")\n",
@@ -147,7 +147,7 @@ static void about_cb(GtkAction *action, gpointer * caller) {
   gtk_show_about_dialog(NULL, 
 			"name", PACKAGE,
 			"version", VERSION,
-			"copyright", "Copyright (c) 2000-2012 Andreas Loening",
+			"copyright", "Copyright (c) 2000-2014 Andreas Loening",
 			"license", "GNU General Public License, Version 2",
 			"authors", authors,
 			"comments", comments,
@@ -380,7 +380,7 @@ void ui_common_update_sample_roi_item(GnomeCanvasItem * roi_item,
   rgba_t outline_color;
   rgba_t fill_color;
 
-  outline_color = amitk_color_table_outline_color(AMITK_COLOR_TABLE_BW_LINEAR, TRUE);
+  outline_color = amitk_color_table_outline_color(AMITK_COLOR_TABLE_NIH, TRUE);
   fill_color = outline_color;
 #ifdef AMIDE_LIBGNOMECANVAS_AA
   fill_color.a *= transparency;

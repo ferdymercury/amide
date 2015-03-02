@@ -1,7 +1,7 @@
 /* amitk_data_set.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2012 Andy Loening
+ * Copyright (C) 2000-2014 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -5719,11 +5719,14 @@ AmitkDataSet * amitk_data_sets_math_unary(AmitkDataSet * ds1,
   i_dim = AMITK_DATA_SET_DIM (ds1);
 
   switch(operation) {
-  case AMITK_OPERATION_UNARY_THRESHOLD:
+  case AMITK_OPERATION_UNARY_RESCALE:
     if (parameter0 >= parameter1)
       format = AMITK_FORMAT_UBYTE; /* results will be 0 or 1 */
     else
       format = AMITK_FORMAT_FLOAT; /* results will be between 0 and 1 */
+    break;
+  case AMITK_OPERATION_UNARY_REMOVE_NEGATIVES:
+    format = AMITK_FORMAT_FLOAT;
     break;
   default:
     g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
@@ -5743,6 +5746,7 @@ AmitkDataSet * amitk_data_sets_math_unary(AmitkDataSet * ds1,
   amitk_data_set_set_scale_factor(output_ds, 1.0);
   amitk_data_set_set_voxel_size(output_ds, AMITK_DATA_SET_VOXEL_SIZE(ds1));
   amitk_data_set_calc_far_corner(output_ds);
+  amitk_data_set_set_scan_start(output_ds, amitk_data_set_get_start_time(ds1, i_voxel.t));
 
   for (i_view_mode=0; i_view_mode < AMITK_VIEW_MODE_NUM; i_view_mode++) 
     amitk_data_set_set_color_table(output_ds, i_view_mode, AMITK_DATA_SET_COLOR_TABLE(ds1, i_view_mode));
@@ -5751,13 +5755,17 @@ AmitkDataSet * amitk_data_sets_math_unary(AmitkDataSet * ds1,
 
   /* set a new name for this guy */
   switch(operation) {
-  case AMITK_OPERATION_UNARY_THRESHOLD:
+  case AMITK_OPERATION_UNARY_RESCALE:
     if (parameter0 >= parameter1)
-      temp_string = g_strdup_printf(_("Result: %s thresholded at %5.2g"), 
+      temp_string = g_strdup_printf(_("Result: %s rescaled at %3.2g"), 
 				    AMITK_OBJECT_NAME(ds1), parameter0);
     else
-      temp_string = g_strdup_printf(_("Result: %s thresholded below %5.2g and above %5.2g"), 
+      temp_string = g_strdup_printf(_("Result: %s rescaled below %3.2g and above %3.2g"), 
 				    AMITK_OBJECT_NAME(ds1), parameter0, parameter1);
+    break;
+  case AMITK_OPERATION_UNARY_REMOVE_NEGATIVES:
+    temp_string = g_strdup_printf(_("Result: %s negative values removed"),
+				  AMITK_OBJECT_NAME(ds1));
     break;
   default:
     g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
@@ -5774,9 +5782,16 @@ AmitkDataSet * amitk_data_sets_math_unary(AmitkDataSet * ds1,
   total_planes = i_dim.z*i_dim.t*i_dim.g;
   divider = ((total_planes/AMITK_UPDATE_DIVIDER) < 1) ? 1 : (total_planes/AMITK_UPDATE_DIVIDER);
 
+
   /* fill in output_ds by performing the operation on the data set */
   for (i_voxel.g = 0; (i_voxel.g < i_dim.g) && continue_work; i_voxel.g++) {
+    amitk_data_set_set_gate_time(output_ds, i_voxel.g, 
+				 amitk_data_set_get_gate_time(ds1, i_voxel.g));
+
     for (i_voxel.t = 0; (i_voxel.t < i_dim.t) && continue_work; i_voxel.t++) {
+      amitk_data_set_set_frame_duration(output_ds, i_voxel.t, amitk_data_set_get_frame_duration(ds1, i_voxel.t));
+
+
       for (i_voxel.z = 0; (i_voxel.z < i_dim.z) && continue_work; i_voxel.z++) {
 	if (update_func != NULL) {
 	  image_num = i_voxel.z+i_voxel.t*i_dim.z+i_voxel.g*i_dim.z*i_dim.t;
@@ -5789,7 +5804,7 @@ AmitkDataSet * amitk_data_sets_math_unary(AmitkDataSet * ds1,
 	  for (i_voxel.x = 0; i_voxel.x < i_dim.x; i_voxel.x++) {
 	    value = amitk_data_set_get_value(ds1, i_voxel);
 	    switch(operation) {
-	    case AMITK_OPERATION_UNARY_THRESHOLD:
+	    case AMITK_OPERATION_UNARY_RESCALE:
 	      if (parameter0 > parameter1) {
 		AMITK_RAW_DATA_UBYTE_SET_CONTENT(output_ds->raw_data, i_voxel) = (value >= parameter0);
 	      } else {
@@ -5801,6 +5816,8 @@ AmitkDataSet * amitk_data_sets_math_unary(AmitkDataSet * ds1,
 		  AMITK_RAW_DATA_FLOAT_SET_CONTENT(output_ds->raw_data, i_voxel) = 
 		    (value - parameter0)/(parameter1-parameter0);
 	      }
+	    case AMITK_OPERATION_UNARY_REMOVE_NEGATIVES:
+	      AMITK_RAW_DATA_FLOAT_SET_CONTENT(output_ds->raw_data, i_voxel) = (value < 0.0) ? 0.0 : value;
 	      break;
 	    default:
 	      goto error;
@@ -5842,38 +5859,71 @@ AmitkDataSet * amitk_data_sets_math_unary(AmitkDataSet * ds1,
 
 
 /* function to perform the given operation between two data sets 
-   parameter0 - used by division as a threshold for the divisor, below
-   which we set the output to zero. */
+   DIVISION: parameter0 used a threshold for the divisor, below which output is set zero. 
+   T2STAR: parameter0 is the echo time of ds1
+           parameter1 is the echo time of ds2
+*/
 AmitkDataSet * amitk_data_sets_math_binary(AmitkDataSet * ds1, 
 					   AmitkDataSet * ds2, 
 					   AmitkOperationBinary operation,
 					   amide_data_t parameter0,
+					   amide_data_t parameter1,
 					   gboolean by_frames,
 					   gboolean maintain_ds1_dim,
 					   AmitkUpdateFunc update_func,
 					   gpointer update_data) {
 
-  GList * data_sets;
+  GList * data_sets=NULL;
   AmitkCorners corner;
-  AmitkVolume * volume;
+  AmitkVolume * volume=NULL;
   AmitkPoint voxel_size;
   AmitkCanvasPoint pixel_size;
   AmitkVoxel i_dim,j_dim;
   amide_time_t frame_start, frame_duration;
-  AmitkDataSet * output_ds;
+  AmitkDataSet * output_ds=NULL;
   AmitkVoxel i_voxel, j_voxel, k_voxel;
   AmitkPoint new_offset;
   AmitkDataSet * slice1=NULL;
   AmitkDataSet * slice2=NULL;
-  amitk_format_FLOAT_t value;
+  amitk_format_FLOAT_t value0;
+  amitk_format_FLOAT_t value1;
   gchar * temp_string;
   AmitkViewMode i_view_mode;
   div_t x;
   gint divider, total_planes,image_num;
   gboolean continue_work=TRUE;
+  amide_data_t delta_echo=1.0;
 
   g_return_val_if_fail(AMITK_IS_DATA_SET(ds1), NULL);
   g_return_val_if_fail(AMITK_IS_DATA_SET(ds2), NULL);
+
+  /* more error checking */
+  switch(operation) {
+  case AMITK_OPERATION_BINARY_T2STAR:
+    if ((parameter0 <= 0) || (parameter1 <= 0)) {
+      g_warning("echo times need to be positive");
+      goto error;
+    }
+    if (parameter0 == parameter1) {
+      g_warning("echo times cannot be equal");
+      goto error;
+    }
+    /* switch data set order so that ds1 has shorter echo time */
+    if (parameter0 > parameter1) {
+      AmitkDataSet * temp_ds;
+      amide_data_t temp_parameter;
+      temp_ds = ds2;
+      ds2 = ds1;
+      ds1 = temp_ds;
+      temp_parameter = parameter1;
+      parameter1 = parameter0;
+      parameter0 = temp_parameter;
+    }
+    delta_echo = parameter1 - parameter0;
+    break;
+  default:
+    break;
+  }
 
   /* Make a list out of datasets 1 and 2 */
   data_sets = g_list_append(NULL, ds1);
@@ -5940,10 +5990,18 @@ AmitkDataSet * amitk_data_sets_math_binary(AmitkDataSet * ds1,
     amitk_data_set_set_color_table_independent(output_ds, i_view_mode, AMITK_DATA_SET_COLOR_TABLE_INDEPENDENT(ds1, i_view_mode));
 
   /* set a new name for this guy */
-  temp_string = g_strdup_printf(_("Result: %s %s %s"), AMITK_OBJECT_NAME(ds1),
+  switch(operation) {
+  case AMITK_OPERATION_BINARY_T2STAR:
+    temp_string = g_strdup_printf(_("R2* (1/s) based on: %s %s"), AMITK_OBJECT_NAME(ds1), AMITK_OBJECT_NAME(ds2));
+    break;
+  default:
+    temp_string = g_strdup_printf(_("Result: %s %s %s"), AMITK_OBJECT_NAME(ds1),
 				amitk_operation_binary_get_name(operation), AMITK_OBJECT_NAME(ds2));
+    break;
+  }
   amitk_object_set_name(AMITK_OBJECT(output_ds), temp_string);
   g_free(temp_string);
+
 
 
   if (update_func != NULL) {
@@ -6012,30 +6070,42 @@ AmitkDataSet * amitk_data_sets_math_binary(AmitkDataSet * ds1,
 	  for (i_voxel.x = 0, k_voxel.x = 0; i_voxel.x < i_dim.x; i_voxel.x++, k_voxel.x++) {
 	    switch(operation) {
 	    case AMITK_OPERATION_BINARY_ADD:
-	      value = AMITK_DATA_SET_DOUBLE_0D_SCALING_CONTENT(AMITK_DATA_SET(slice1), k_voxel ) 
+	      value0 = AMITK_DATA_SET_DOUBLE_0D_SCALING_CONTENT(AMITK_DATA_SET(slice1), k_voxel ) 
 		+ AMITK_DATA_SET_DOUBLE_0D_SCALING_CONTENT( AMITK_DATA_SET(slice2), k_voxel);
 	      break;
 	    case AMITK_OPERATION_BINARY_SUB:
-	      value = AMITK_DATA_SET_DOUBLE_0D_SCALING_CONTENT(AMITK_DATA_SET(slice1), k_voxel ) 
+	      value0 = AMITK_DATA_SET_DOUBLE_0D_SCALING_CONTENT(AMITK_DATA_SET(slice1), k_voxel ) 
 		- AMITK_DATA_SET_DOUBLE_0D_SCALING_CONTENT( AMITK_DATA_SET(slice2), k_voxel);
 	      break;
 	    case AMITK_OPERATION_BINARY_MULTIPLY:
-	      value = AMITK_DATA_SET_DOUBLE_0D_SCALING_CONTENT(AMITK_DATA_SET(slice1), k_voxel ) 
+	      value0 = AMITK_DATA_SET_DOUBLE_0D_SCALING_CONTENT(AMITK_DATA_SET(slice1), k_voxel ) 
 		* AMITK_DATA_SET_DOUBLE_0D_SCALING_CONTENT( AMITK_DATA_SET(slice2), k_voxel);
 	      break;
 	    case AMITK_OPERATION_BINARY_DIVISION:
-	      value = AMITK_DATA_SET_DOUBLE_0D_SCALING_CONTENT( AMITK_DATA_SET(slice2), k_voxel);
-	      if (value > parameter0)
-		value = AMITK_DATA_SET_DOUBLE_0D_SCALING_CONTENT(AMITK_DATA_SET(slice1), k_voxel ) 
-		  / value;
+	      value0 = AMITK_DATA_SET_DOUBLE_0D_SCALING_CONTENT( AMITK_DATA_SET(slice2), k_voxel);
+	      if (value0 > parameter0)
+		value0 = AMITK_DATA_SET_DOUBLE_0D_SCALING_CONTENT(AMITK_DATA_SET(slice1), k_voxel ) 
+		  / value0;
 	      else
-		value = 0.0;
+		value0 = 0.0;
+	      break;
+	    case AMITK_OPERATION_BINARY_T2STAR:
+	      /* we actually compute the relaxation rate, that way we don't run into issues with infinity */
+	      value0 = AMITK_DATA_SET_DOUBLE_0D_SCALING_CONTENT(AMITK_DATA_SET(slice1), k_voxel);
+	      value1 = AMITK_DATA_SET_DOUBLE_0D_SCALING_CONTENT(AMITK_DATA_SET(slice2), k_voxel);
+	     
+	      if ((value0 <= 0) || (value1 <= 0))
+		value0 = 0; /* don't have signal, can't assess */
+	      if (value0 <= value1) /* no decay between two time points */
+		value0 = 0; /* no relaxation */
+	      else /* compute in units of 1/s */
+		value0 = 1000.0 * (log(value0)-log(value1)) / (delta_echo);
 	      break;
 	    default:
 	      goto error;
 	    }
 
-	    AMITK_RAW_DATA_FLOAT_SET_CONTENT(output_ds->raw_data, i_voxel) = value;
+	    AMITK_RAW_DATA_FLOAT_SET_CONTENT(output_ds->raw_data, i_voxel) = value0;
 	  }
 	}
 	amitk_object_unref(slice1);

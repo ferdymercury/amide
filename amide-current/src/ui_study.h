@@ -1,7 +1,7 @@
 /* ui_study.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2012 Andy Loening
+ * Copyright (C) 2000-2014 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -34,13 +34,11 @@
 #define AMIDE_LIMIT_ZOOM_UPPER 10.0
 #define AMIDE_LIMIT_ZOOM_LOWER 0.2
 #define AMIDE_LIMIT_ZOOM_STEP 0.2
-#define AMIDE_LIMIT_ZOOM_PAGE 0.25
 
 /* in percent */
 #define AMIDE_LIMIT_FOV_UPPER 100.0
 #define AMIDE_LIMIT_FOV_LOWER 10.0
 #define AMIDE_LIMIT_FOV_STEP 10.0
-#define AMIDE_LIMIT_FOV_PAGE 10.0
 
 typedef enum {
   HELP_INFO_LINE_1,

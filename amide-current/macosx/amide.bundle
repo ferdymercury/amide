@@ -72,7 +72,7 @@
 
   <!-- AML: get gdkpixbuf loaders so we can export jpeg's -->
   <binary>
-    ${prefix}/lib/gdk-pixbuf-2.0/*
+    ${prefix}/lib/gdk-pixbuf-2.0/${pkg:${gtk}:gtk_binary_version}/*.so
   </binary>
 
   <!-- Translation filenames, one for each program or library that you

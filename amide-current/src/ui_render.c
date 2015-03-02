@@ -1,7 +1,7 @@
 /* ui_render.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2012 Andy Loening
+ * Copyright (C) 2001-2014 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -579,6 +579,8 @@ static void menus_toolbar_create(ui_render_t * ui_render) {
   gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(spin_button), GTK_UPDATE_ALWAYS);
   gtk_widget_set_size_request (spin_button, 60, -1);
   g_signal_connect(G_OBJECT(spin_button), "value_changed", G_CALLBACK(change_zoom_cb), ui_render);
+  g_signal_connect(G_OBJECT(spin_button), "button_press_event",
+		   G_CALLBACK(amitk_spin_button_discard_double_or_triple_click), NULL);
   ui_common_toolbar_append_widget(toolbar, spin_button,_("specify how much to magnify the rendering"));
 			      
   return;

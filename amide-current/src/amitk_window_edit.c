@@ -1,7 +1,7 @@
 /* amitk_window_edit.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2005-2012 Andy Loening
+ * Copyright (C) 2005-2014 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */

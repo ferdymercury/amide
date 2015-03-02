@@ -1,7 +1,7 @@
 /* tb_fads.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2003-2012 Andy Loening
+ * Copyright (C) 2003-2014 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -95,6 +95,7 @@ typedef struct tb_fads_t {
   gint num_factors;
   gint max_iterations;
   gdouble stopping_criteria;
+  gboolean sum_factors_equal_one;
   gdouble beta;
   gdouble k12;
   gdouble k21;
@@ -110,6 +111,7 @@ typedef struct tb_fads_t {
   GtkWidget * num_factors_spin;
   GtkWidget * num_iterations_spin;
   GtkWidget * stopping_criteria_spin;
+  GtkWidget * sum_factors_equal_one_button;
   GtkWidget * beta_spin;
   GtkWidget * k12_spin;
   GtkWidget * k21_spin;
@@ -145,6 +147,7 @@ static void remove_curve_pressed_cb(GtkButton * button, gpointer data);
 static void num_factors_spinner_cb(GtkSpinButton * spin_button, gpointer data);
 static void max_iterations_spinner_cb(GtkSpinButton * spin_button, gpointer data);
 static void stopping_criteria_spinner_cb(GtkSpinButton * spin_button, gpointer data);
+static void sum_factors_equal_one_toggle_cb(GtkToggleButton * button, gpointer data);
 static void beta_spinner_cb(GtkSpinButton * spin_button, gpointer data);
 static void k12_spinner_cb(GtkSpinButton * spin_button, gpointer data);
 static void k21_spinner_cb(GtkSpinButton * spin_button, gpointer data);
@@ -210,7 +213,7 @@ static void update_curve_text(tb_fads_t * tb_fads, gboolean allow_curve_entries)
     text_str = g_string_new("frame/curve:");
     for (j=0; j < tb_fads->num_factors; j++) 
       g_string_append_printf(text_str, " %10d", j);
-    g_string_append(text_str, "\n");
+    g_string_append(text_str, "\n\n");
 
     for (i=0,j=0,k=0; i < tb_fads->initial_curves->len; i++,j++) {
       if (j >= tb_fads->num_factors) {
@@ -510,6 +513,12 @@ static void stopping_criteria_spinner_cb(GtkSpinButton * spin_button, gpointer d
   return;
 }
 
+static void sum_factors_equal_one_toggle_cb(GtkToggleButton * button, gpointer data) {
+  tb_fads_t * tb_fads = data;
+  tb_fads->sum_factors_equal_one = gtk_toggle_button_get_active(button);
+  return;
+}
+
 static void beta_spinner_cb(GtkSpinButton * spin_button, gpointer data) {
   tb_fads_t * tb_fads = data;
   tb_fads->beta = gtk_spin_button_get_value(spin_button);
@@ -590,13 +599,14 @@ static void apply_cb(GtkAssistant * assistant, gpointer data) {
     break;
   case FADS_TYPE_PLS:
     fads_pls(tb_fads->data_set, tb_fads->num_factors, tb_fads->algorithm, tb_fads->max_iterations,
-	     tb_fads->stopping_criteria,
+	     tb_fads->stopping_criteria, tb_fads->sum_factors_equal_one,
 	     tb_fads->beta, output_filename, num, frames, vals, tb_fads->initial_curves,
 	     amitk_progress_dialog_update, tb_fads->progress_dialog);
     break;
   case FADS_TYPE_TWO_COMPARTMENT:
     fads_two_comp(tb_fads->data_set, tb_fads->algorithm, tb_fads->max_iterations, 
 		  tb_fads->num_factors-1, tb_fads->k12, tb_fads->k21, tb_fads->stopping_criteria,
+		  tb_fads->sum_factors_equal_one,
 		  output_filename, num, frames, vals, 
 		  amitk_progress_dialog_update, tb_fads->progress_dialog);
     break;
@@ -702,6 +712,7 @@ static tb_fads_t * tb_fads_init(void) {
   tb_fads->num_factors = 2;
   tb_fads->max_iterations = 1e6;
   tb_fads->stopping_criteria = 1e-2;
+  tb_fads->sum_factors_equal_one = FALSE;
   tb_fads->beta = 0.0;
   tb_fads->k12 = 0.01;
   tb_fads->k21 = 0.1;
@@ -777,6 +788,7 @@ static void prepare_page_cb(GtkAssistant * wizard, GtkWidget * page, gpointer da
     gtk_widget_set_sensitive(tb_fads->num_factors_spin, num_factors);
     gtk_widget_set_sensitive(tb_fads->num_iterations_spin, num_iterations);
     gtk_widget_set_sensitive(tb_fads->stopping_criteria_spin, num_iterations);
+    gtk_widget_set_sensitive(tb_fads->sum_factors_equal_one_button, num_iterations);
     gtk_widget_set_sensitive(tb_fads->beta_spin, num_iterations);
     gtk_widget_set_sensitive(tb_fads->k12_spin, k_values);
     gtk_widget_set_sensitive(tb_fads->k21_spin, k_values);
@@ -948,6 +960,21 @@ static GtkWidget * create_page(tb_fads_t * tb_fads, which_page_t i_page) {
     gtk_table_attach(GTK_TABLE(table), tb_fads->stopping_criteria_spin, 1,2, table_row,table_row+1,
 		     FALSE,FALSE, X_PADDING, Y_PADDING);
     table_row++;
+
+    /* whether to force sum of factors to equal one */
+    label = gtk_label_new(_("Constrain sum of factors = 1:"));
+    gtk_table_attach(GTK_TABLE(table), label, 0,1, table_row,table_row+1,
+		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    
+    tb_fads->sum_factors_equal_one_button =  gtk_check_button_new();
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tb_fads->sum_factors_equal_one_button),
+				 tb_fads->sum_factors_equal_one);
+    g_signal_connect(G_OBJECT(tb_fads->sum_factors_equal_one_button), "toggled",  
+		     G_CALLBACK(sum_factors_equal_one_toggle_cb), tb_fads);
+    gtk_table_attach(GTK_TABLE(table), tb_fads->sum_factors_equal_one_button, 1,2, table_row,table_row+1,
+		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    table_row++;
+
     
     /* stopping criteria */
     label = gtk_label_new(_("Beta:"));

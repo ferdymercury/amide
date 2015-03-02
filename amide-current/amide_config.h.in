@@ -1,4 +1,4 @@
-/* amide_config.h.in.  Generated from configure.in by autoheader.  */
+/* amide_config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* Define to compile with checks for obsolete GLib/GTK functions */
 #undef AMIDE_CHECK_OBSOLETE

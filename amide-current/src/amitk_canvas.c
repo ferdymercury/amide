@@ -1,7 +1,7 @@
 /* amitk_canvas.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2002-2012 Andy Loening
+ * Copyright (C) 2002-2014 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -3849,8 +3849,6 @@ GdkPixbuf * amitk_canvas_get_pixbuf(AmitkCanvas * canvas) {
 
   GdkPixbuf * pixbuf;
 
-  g_print("%d %d %d %d\n", canvas->border_width, canvas->border_width, 
-	  canvas->pixbuf_width, canvas->pixbuf_height);
   pixbuf = amitk_get_pixbuf_from_canvas(GNOME_CANVAS(canvas->canvas), 
 					canvas->border_width,canvas->border_width,
 					canvas->pixbuf_width, canvas->pixbuf_height);

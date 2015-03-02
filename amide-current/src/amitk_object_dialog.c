@@ -1,7 +1,7 @@
 /* amitk_object_dialog.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2002-2012 Andy Loening
+ * Copyright (C) 2002-2014 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -1024,9 +1024,13 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     /* a separator for clarity */
     vseparator = gtk_vseparator_new();
     gtk_table_attach(GTK_TABLE(packing_table), vseparator,2,3,
-		     0, table_row, GTK_FILL, GTK_FILL, X_PADDING, Y_PADDING);
+		     0, table_row+1, GTK_FILL, GTK_FILL, X_PADDING, Y_PADDING);
     gtk_widget_show(vseparator);
     table_row=0;
+
+
+    /* skip two rows to make things line up well */
+    table_row +=2;
     
     /* gate time(s).... */
     label = gtk_label_new(_("Gate"));
@@ -2707,7 +2711,7 @@ GtkWidget* amitk_object_dialog_new (AmitkObject * object) {
   /* fill in values */
   dialog_update_entries(dialog);
 
-  temp_string = g_strdup_printf(_("Modification Dialog: %s\n"),AMITK_OBJECT_NAME(object));
+  temp_string = g_strdup_printf(_("Modification Dialog: %s"),AMITK_OBJECT_NAME(object));
   gtk_window_set_title (GTK_WINDOW (dialog), temp_string);
   g_free(temp_string);
 

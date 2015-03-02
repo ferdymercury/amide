@@ -1,7 +1,7 @@
 /* image.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2012 Andy Loening
+ * Copyright (C) 2000-2014 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -324,7 +324,7 @@ GdkPixbuf * image_from_renderings(renderings_t * renderings,
 
   /* allocate and initialize space for a temporary storage buffer */
   if ((rgba16_data = g_try_new(rgba16_t,total_width * image_height)) == NULL) {
-    g_warning(_("couldn't allocate memory for rgba16_data for transfering rendering to image"));
+    g_warning(_("couldn't allocate memory for rgba16_data for transferring rendering to image"));
     return NULL;
   }
   for (j=0; j<total_width*image_height; j++) {

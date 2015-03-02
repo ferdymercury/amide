@@ -1,7 +1,7 @@
 /* amitk_color_table_menu.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2003-2012 Andy Loening
+ * Copyright (C) 2003-2014 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -119,7 +119,7 @@ static void color_table_menu_init (AmitkColorTableMenu * ct_menu) {
 }
 
 
-GtkWidget * amitk_color_table_menu_new(AmitkColorTable color_table) {
+GtkWidget * amitk_color_table_menu_new(void) {
 
   AmitkColorTableMenu * color_table_menu;
   color_table_menu = g_object_new(amitk_color_table_menu_get_type (), NULL);

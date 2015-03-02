@@ -1,7 +1,7 @@
 /* amitk_preferences.h
  *
  * Part of amide - Amide's a Medical Image Data Examiner
- * Copyright (C) 2003-2012 Andy Loening
+ * Copyright (C) 2003-2014 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -71,7 +71,7 @@ typedef enum {
 
 #define AMITK_PREFERENCES_DEFAULT_CANVAS_ROI_WIDTH 2
 #ifdef AMIDE_LIBGNOMECANVAS_AA
-#define AMITK_PREFERENCES_DEFAULT_CANVAS_ROI_TRANSPARENCY 0.3
+#define AMITK_PREFERENCES_DEFAULT_CANVAS_ROI_TRANSPARENCY 0.5
 #else
 #define AMITK_PREFERENCES_DEFAULT_CANVAS_LINE_STYLE GDK_LINE_SOLID
 #define AMITK_PREFERENCES_DEFAULT_CANVAS_FILL_ROI TRUE

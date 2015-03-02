@@ -4,12 +4,9 @@ for next release?
 -----------------
 * gnome_canvas font looks bad on windows, switched to Tahoma looks a little better but not true type'd. Figure out what font gtk's using.
 * calling help on win32 creates coredump
-* g_win32_get_package_installation_subdirectoy in amide_gnome is deprecated
 * exporting gated studies via DICOM and reloading doesn't work. May be
   an error in exporting, or an error in importing gated DICOM
 * change wait cursor to be whole dialog, not just canvas
-* help works in cygwin setup, but not in installed package. Seems to know the
-  right place to look, just isn't doing something correctly....
 * revert on dialogs doesn't work correctly... children get readded
 * freehand/isocontour roi's - draw them at high mag - will see they're shifted just slightly off voxel lines [2]
  [x] noticed by Mark Huisman
@@ -24,9 +21,14 @@ Mac OS X
 
 
 Win32
-----------------
-* Copy to clipboard function in roi analysis widget doesn't work on win32
-  likely a win32 bug in gtk_clipboard on win32... (noticed by Joel Lazewatsky)
+---------------- 
+* g_win32_get_package_installation_subdirectoy in amide_gnome is
+  deprecated, currently commented out. Need to fix starting up help
+* help works in cygwin setup, but not in installed package. Seems to know the
+  right place to look, just isn't doing something correctly....
+* Copy to clipboard function in roi analysis widget doesn't work on Windows 7,
+  although it does work on Windows XP, likely a win32 bug in gtk_clipboard on win32... 
+  (noticed by Arutselvan Natarajan)
 * export pixel size text boxes get ignored - likely using wrong "update" event
   (noticed by Priti Madhav and Ian Miller)
 * zdial on rendering doesn't work

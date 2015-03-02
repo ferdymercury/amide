@@ -1,7 +1,7 @@
 /* amitk_space.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2012 Andy Loening
+ * Copyright (C) 2000-2014 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -623,7 +623,7 @@ void amitk_space_set_view_space(AmitkSpace * set_space, const AmitkView view, co
 
 
 /* convert a point from the base coordinate frame to the given coordinate space */
-inline AmitkPoint amitk_space_b2s(const AmitkSpace * space, AmitkPoint in_point) {
+AmitkPoint amitk_space_b2s(const AmitkSpace * space, AmitkPoint in_point) {
 
   AmitkPoint return_point;
 
@@ -649,7 +649,7 @@ inline AmitkPoint amitk_space_b2s(const AmitkSpace * space, AmitkPoint in_point)
 
 }
 /* convert a point from the given coordinate spaace to the base coordinate frame */
-inline AmitkPoint amitk_space_s2b(const AmitkSpace * space, const AmitkPoint in_point) {
+AmitkPoint amitk_space_s2b(const AmitkSpace * space, const AmitkPoint in_point) {
 
   AmitkPoint return_point;
 
@@ -673,7 +673,7 @@ inline AmitkPoint amitk_space_s2b(const AmitkSpace * space, const AmitkPoint in_
 
 /* converts a "dimensional" quantity (i.e. the size of a voxel) from a
    given space to the base coordinate system */
-inline AmitkPoint amitk_space_s2b_dim(const AmitkSpace * space, const AmitkPoint in_point) {
+AmitkPoint amitk_space_s2b_dim(const AmitkSpace * space, const AmitkPoint in_point) {
 
   AmitkPoint return_point;
   AmitkPoint temp[AMITK_AXIS_NUM];
@@ -701,7 +701,7 @@ inline AmitkPoint amitk_space_s2b_dim(const AmitkSpace * space, const AmitkPoint
 
 /* converts a "dimensional" quantity (i.e. the size of a voxel) from the
    base coordinate space to the given coordinate space */
-inline AmitkPoint amitk_space_b2s_dim(const AmitkSpace * space, const AmitkPoint in_point) {
+AmitkPoint amitk_space_b2s_dim(const AmitkSpace * space, const AmitkPoint in_point) {
 
   AmitkPoint return_point;
   AmitkPoint temp[AMITK_AXIS_NUM];

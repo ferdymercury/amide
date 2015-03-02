@@ -1,7 +1,7 @@
 /* tb_math.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2006-2012 Andy Loening
+ * Copyright (C) 2006-2014 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -226,7 +226,7 @@ static void data_sets_update_model(tb_math_t * tb_math) {
 
 static void parameters_update_page(tb_math_t * tb_math) {
 
-  if (tb_math->operation == AMITK_OPERATION_UNARY_THRESHOLD) {
+  if (tb_math->operation == AMITK_OPERATION_UNARY_RESCALE) {
     gtk_label_set_text(GTK_LABEL(tb_math->parameter0_label), _("Set to 0 below:"));
     gtk_widget_show(tb_math->parameter0_label);
     gtk_widget_show(tb_math->parameter0_spin);
@@ -234,13 +234,34 @@ static void parameters_update_page(tb_math_t * tb_math) {
     gtk_widget_show(tb_math->parameter1_label);
     gtk_widget_show(tb_math->parameter1_spin);
     gtk_widget_hide(tb_math->by_frames_check_button);
-    gtk_widget_hide(tb_math->maintain_ds1_dim_check_button);
+    gtk_widget_hide(tb_math->maintain_ds1_dim_check_button); 
+  } else if (tb_math->operation < AMITK_OPERATION_UNARY_NUM){
+    /* other unary operations */
+    gtk_widget_hide(tb_math->parameter0_label);
+    gtk_widget_hide(tb_math->parameter0_spin);
+    gtk_widget_hide(tb_math->parameter1_label);
+    gtk_widget_hide(tb_math->parameter1_spin);
+    gtk_widget_hide(tb_math->by_frames_check_button);
+    gtk_widget_hide(tb_math->maintain_ds1_dim_check_button); 
   } else if (tb_math->operation == (AMITK_OPERATION_UNARY_NUM+AMITK_OPERATION_BINARY_DIVISION)) {
     gtk_label_set_text(GTK_LABEL(tb_math->parameter0_label), _("Set to 0 if Divisor below:"));
     gtk_widget_show(tb_math->parameter0_label);
     gtk_widget_show(tb_math->parameter0_spin);
     gtk_widget_hide(tb_math->parameter1_label);
     gtk_widget_hide(tb_math->parameter1_spin);
+    gtk_widget_show(tb_math->by_frames_check_button);
+    gtk_widget_show(tb_math->maintain_ds1_dim_check_button);
+  } else if (tb_math->operation == (AMITK_OPERATION_UNARY_NUM+AMITK_OPERATION_BINARY_T2STAR)) {
+    gtk_label_set_text(GTK_LABEL(tb_math->parameter0_label), _("Data Set 1 echo time (ms):"));
+    gtk_widget_show(tb_math->parameter0_label);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(tb_math->parameter0_spin), 
+			      AMITK_DATA_SET_ECHO_TIME(tb_math->ds1));
+    gtk_widget_show(tb_math->parameter0_spin);
+    gtk_label_set_text(GTK_LABEL(tb_math->parameter1_label), _("Data Set 2 echo time (ms):"));
+    gtk_widget_show(tb_math->parameter1_label);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(tb_math->parameter1_spin), 
+			      AMITK_DATA_SET_ECHO_TIME(tb_math->ds2));
+    gtk_widget_show(tb_math->parameter1_spin);
     gtk_widget_show(tb_math->by_frames_check_button);
     gtk_widget_show(tb_math->maintain_ds1_dim_check_button);
   } else{ /* other binary operations */  
@@ -396,6 +417,7 @@ static void apply_cb(GtkAssistant * assistant, gpointer data) {
 					    tb_math->ds2, 
 					    tb_math->operation-AMITK_OPERATION_UNARY_NUM,
 					    tb_math->parameter0,
+					    tb_math->parameter1,
 					    tb_math->by_frames,
 					    tb_math->maintain_ds1_dim,
 					    amitk_progress_dialog_update,

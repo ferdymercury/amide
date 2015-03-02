@@ -1,7 +1,7 @@
 /* amitk_point.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2012 Andy Loening
+ * Copyright (C) 2000-2014 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -527,13 +527,13 @@ const AmitkVoxel zero_voxel = {0,0,0,0,0};
 const AmitkVoxel one_voxel = ONE_VOXEL;
 
 /* returns abs(point1) for realpoint structures */
-inline AmitkPoint point_abs(const AmitkPoint point1) {
+AmitkPoint point_abs(const AmitkPoint point1) {
   AmitkPoint temp;
   POINT_ABS(point1, temp);
   return temp;
 }
 /* returns -point1 for realpoint structures */
-inline AmitkPoint point_neg(const AmitkPoint point1) {
+AmitkPoint point_neg(const AmitkPoint point1) {
   AmitkPoint temp;
   temp.x = -point1.x;
   temp.y = -point1.y;
@@ -541,108 +541,108 @@ inline AmitkPoint point_neg(const AmitkPoint point1) {
   return temp;
 }
 /* returns point1+point2 for realpoint structures */
-inline AmitkPoint point_add(const AmitkPoint point1,const AmitkPoint point2) {
+AmitkPoint point_add(const AmitkPoint point1,const AmitkPoint point2) {
   AmitkPoint temp;
   POINT_ADD(point1, point2, temp);
   return temp;
 }
 /* returns point1-point2 for realpoint structures */
-inline AmitkPoint point_sub(const AmitkPoint point1,const AmitkPoint point2) {
+AmitkPoint point_sub(const AmitkPoint point1,const AmitkPoint point2) {
   AmitkPoint temp;
   POINT_SUB(point1, point2, temp);
   return temp;
 }
 /* returns point1.*point2 for realpoint structures */
-inline AmitkPoint point_mult(const AmitkPoint point1,const AmitkPoint point2) {
+AmitkPoint point_mult(const AmitkPoint point1,const AmitkPoint point2) {
   AmitkPoint temp;
   POINT_MULT(point1, point2, temp);
   return temp;
 }
 /* returns point1./point2 for realpoint structures */
-inline AmitkPoint point_div(const AmitkPoint point1,const AmitkPoint point2) {
+AmitkPoint point_div(const AmitkPoint point1,const AmitkPoint point2) {
   AmitkPoint temp;
   POINT_DIV(point1, point2, temp);
   return temp;
 }
 /* returns abs(point1-point2) for realpoint structures */
-inline AmitkPoint point_diff(const AmitkPoint point1,const AmitkPoint point2) {
+AmitkPoint point_diff(const AmitkPoint point1,const AmitkPoint point2) {
   AmitkPoint temp;
   POINT_DIFF(point1, point2, temp);
   return temp;
 }
 /* returns cm*point1 for realpoint structures */
-inline AmitkPoint point_cmult(const amide_real_t cmult,const AmitkPoint point1) {
+AmitkPoint point_cmult(const amide_real_t cmult,const AmitkPoint point1) {
   AmitkPoint temp;
   POINT_CMULT(cmult, point1, temp);
   return temp;
 }
 
 /* returns cross product of point1 and point2 for realpoint structures */
-inline AmitkPoint point_cross_product(const AmitkPoint point1, const AmitkPoint point2) {
+AmitkPoint point_cross_product(const AmitkPoint point1, const AmitkPoint point2) {
   AmitkPoint temp;
   POINT_CROSS_PRODUCT(point1, point2, temp);
   return temp;
 }
 
 /* returns dot product of point1 and point2 for realpoint structures */
-inline amide_real_t point_dot_product(const AmitkPoint point1, const AmitkPoint point2) {
+amide_real_t point_dot_product(const AmitkPoint point1, const AmitkPoint point2) {
   return POINT_DOT_PRODUCT(point1, point2);
 }
 
 
 /* returns sqrt(point_dot_product(point1, point1)) for realpoint structures */
-inline amide_real_t point_mag(const AmitkPoint point1) {
+amide_real_t point_mag(const AmitkPoint point1) {
   return sqrt(POINT_DOT_PRODUCT(point1, point1));
 }
 
 /* returns the minimum dimension of the "box" defined by point1*/
-inline amide_real_t point_min_dim(const AmitkPoint point1) {
+amide_real_t point_min_dim(const AmitkPoint point1) {
   return MIN( MIN(point1.x,point1.y), point1.z);
 }
 
 /* returns the maximum dimension of the "box" defined by point1 */
-inline amide_real_t point_max_dim(const AmitkPoint point1) {
+amide_real_t point_max_dim(const AmitkPoint point1) {
   return point_mag(point1);
 }
 
 
 
 /* returns abs(point1-point2) for canvaspoint structures */
-inline AmitkCanvasPoint canvas_point_diff(const AmitkCanvasPoint point1,const AmitkCanvasPoint point2) {
+AmitkCanvasPoint canvas_point_diff(const AmitkCanvasPoint point1,const AmitkCanvasPoint point2) {
   AmitkCanvasPoint temp;
   temp.x = fabs(point1.x-point2.x);
   temp.y = fabs(point1.y-point2.y);
   return temp;
 }
 /* returns point1-point2 for canvaspoint structures */
-inline AmitkCanvasPoint canvas_point_sub(const AmitkCanvasPoint point1,const AmitkCanvasPoint point2) {
+AmitkCanvasPoint canvas_point_sub(const AmitkCanvasPoint point1,const AmitkCanvasPoint point2) {
   AmitkCanvasPoint temp;
   temp.x = point1.x-point2.x;
   temp.y = point1.y-point2.y;
   return temp;
 }
 /* returns point1+point2 for canvaspoint structures */
-inline AmitkCanvasPoint canvas_point_add(const AmitkCanvasPoint point1,const AmitkCanvasPoint point2) {
+AmitkCanvasPoint canvas_point_add(const AmitkCanvasPoint point1,const AmitkCanvasPoint point2) {
   AmitkCanvasPoint temp;
   temp.x = point1.x+point2.x;
   temp.y = point1.y+point2.y;
   return temp;
 }
 /* returns cm*point1 for canvaspoint structures */
-inline AmitkCanvasPoint canvas_point_cmult(const amide_real_t cmult,const AmitkCanvasPoint point1) {
+AmitkCanvasPoint canvas_point_cmult(const amide_real_t cmult,const AmitkCanvasPoint point1) {
   AmitkCanvasPoint temp;
   temp.x = cmult*point1.x;
   temp.y = cmult*point1.y;
   return temp;
 }
 /* returns dot product of point1 and point2 for canvaspoint structures */
-inline amide_real_t canvas_point_dot_product(const AmitkCanvasPoint point1, const AmitkCanvasPoint point2) {
+amide_real_t canvas_point_dot_product(const AmitkCanvasPoint point1, const AmitkCanvasPoint point2) {
 
   return point1.x*point2.x + point1.y*point2.y;
 
 }
 /* returns sqrt(canvas_point_dot_product(point1, point1)) for canvaspoint structures */
-inline amide_real_t canvas_point_mag(const AmitkCanvasPoint point1) {
+amide_real_t canvas_point_mag(const AmitkCanvasPoint point1) {
   return sqrt(canvas_point_dot_product(point1, point1));
 }
 
@@ -688,7 +688,7 @@ AmitkCanvasPoint point_2_canvas_point(AmitkPoint volume_corner,
 
 
 /* returns voxel1+voxel2 for voxelpoint structures */
-inline AmitkVoxel voxel_add(const AmitkVoxel voxel1,const AmitkVoxel voxel2) {
+AmitkVoxel voxel_add(const AmitkVoxel voxel1,const AmitkVoxel voxel2) {
   AmitkVoxel temp;
   temp.x = voxel1.x+voxel2.x;
   temp.y = voxel1.y+voxel2.y;
@@ -699,7 +699,7 @@ inline AmitkVoxel voxel_add(const AmitkVoxel voxel1,const AmitkVoxel voxel2) {
 }
 
 /* returns voxel1-voxel2 for voxelpoint structures */
-inline AmitkVoxel voxel_sub(const AmitkVoxel voxel1,const AmitkVoxel voxel2) {
+AmitkVoxel voxel_sub(const AmitkVoxel voxel1,const AmitkVoxel voxel2) {
   AmitkVoxel temp;
   temp.x = voxel1.x-voxel2.x;
   temp.y = voxel1.y-voxel2.y;
@@ -710,13 +710,13 @@ inline AmitkVoxel voxel_sub(const AmitkVoxel voxel1,const AmitkVoxel voxel2) {
 }
 
 /* returns voxel1 == voxel2 for voxelpoint structures */
-inline gboolean voxel_equal(const AmitkVoxel voxel1, const AmitkVoxel voxel2) {
+gboolean voxel_equal(const AmitkVoxel voxel1, const AmitkVoxel voxel2) {
 
   return VOXEL_EQUAL(voxel1, voxel2);
 }
 
 /* returns the maximum dimension of the "box" defined by voxel1 */
-inline amide_real_t voxel_max_dim(const AmitkVoxel voxel1) {
+amide_real_t voxel_max_dim(const AmitkVoxel voxel1) {
   AmitkPoint temp_point;
   VOXEL_TO_POINT(voxel1, one_point, temp_point);
   return point_mag(temp_point);
@@ -784,7 +784,7 @@ void voxel_set_dim(AmitkVoxel * voxel,
 
 /* returns true if the realpoint is in the given box */
 /* box first corner is zero point */
-inline gboolean point_in_box(const AmitkPoint p,
+gboolean point_in_box(const AmitkPoint p,
 			     const AmitkPoint box_corner) {
 
 
@@ -798,7 +798,7 @@ inline gboolean point_in_box(const AmitkPoint p,
    cylinder must be inline with the coordinate space center is in 
    note: height is in the z direction, and radius.z isn't used for anything 
 */
-inline gboolean point_in_elliptic_cylinder(const AmitkPoint p,
+gboolean point_in_elliptic_cylinder(const AmitkPoint p,
 					   const AmitkPoint center,
 					   const amide_real_t height,
 					   const AmitkPoint radius) {
@@ -819,7 +819,7 @@ inline gboolean point_in_elliptic_cylinder(const AmitkPoint p,
 
 
 /* returns true if the realpoint is in the ellipsoid */
-inline gboolean point_in_ellipsoid(const AmitkPoint p,
+gboolean point_in_ellipsoid(const AmitkPoint p,
 				   const AmitkPoint center,
 				   const AmitkPoint radius) {
   

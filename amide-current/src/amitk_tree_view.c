@@ -1,7 +1,7 @@
 /* amitk_tree_view.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2002-2012 Andy Loening
+ * Copyright (C) 2002-2014 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -469,7 +469,7 @@ static gboolean tree_view_button_press_event (GtkWidget      *widget,
   return return_value;
 }
 
-static path_compare(GtkTreePath * path1, GtkTreePath * path2) {
+static gint path_compare(GtkTreePath * path1, GtkTreePath * path2) {
 
   if ((path1 == NULL) && (path2 == NULL))
     return 0;

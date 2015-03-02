@@ -2,8 +2,8 @@
 <!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
 "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
 <!ENTITY app "AMIDE">
-<!ENTITY date "Jan 2012">
-<!ENTITY appversion "1.0.2">
+<!ENTITY date "Feb 2013">
+<!ENTITY appversion "1.0.5">
 <!ENTITY manrevision "0.3.1">
 <!ENTITY legal          SYSTEM "legal.xml">
 ]>
@@ -20,7 +20,7 @@
       </para>
     </abstract>
 
-    <copyright><year>2000-2012</year> <holder>Andy Loening</holder></copyright>
+    <copyright><year>2000-2014</year> <holder>Andy Loening</holder></copyright>
     <!--- translators should put additional copyright entries -->
 
     <authorgroup>

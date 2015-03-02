@@ -2039,7 +2039,7 @@ msgid "couldn't allocate memory for image from 8 bit data"
 msgstr "無法配置記憶體給八位元資料的影像"
 
 #: ../src/image.c:303
-msgid "couldn't allocate memory for rgba16_data for transfering rendering to image"
+msgid "couldn't allocate memory for rgba16_data for transferring rendering to image"
 msgstr "無法配置記憶體給 rgba16_data 用於轉換潤算為影像"
 
 #: ../src/image.c:380

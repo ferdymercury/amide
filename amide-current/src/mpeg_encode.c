@@ -1,7 +1,7 @@
 /* mpeg_encode.c - interface to the mpeg encoding library
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2012 Andy Loening
+ * Copyright (C) 2001-2014 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -261,7 +261,7 @@ gpointer mpeg_encode_setup(gchar * output_filename, mpeg_encode_t type, gint xsi
     return NULL;
   }
 
-  encode->context = avcodec_alloc_context();
+  encode->context = avcodec_alloc_context3(NULL);
   if (!encode->context) {
     g_warning("couldn't allocate memory for encode->context");
     encode_free(encode);
@@ -282,7 +282,9 @@ gpointer mpeg_encode_setup(gchar * output_filename, mpeg_encode_t type, gint xsi
   ysize = 16*ceil(ysize/16.0);
 
   /* put sample parameters */
-  encode->context->bit_rate = 400000.0*((float) (xsize*ysize)/(352.0*288.0));
+  /* used to use 400000.0*((float) (xsize*ysize)/(352.0*288.0))
+     but output mpeg was too blocky */
+  encode->context->bit_rate = 2000000.0*((float) (xsize*ysize)/(352.0*288.0));
   encode->context->width = xsize;
   encode->context->height = ysize;
   encode->size = encode->context->width*encode->context->height;
@@ -299,7 +301,7 @@ gpointer mpeg_encode_setup(gchar * output_filename, mpeg_encode_t type, gint xsi
   encode->context->trellis=2; /* turn trellis quantization on */
 
   /* open it */
-  if (avcodec_open(encode->context, encode->codec) < 0) {
+  if (avcodec_open2(encode->context, encode->codec, NULL) < 0) {
     g_warning("could not open codec");
     encode_free(encode);
     return NULL;

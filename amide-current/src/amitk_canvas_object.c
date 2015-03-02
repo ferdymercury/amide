@@ -1,7 +1,7 @@
 /* amitk_canvas_object.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2002-2012 Andy Loening
+ * Copyright (C) 2002-2014 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -86,7 +86,7 @@ GnomeCanvasItem * amitk_canvas_object_draw(GnomeCanvas * canvas,
     rgba_t outline_color;
 
     if (AMITK_FIDUCIAL_MARK_SPECIFY_COLOR(object)) 
-      outline_color = AMITK_IS_ROI(object) ? AMITK_ROI_COLOR(object) : AMITK_FIDUCIAL_MARK_COLOR(object);
+      outline_color = AMITK_FIDUCIAL_MARK_COLOR(object);
     else if (AMITK_IS_DATA_SET(AMITK_OBJECT_PARENT(object)))
       outline_color = 
 	amitk_color_table_outline_color(amitk_data_set_get_color_table_to_use(AMITK_DATA_SET(AMITK_OBJECT_PARENT(object)), view_mode), TRUE);
@@ -155,7 +155,7 @@ GnomeCanvasItem * amitk_canvas_object_draw(GnomeCanvas * canvas,
 
     /* overwrite the passed in color if desired */
     if (AMITK_ROI_SPECIFY_COLOR(object))
-      roi_color = AMITK_IS_ROI(object) ? AMITK_ROI_COLOR(object) : AMITK_FIDUCIAL_MARK_COLOR(object);
+      roi_color = AMITK_ROI_COLOR(object);
 
     switch(AMITK_ROI_TYPE(roi)) {
     case AMITK_ROI_TYPE_ISOCONTOUR_2D:

@@ -1,7 +1,7 @@
 /* amitk_space_edit.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2002-2012 Andy Loening
+ * Copyright (C) 2002-2014 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -335,7 +335,7 @@ static gboolean space_edit_prompt(AmitkSpaceEdit * space_edit, const gchar * mes
   				    GTK_DIALOG_DESTROY_WITH_PARENT,
   				    GTK_MESSAGE_QUESTION,
   				    GTK_BUTTONS_OK_CANCEL,
-  				    message);
+  				    "%s", message);
   return_val = gtk_dialog_run(GTK_DIALOG(question));
   
   gtk_widget_destroy(question);

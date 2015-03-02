@@ -1,7 +1,7 @@
 /* amitk_point.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2012 Andy Loening
+ * Copyright (C) 2000-2014 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -294,26 +294,26 @@ SQRT_FLT_EPSILON   3.4526698300124393e-04
 /* external functions */
 
 /* note! the equivalent defines above are faster and should be used in any time critical spots */
-inline AmitkPoint point_abs(const AmitkPoint point1);
-inline AmitkPoint point_neg(const AmitkPoint point1);
-inline AmitkPoint point_add(const AmitkPoint point1, const AmitkPoint point2);
-inline AmitkPoint point_sub(const AmitkPoint point1, const AmitkPoint point2);
-inline AmitkPoint point_mult(const AmitkPoint point1, const AmitkPoint point2);
-inline AmitkPoint point_div(const AmitkPoint point1, const AmitkPoint point2);
-inline AmitkPoint point_diff(const AmitkPoint point1, const AmitkPoint point2);
-inline AmitkPoint point_cmult(const amide_real_t cmult, const AmitkPoint point1);
-inline AmitkPoint point_cross_product(const AmitkPoint point1, const AmitkPoint point2);
-inline amide_real_t point_dot_product(const AmitkPoint point1, const AmitkPoint point2);
-inline amide_real_t point_mag(const AmitkPoint point1);
-inline amide_real_t point_min_dim(const AmitkPoint point1);
-inline amide_real_t point_max_dim(const AmitkPoint point1);
+AmitkPoint point_abs(const AmitkPoint point1);
+AmitkPoint point_neg(const AmitkPoint point1);
+AmitkPoint point_add(const AmitkPoint point1, const AmitkPoint point2);
+AmitkPoint point_sub(const AmitkPoint point1, const AmitkPoint point2);
+AmitkPoint point_mult(const AmitkPoint point1, const AmitkPoint point2);
+AmitkPoint point_div(const AmitkPoint point1, const AmitkPoint point2);
+AmitkPoint point_diff(const AmitkPoint point1, const AmitkPoint point2);
+AmitkPoint point_cmult(const amide_real_t cmult, const AmitkPoint point1);
+AmitkPoint point_cross_product(const AmitkPoint point1, const AmitkPoint point2);
+amide_real_t point_dot_product(const AmitkPoint point1, const AmitkPoint point2);
+amide_real_t point_mag(const AmitkPoint point1);
+amide_real_t point_min_dim(const AmitkPoint point1);
+amide_real_t point_max_dim(const AmitkPoint point1);
 
-inline AmitkCanvasPoint canvas_point_diff(const AmitkCanvasPoint point1,const AmitkCanvasPoint point2);
-inline AmitkCanvasPoint canvas_point_sub(const AmitkCanvasPoint point1,const AmitkCanvasPoint point2);
-inline AmitkCanvasPoint canvas_point_add(const AmitkCanvasPoint point1,const AmitkCanvasPoint point2);
-inline AmitkCanvasPoint canvas_point_cmult(const amide_real_t cmult, const AmitkCanvasPoint point1);
-inline amide_real_t canvas_point_dot_product(const AmitkCanvasPoint point1, const AmitkCanvasPoint point2);
-inline amide_real_t canvas_point_mag(const AmitkCanvasPoint point1);
+AmitkCanvasPoint canvas_point_diff(const AmitkCanvasPoint point1,const AmitkCanvasPoint point2);
+AmitkCanvasPoint canvas_point_sub(const AmitkCanvasPoint point1,const AmitkCanvasPoint point2);
+AmitkCanvasPoint canvas_point_add(const AmitkCanvasPoint point1,const AmitkCanvasPoint point2);
+AmitkCanvasPoint canvas_point_cmult(const amide_real_t cmult, const AmitkCanvasPoint point1);
+amide_real_t canvas_point_dot_product(const AmitkCanvasPoint point1, const AmitkCanvasPoint point2);
+amide_real_t canvas_point_mag(const AmitkCanvasPoint point1);
 AmitkPoint canvas_point_2_point(AmitkPoint volume_corner,
 				gint width, gint height,
 				gdouble x_offset,gdouble y_offset,
@@ -323,10 +323,10 @@ AmitkCanvasPoint point_2_canvas_point(AmitkPoint volume_corner,
 				      gdouble x_offset, gdouble y_offset,
 				      AmitkPoint canvas_point);
 
-inline AmitkVoxel voxel_add(const AmitkVoxel voxel1,const AmitkVoxel voxel2);
-inline AmitkVoxel voxel_sub(const AmitkVoxel voxel1,const AmitkVoxel voxel2);
-inline gboolean voxel_equal(const AmitkVoxel voxel1, const AmitkVoxel voxel2);
-inline amide_real_t voxel_max_dim(const AmitkVoxel voxel1);
+AmitkVoxel voxel_add(const AmitkVoxel voxel1,const AmitkVoxel voxel2);
+AmitkVoxel voxel_sub(const AmitkVoxel voxel1,const AmitkVoxel voxel2);
+gboolean voxel_equal(const AmitkVoxel voxel1, const AmitkVoxel voxel2);
+amide_real_t voxel_max_dim(const AmitkVoxel voxel1);
 void voxel_print(gchar * message, const AmitkVoxel voxel);
 amide_intpoint_t voxel_get_dim(const AmitkVoxel voxel,
 				const AmitkDim which_dim);
@@ -334,13 +334,13 @@ void voxel_set_dim(AmitkVoxel * voxel,
 		   const AmitkDim which_dim,
 		   amide_intpoint_t value);
 
-inline gboolean point_in_box(const AmitkPoint p,
-			     const AmitkPoint box_corner);
-inline gboolean point_in_elliptic_cylinder(const AmitkPoint p,
-					   const AmitkPoint center,
-					   const amide_real_t height,
-					   const AmitkPoint radius);
-inline gboolean point_in_ellipsoid(const AmitkPoint p,
+gboolean point_in_box(const AmitkPoint p,
+		      const AmitkPoint box_corner);
+gboolean point_in_elliptic_cylinder(const AmitkPoint p,
+				    const AmitkPoint center,
+				    const amide_real_t height,
+				    const AmitkPoint radius);
+gboolean point_in_ellipsoid(const AmitkPoint p,
 			    const AmitkPoint center,
 			    const AmitkPoint radius);
 void point_print(gchar * message, const AmitkPoint point);

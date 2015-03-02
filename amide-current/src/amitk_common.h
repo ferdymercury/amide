@@ -1,7 +1,7 @@
 /* amitk_common.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2004-2012 Andy Loening
+ * Copyright (C) 2004-2014 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -147,6 +147,7 @@ void amitk_append_str(gchar ** pstr, const gchar * format, ...);
 void amitk_real_cell_data_func(GtkTreeViewColumn *tree_column, GtkCellRenderer *cell,
 			       GtkTreeModel *tree_model, GtkTreeIter *iter, gpointer data);
 gint amitk_spin_button_scientific_output (GtkSpinButton *spin_button, gpointer data);
+gint amitk_spin_button_discard_double_or_triple_click(GtkWidget *widget, GdkEventButton *event, gpointer func_data);
 GdkPixbuf * amitk_get_pixbuf_from_canvas(GnomeCanvas * canvas, gint xoffset, gint yoffset,
 					 gint width, gint height);
 

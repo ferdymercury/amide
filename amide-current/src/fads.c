@@ -1,7 +1,7 @@
 /* fads.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2003-2012 Andy Loening
+ * Copyright (C) 2003-2014 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -147,7 +147,7 @@ void fads_svd_factors(AmitkDataSet * data_set,
   status = perform_svd(matrix_a, matrix_v, vector_s);
   if (status != 0) g_warning(_("SV decomp returned error: %s"), gsl_strerror(status));
 
-  /* transfering data */
+  /* transferring data */
   if (pnum_factors != NULL)
     *pnum_factors = n;
 
@@ -563,20 +563,23 @@ typedef struct pls_params_t {
 
   gdouble * forward_error; /* our estimated data (the forward problem), subtracted by the actual data */
   gdouble * weight; /* the appropriate weight (frame dependent) */
-  gdouble * ec_a;
+  gdouble * ec_a; /* used for sum alpha == 1.0 */
   gdouble * ec_bc;
   
   /* lagrange multipliers - equality */
-  gdouble * lme_a;
+  gdouble * lme_a; /* used for sum alpha == 1.0 */
   gdouble * lme_bc;
 
   /* lagrange multipliers - inequality */
-  gdouble * lmi_a;
+  gdouble * lmi_a; /* 0 <= alpha <= 1.0 */
   gdouble * lmi_f;
 
+  /* variable constraints */
+  gboolean sum_factors_equal_one; /* whether to constrain by sum alpha == 1.0 */
   gint num_blood_curve_constraints;
   gint * blood_curve_constraint_frame;
   gdouble * blood_curve_constraint_val;
+
 
   gdouble orth;
   gdouble blood;
@@ -593,12 +596,15 @@ static void pls_calc_constraints(pls_params_t * p, const gsl_vector *v) {
 
 
   /* total alpha == 1 constraints */
-  for (k=0, i=p->alpha_offset; k < p->num_voxels; k++, i+=p->num_factors) {
-    total = -1.0;
-    for (f=0; f<p->num_factors; f++)
-      total += gsl_vector_get(v, i+f);
-    p->ec_a[k] = total;
+  if (p->sum_factors_equal_one) {
+    for (k=0, i=p->alpha_offset; k < p->num_voxels; k++, i+=p->num_factors) {
+      total = -1.0;
+      for (f=0; f<p->num_factors; f++)
+	total += gsl_vector_get(v, i+f);
+      p->ec_a[k] = total;
+    }
   }
+
 
   /* blood curve constraints */
   for (i=0; i<p->num_blood_curve_constraints; i++) {
@@ -629,7 +635,7 @@ static void pls_calc_forward_error(pls_params_t * p, const gsl_vector *v) {
 	      factor = gsl_vector_get(v, f*p->num_frames+i_voxel.t);
 	      inner += alpha*factor;
 	    }
-	    p->forward_error[k+i_voxel.t] = inner+-amitk_data_set_get_value(p->data_set,i_voxel);
+	    p->forward_error[k+i_voxel.t] = inner - amitk_data_set_get_value(p->data_set,i_voxel);
 	  }
 	}
       }
@@ -684,8 +690,11 @@ static gdouble pls_calc_function(pls_params_t * p, const gsl_vector *v) {
   }
 
   /* the sum of alpha's == 1 constraint */
-  for (i=0; i< p->num_voxels; i++)
-    neg_answer += p->ec_a[i]*(p->ec_a[i]/(2.0*p->mu) - p->lme_a[i]);
+  if (p->sum_factors_equal_one) {
+    for (i=0; i< p->num_voxels; i++)
+      neg_answer += p->ec_a[i]*(p->ec_a[i]/(2.0*p->mu) - p->lme_a[i]);
+  }
+
   p->neg = neg_answer;
 
   /* the orthogonality objective */
@@ -764,7 +773,7 @@ static void pls_calc_derivative(pls_params_t * p, const gsl_vector *v, gsl_vecto
       }
       ls_answer *= 2.0;
 
-      /* the non-negativity  and <= 1 objective */
+      /* the non-negativity and <= 1 objective */
       lambda = p->lmi_a[l*p->num_factors+q];
       if ((alpha-p->mu*lambda) < 0.0)
 	neg_answer = alpha/p->mu-lambda;
@@ -772,8 +781,9 @@ static void pls_calc_derivative(pls_params_t * p, const gsl_vector *v, gsl_vecto
 	neg_answer = 0;
 
       /* the sum of alpha's == 1 constraint */
-      neg_answer += p->ec_a[l]/p->mu - p->lme_a[l];
-      
+      if (p->sum_factors_equal_one) {
+	neg_answer += p->ec_a[l]/p->mu - p->lme_a[l];
+      }
 	
       /* the orthogonality objective */
 #if 0
@@ -848,7 +858,7 @@ static void pls_fdf (const gsl_vector *v, void *params,  double *f, gsl_vector *
    2-weights the least square terms by their respective frame duration
    
    Constrained optimization is done by using an augmented lagrangian method, 
-   so Chapter 17.4 of "Numerical Optimization" - Nocedal & Wright.
+   see Chapter 17.4 of "Numerical Optimization" - Nocedal & Wright.
 
    gsl supports minimizing on only a single vector space, so that
    vector is setup as follows
@@ -881,6 +891,7 @@ void fads_pls(AmitkDataSet * data_set,
 	      fads_minimizer_algorithm_t minimizer_algorithm,
 	      gint max_iterations,
 	      gdouble stopping_criteria,
+	      gboolean sum_factors_equal_one,
 	      gdouble beta,
 	      gchar * output_filename,
 	      gint num_blood_curve_constraints,
@@ -934,6 +945,8 @@ void fads_pls(AmitkDataSet * data_set,
   p.num_factors = num_factors;
   p.alpha_offset = p.num_factors*p.num_frames;
   p.num_variables = p.alpha_offset+p.num_factors*p.num_voxels;
+
+  p.sum_factors_equal_one = sum_factors_equal_one;
   p.num_blood_curve_constraints = num_blood_curve_constraints;
   p.blood_curve_constraint_frame = blood_curve_constraint_frame;
   p.blood_curve_constraint_val = blood_curve_constraint_val;
@@ -973,10 +986,12 @@ void fads_pls(AmitkDataSet * data_set,
   }
   magnitude = calc_magnitude(p.data_set, p.weight);
 
-  p.ec_a = g_try_new(gdouble, p.num_voxels);
-  if (p.ec_a == NULL) {
-    g_warning(_("failed equality constraint alpha malloc"));
-    goto ending;
+  if (p.sum_factors_equal_one) {
+    p.ec_a = g_try_new(gdouble, p.num_voxels);
+    if (p.ec_a == NULL) {
+      g_warning(_("failed equality constraint alpha malloc"));
+      goto ending;
+    }
   }
 
   p.ec_bc = g_try_new(gdouble, p.num_blood_curve_constraints);
@@ -985,13 +1000,15 @@ void fads_pls(AmitkDataSet * data_set,
     goto ending;
   }
 
-  p.lme_a = g_try_new(gdouble, p.num_voxels);
-  if (p.lme_a == NULL) {
-    g_warning(_("failed malloc for equality lagrange multiplier - alpha"));
-    goto ending;
+  if (p.sum_factors_equal_one) {
+    p.lme_a = g_try_new(gdouble, p.num_voxels);
+    if (p.lme_a == NULL) {
+      g_warning(_("failed malloc for equality lagrange multiplier - alpha"));
+      goto ending;
+    }
+    for (i=0; i<p.num_voxels; i++)
+      p.lme_a[i] = 0.0;
   }
-  for (i=0; i<p.num_voxels; i++)
-    p.lme_a[i] = 0.0;
 
   p.lme_bc = g_try_new(gdouble, p.num_blood_curve_constraints);
   if ((p.lme_bc == NULL) && (p.num_blood_curve_constraints > 0)) {
@@ -1012,7 +1029,7 @@ void fads_pls(AmitkDataSet * data_set,
 
   p.lmi_f = g_try_new(gdouble, p.num_frames*p.num_factors);
   if (p.lmi_f == NULL) {
-    g_warning(_("failed malloc for inequailty lagrange multiplier - factors"));
+    g_warning(_("failed malloc for inequality lagrange multiplier - factors"));
     goto ending;
   }
   for (f=0; f<p.num_factors; f++)
@@ -1144,6 +1161,8 @@ void fads_pls(AmitkDataSet * data_set,
 #if AMIDE_DEBUG
   if (timer != NULL)
     timer = g_timer_new();
+
+  g_print("iteration\t%10s = %5s + %5s + %5s + %5s\tmu\tbeta\n", "total err", "lsq", "noneg", "ortho", "blood");
 #endif
 
 
@@ -1174,7 +1193,7 @@ void fads_pls(AmitkDataSet * data_set,
       
 	  g_timer_start(timer); /* reset the timer */
 #if AMIDE_DEBUG  
-	  g_print("iter %d %d   %10.9g = %5.3g + %5.3g + %5.3g + %5.3g   mu=%g beta %g     \r",
+	  g_print("iter %d-%d\t%10.9g = %5.3g + %5.3g + %5.3g + %5.3g\t%g\t%g     \r",
 		  outer_iter, inner_iter, 
 		  100.0*gsl_multimin_fdfminimizer_minimum(multimin_minimizer)/magnitude,
 		  100.0*p.ls/magnitude,
@@ -1223,7 +1242,10 @@ void fads_pls(AmitkDataSet * data_set,
 
       /* adjust lagrangian's */
       for (i=0; i<p.num_voxels; i++) {
-	p.lme_a[i] -= p.ec_a[i]/p.mu;
+
+	if (p.sum_factors_equal_one) {
+	  p.lme_a[i] -= p.ec_a[i]/p.mu;
+	}
 
 	for (f=0; f<p.num_factors; f++) {
 	  alpha = gsl_vector_get(initial, p.alpha_offset + i*p.num_factors+f);
@@ -1433,20 +1455,21 @@ typedef struct two_comp_params_t {
   gdouble * start; /* start time of each frame */
   gdouble * end; /* end time of each frame */
   gdouble * midpt; /* midpt of each frame */
-  gdouble * ec_a;
+  gdouble * ec_a; /* used for sum alpha == 1.0 */
   gdouble * ec_bc;
 
   /* lagrange multipliers - equality */
-  gdouble * lme_a;
+  gdouble * lme_a; /* used for sum alpha == 1.0 */
   gdouble * lme_bc;
 
   /* lagrange multipliers - inequality */
-  gdouble * lmi_a;
+  gdouble * lmi_a; /* 0 <= alpha <= 1.0 */
   gdouble * lmi_bc;
   gdouble * lmi_k12;
   gdouble * lmi_k21;
 
-
+  /* variable constraints */
+  gboolean sum_factors_equal_one; /* whether to constrain by sum alpha == 1.0 */
   gint num_blood_curve_constraints;
   gint * blood_curve_constraint_frame;
   gdouble * blood_curve_constraint_val;
@@ -1465,12 +1488,13 @@ static void two_comp_calc_constraints(two_comp_params_t * p, const gsl_vector *v
 
 
   /* total alpha == 1 constraints */
-  for (k=0, i=p->alpha_offset; k < p->num_voxels; k++, i+=p->num_factors) {
-    total = -1.0;
-    for (f=0; f<p->num_factors; f++)
-      total += gsl_vector_get(v, i+f);
-    p->ec_a[k] = total;
-
+  if (p->sum_factors_equal_one) {
+    for (k=0, i=p->alpha_offset; k < p->num_voxels; k++, i+=p->num_factors) {
+      total = -1.0;
+      for (f=0; f<p->num_factors; f++)
+	total += gsl_vector_get(v, i+f);
+      p->ec_a[k] = total;
+    }
   }
 
   /* blood curve constraints */
@@ -1621,8 +1645,10 @@ static gdouble two_comp_calc_function(two_comp_params_t * p, const gsl_vector *v
   }
 
   /* the sum of alpha's == 1 constraint */
-  for (k=0; k< p->num_voxels; k++)
-    neg_answer += p->ec_a[k]*(p->ec_a[k]/(2.0*p->mu) - p->lme_a[k]);
+  if (p->sum_factors_equal_one) {
+    for (k=0; k< p->num_voxels; k++)
+      neg_answer += p->ec_a[k]*(p->ec_a[k]/(2.0*p->mu) - p->lme_a[k]);
+  }
 
   /* blood curve constraints */
   blood_answer = 0;
@@ -1799,7 +1825,7 @@ static void two_comp_calc_derivative(two_comp_params_t * p, const gsl_vector *v,
       }
       ls_answer *=2;
 
-      /* the non-negatvity objective */
+      /* the non-negatvity and <= 1 objective */
       lambda = p->lmi_a[i*p->num_factors+f];
       if ((alpha - p->mu*lambda) < 0.0)
 	neg_answer = alpha/p->mu - lambda;
@@ -1807,7 +1833,9 @@ static void two_comp_calc_derivative(two_comp_params_t * p, const gsl_vector *v,
 	neg_answer = 0.0;
 
       /* the sum of alpha's == 1 constraint */
-      neg_answer += p->ec_a[i]/p->mu - p->lme_a[i];
+      if (p->sum_factors_equal_one) {
+	neg_answer += p->ec_a[i]/p->mu - p->lme_a[i];
+      }
 
       gsl_vector_set(df, p->alpha_offset+i*p->num_factors+f, ls_answer + neg_answer);
     }
@@ -1895,6 +1923,7 @@ void fads_two_comp(AmitkDataSet * data_set,
 		   gdouble supplied_k12,
 		   gdouble supplied_k21,
 		   gdouble stopping_criteria,
+		   gboolean sum_factors_equal_one,
 		   gchar * output_filename,
 		   gint num_blood_curve_constraints,
 		   gint * blood_curve_constraint_frame,
@@ -1963,6 +1992,7 @@ void fads_two_comp(AmitkDataSet * data_set,
   p.lmi_k12 = NULL;
   p.lmi_k12 = NULL;
 
+  p.sum_factors_equal_one = sum_factors_equal_one;
   p.num_blood_curve_constraints = num_blood_curve_constraints;
   p.blood_curve_constraint_frame = blood_curve_constraint_frame;
   p.blood_curve_constraint_val = blood_curve_constraint_val;
@@ -2008,10 +2038,12 @@ void fads_two_comp(AmitkDataSet * data_set,
     p.midpt[j] = amitk_data_set_get_midpt_time(p.data_set, j);
   }
 
-  p.ec_a = g_try_new(gdouble, p.num_voxels);
-  if (p.ec_a == NULL) {
-    g_warning(_("failed malloc for equality constraint on alpha"));
-    goto ending;
+  if (p.sum_factors_equal_one) {
+    p.ec_a = g_try_new(gdouble, p.num_voxels);
+    if (p.ec_a == NULL) {
+      g_warning(_("failed malloc for equality constraint on alpha"));
+      goto ending;
+    }
   }
 
   p.ec_bc = g_try_new(gdouble, p.num_blood_curve_constraints);
@@ -2020,13 +2052,15 @@ void fads_two_comp(AmitkDataSet * data_set,
     goto ending;
   }
 
-  p.lme_a = g_try_new(gdouble, p.num_voxels);
-  if (p.lme_a == NULL) {
-    g_warning(_("failed malloc for equality lagrange multiplier - alpha"));
-    goto ending;
+  if (p.sum_factors_equal_one) {
+    p.lme_a = g_try_new(gdouble, p.num_voxels);
+    if (p.lme_a == NULL) {
+      g_warning(_("failed malloc for equality lagrange multiplier - alpha"));
+      goto ending;
+    }
+    for (i=0; i<p.num_voxels; i++)
+      p.lme_a[i] = 0.0;
   }
-  for (i=0; i<p.num_voxels; i++)
-    p.lme_a[i] = 0.0;
 
   p.lme_bc = g_try_new(gdouble, p.num_blood_curve_constraints);
   if ((p.lme_bc == NULL) && (p.num_blood_curve_constraints > 0)) {
@@ -2217,7 +2251,10 @@ void fads_two_comp(AmitkDataSet * data_set,
 
       /* adjust lagrangian's */
       for (i=0; i<p.num_voxels; i++) {
-	p.lme_a[i] -= p.ec_a[i]/p.mu;
+
+	if (p.sum_factors_equal_one) {
+	  p.lme_a[i] -= p.ec_a[i]/p.mu;
+	}
 
 	for (f=0; f<p.num_factors; f++) {
 	  alpha = gsl_vector_get(initial, p.alpha_offset + i*p.num_factors+f);

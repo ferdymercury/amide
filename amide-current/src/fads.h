@@ -1,7 +1,7 @@
 /* fads.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2003-2012 Andy Loening
+ * Copyright (C) 2003-2014 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -65,6 +65,7 @@ void fads_pls(AmitkDataSet * data_set,
 	      fads_minimizer_algorithm_t minimizer_algorithm,
 	      gint max_iterations,
 	      gdouble stopping_criteria,
+	      gboolean sum_factors_equal_one,
 	      gdouble beta,
 	      gchar * output_filename,
 	      gint num_blood_curve_constraints,
@@ -80,6 +81,7 @@ void fads_two_comp(AmitkDataSet * data_set,
 		   gdouble k12,
 		   gdouble k21,
 		   gdouble stopping_criteria,
+		   gboolean sum_factors_equal_one,
 		   gchar * output_filename,
 		   gint num_blood_curve_constraints,
 		   gint * blood_curve_constraint_frame,

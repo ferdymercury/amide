@@ -1,7 +1,7 @@
 /* ui_study.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2012 Andy Loening
+ * Copyright (C) 2000-2014 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -736,19 +736,17 @@ static void menus_toolbar_create(ui_study_t * ui_study) {
   label = gtk_label_new(_("zoom:"));
   ui_common_toolbar_append_widget(toolbar, label, NULL);
 
-  adjustment = gtk_adjustment_new(1.0,
-				  AMIDE_LIMIT_ZOOM_LOWER,
-				  AMIDE_LIMIT_ZOOM_UPPER,
-				  AMIDE_LIMIT_ZOOM_STEP, 
-				  AMIDE_LIMIT_ZOOM_PAGE, 0.0);
-  ui_study->zoom_spin = gtk_spin_button_new(GTK_ADJUSTMENT(adjustment), 0.25, 3);
+  ui_study->zoom_spin = gtk_spin_button_new_with_range(AMIDE_LIMIT_ZOOM_LOWER, AMIDE_LIMIT_ZOOM_UPPER, AMIDE_LIMIT_ZOOM_STEP);
   gtk_widget_set_size_request(ui_study->zoom_spin, 50,-1);
+  gtk_spin_button_set_digits(GTK_SPIN_BUTTON(ui_study->zoom_spin), 3);
   gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(ui_study->zoom_spin),FALSE);
   gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(ui_study->zoom_spin), FALSE);
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(ui_study->zoom_spin), FALSE);
   gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(ui_study->zoom_spin), GTK_UPDATE_ALWAYS);
   g_signal_connect(G_OBJECT(ui_study->zoom_spin), "value_changed",G_CALLBACK(ui_study_cb_zoom), ui_study);
   g_signal_connect(G_OBJECT(ui_study->zoom_spin), "output", G_CALLBACK(amitk_spin_button_scientific_output), NULL);
+  g_signal_connect(G_OBJECT(ui_study->zoom_spin), "button_press_event",
+		   G_CALLBACK(amitk_spin_button_discard_double_or_triple_click), NULL);
   ui_common_toolbar_append_widget(toolbar,ui_study->zoom_spin,_("specify how much to magnify the images"));
 
   /* a separator for clarity */
@@ -758,18 +756,16 @@ static void menus_toolbar_create(ui_study_t * ui_study) {
   label = gtk_label_new(_("fov (%):"));
   ui_common_toolbar_append_widget(toolbar, label, NULL);
 
-  adjustment = gtk_adjustment_new(1.0,
-				  AMIDE_LIMIT_FOV_LOWER,
-				  AMIDE_LIMIT_FOV_UPPER,
-				  AMIDE_LIMIT_FOV_STEP,  
-				  AMIDE_LIMIT_FOV_PAGE, 0.0);
-  ui_study->fov_spin = gtk_spin_button_new(GTK_ADJUSTMENT(adjustment), 0.25, 0);
+  ui_study->fov_spin = gtk_spin_button_new_with_range(AMIDE_LIMIT_FOV_LOWER, AMIDE_LIMIT_FOV_UPPER, AMIDE_LIMIT_FOV_STEP);
   gtk_widget_set_size_request(ui_study->fov_spin, 50,-1);
+  gtk_spin_button_set_digits(GTK_SPIN_BUTTON(ui_study->fov_spin), 0);
   gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(ui_study->fov_spin),FALSE);
   gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(ui_study->fov_spin), FALSE);
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(ui_study->fov_spin), FALSE);
   gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(ui_study->fov_spin), GTK_UPDATE_ALWAYS);
   g_signal_connect(G_OBJECT(ui_study->fov_spin), "value_changed", G_CALLBACK(ui_study_cb_fov), ui_study);
+  g_signal_connect(G_OBJECT(ui_study->fov_spin), "button_press_event",
+		   G_CALLBACK(amitk_spin_button_discard_double_or_triple_click), NULL);
   ui_common_toolbar_append_widget(toolbar,ui_study->fov_spin,_("specify how much of the image field of view to display"));
 
   /* a separator for clarity */
@@ -788,6 +784,8 @@ static void menus_toolbar_create(ui_study_t * ui_study) {
   gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(ui_study->thickness_spin), GTK_UPDATE_ALWAYS);
   g_signal_connect(G_OBJECT(ui_study->thickness_spin), "value_changed", G_CALLBACK(ui_study_cb_thickness), ui_study);
   g_signal_connect(G_OBJECT(ui_study->thickness_spin), "output", G_CALLBACK(amitk_spin_button_scientific_output), NULL);
+  g_signal_connect(G_OBJECT(ui_study->thickness_spin), "button_press_event",
+		   G_CALLBACK(amitk_spin_button_discard_double_or_triple_click), NULL);
   ui_common_toolbar_append_widget(toolbar,ui_study->thickness_spin,_("specify how thick to make the slices (mm)"));
 
   /* a separator for clarity */
@@ -1310,7 +1308,7 @@ void ui_study_update_zoom(ui_study_t * ui_study) {
 
   if (ui_study->study != NULL)
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(ui_study->zoom_spin), 
-			      AMITK_STUDY_ZOOM(ui_study->study));
+  			      AMITK_STUDY_ZOOM(ui_study->study));
   
   /* and now, reconnect the signal */
   g_signal_handlers_unblock_by_func(G_OBJECT(ui_study->zoom_spin),

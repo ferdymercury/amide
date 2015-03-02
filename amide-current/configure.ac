@@ -2,7 +2,7 @@ dnl ============================================================================
 dnl              Configure script for AMIDE
 dnl ===============================================================================
 AC_PREREQ(2.59)
-AC_INIT([amide],[1.0.4],[amide-users@lists.sourceforge.net])
+AC_INIT([amide],[1.0.5],[amide-users@lists.sourceforge.net])
 
 AC_CONFIG_SRCDIR(src/amide.c)
 AC_CONFIG_HEADERS(amide_config.h)
@@ -50,33 +50,38 @@ dnl *)		CFLAGS="-g -O6 -Wall"
 dnl 		CXXFLAGS="-g -O6 -Wall";;
 dnl esac
 
-dnl specify optimization level, added 2010.02.20
-OPTIMIZATION_LEVEL="-O3"
-echo "setting optimization level to $OPTIMIZATION_LEVEL"
-CFLAGS="$CFLAGS $OPTIMIZATION_LEVEL"
+dnl added 2014.01.24
+dnl make sure an optimization level is set. On jhbuild (os x) the CFLAGS gets
+dnl overwritten, so we're using this to make sure some optimization is on
+dnl when compiling. This is especially important to speeding up the 
+dnl reslicing algorithm
+OPTIMIZATION_CFLAGS="-O2"
+echo "setting optimization level to $OPTIMIZATION_CFLAGS"
+AC_SUBST(OPTIMIZATION_CFLAGS)
 
-if test $CC = "gcc"; then
-   echo -n "checking version of gcc... "
-   CC_VERSION=`$CC -dumpversion`
-   if (test $CC_VERSION = "2.96" || test $$CC_VERSION = "2.95.4"); then
-	echo $CC_VERSION
-	echo "******************************************************************"
-	echo "This version of gcc is a beta compiler and often incorrectly"
-	echo "compiles this program.  Please upgrade to the current version of"
-	echo "gcc (3.2.1 as of this writing) or downgrade to 2.95.3"
-	echo "******************************************************************"
-	echo -n "continue anyway? (y/n) "
-	read continue_with_bad_gcc
-	if test $continue_with_bad_gcc = "y"; then
-		echo "removing optimizations to reduce potential of compiler error"
-		CFLAGS="-g -O0"
-	else
-		exit 1
-	fi
-   else
-	echo "$CC_VERSION, good"
-   fi
-fi
+dnl 2013.11.02 - remove check for ancient versions of gcc from 13 years ago
+dnl if test $CC = "gcc"; then
+dnl   echo -n "checking version of gcc... "
+dnl   CC_VERSION=`$CC -dumpversion`
+dnl   if (test $CC_VERSION = "2.96" || test $$CC_VERSION = "2.95.4"); then
+dnl	echo $CC_VERSION
+dnl	echo "******************************************************************"
+dnl	echo "This version of gcc is a beta compiler and often incorrectly"
+dnl	echo "compiles this program.  Please upgrade to the current version of"
+dnl	echo "gcc (3.2.1 as of this writing) or downgrade to 2.95.3"
+dnl	echo "******************************************************************"
+dnl	echo -n "continue anyway? (y/n) "
+dnl	read continue_with_bad_gcc
+dnl	if test $continue_with_bad_gcc = "y"; then
+dnl		echo "removing optimizations to reduce potential of compiler error"
+dnl		CFLAGS="-g -O0"
+dnl	else
+dnl		exit 1
+dnl	fi
+dnl   else
+dnl	echo "$CC_VERSION, good"
+dnl   fi
+dnl fi
 
 
 
@@ -103,7 +108,6 @@ dnl autoconf doesn't have a nice macro for checking for c++ libraries, therefore
 AC_CHECK_LIB(pthread, pthread_mutex_init, THREAD_LIBS="-lpthread", THREAD_LIBS="")
 AMIDE_LIBDCMDATA_LIBS="-L/usr/local/dicom/lib -L/usr/lib64/dcmtk -L/usr/lib/dcmtk -ldcmdata -loflog -lofstd -lz $THREAD_LIBS"
 AMIDE_LIBDCMDATA_CFLAGS="-I/usr/local/dicom/include"
-dnl 2010.02.20	AMIDE_LIBDCMDATA_CFLAGS="-I/usr/local/dicom/include/dcmtk/dcmdata -I/usr/local/dicom/include/dcmtk/ofstd -I/usr/local/dicom/include -I/usr/include/dcmtk/dcmdata -I/usr/local/include/dcmtk/ofstd -I/sw/include/dcmtk/dcmdata -I/sw/include/dcmtk/ofstd -I/sw/include/dcmtk"
 saved_libs="${LIBS}"
 LIBS="${LIBS} ${AMIDE_LIBDCMDATA_LIBS}"
 saved_cxxflags="${CXXFLAGS}"                                              
@@ -454,5 +458,7 @@ dnl help/C/Makefile
 dnl help/es/Makefile
 
 dnl Move the spec file so it won't get eaten by make distclean
-echo "Moving SPEC file to base directory"
-mv etc/amide.spec ./
+if [ test -f etc/amide.spec ]; then
+   echo "Moving SPEC file to base directory"
+   mv etc/amide.spec ./
+fi

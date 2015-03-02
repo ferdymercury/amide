@@ -1,7 +1,7 @@
 /* ui_study_cb.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2012 Andy Loening
+ * Copyright (C) 2000-2014 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -867,7 +867,7 @@ void ui_study_cb_zoom(GtkSpinButton * spin_button, gpointer data) {
 
   zoom = gtk_spin_button_get_value(spin_button);
   amitk_study_set_zoom(ui_study->study, zoom);
-    
+
   return;
 }
 

@@ -1,7 +1,7 @@
 /* amide.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2012 Andy Loening
+ * Copyright (C) 2000-2014 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -146,7 +146,7 @@ void missing_functionality_warning(AmitkPreferences * preferences) {
 #endif
 			   NULL);
 
-    g_warning(comments);
+    g_warning("%s", comments);
     
     g_free(comments);
     amide_gconf_set_string("MISSING_FUNCTIONALITY", "AlreadyWarned", VERSION);

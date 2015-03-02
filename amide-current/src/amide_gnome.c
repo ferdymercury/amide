@@ -1,7 +1,7 @@
 /* amide_gnome.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2007-2012 Andy Loening
+ * Copyright (C) 2007-2014 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  * Code directly copied from libgnome
@@ -166,7 +166,7 @@ static gboolean amide_gnome_url_show_with_env (const char  *url,  char       **e
 		g_set_error (error,
 			     AMIDE_GNOME_URL_ERROR,
 			     AMIDE_GNOME_URL_ERROR_VFS,
-			     gnome_vfs_result_to_string (result));
+			     "%s", gnome_vfs_result_to_string (result));
 	}
 
 	return FALSE;
