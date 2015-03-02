@@ -33,9 +33,12 @@ void ui_study_callbacks_plane_change(GtkAdjustment * adjustment, gpointer data);
 void ui_study_callbacks_zoom(GtkAdjustment * adjustment, gpointer data);
 void ui_study_callbacks_time_pressed(GtkWidget * combo, gpointer data);
 void ui_study_callbacks_thickness(GtkAdjustment * adjustment, gpointer data);
-void ui_study_callbacks_transverse_series(GtkWidget * widget, gpointer data);
-void ui_study_callbacks_coronal_series(GtkWidget * widget, gpointer data);
-void ui_study_callbacks_sagittal_series(GtkWidget * widget, gpointer data);
+void ui_study_callbacks_transverse_series_planes(GtkWidget * widget, gpointer ui_study_p);
+void ui_study_callbacks_coronal_series_planes(GtkWidget * widget, gpointer ui_study_p);
+void ui_study_callbacks_sagittal_series_planes(GtkWidget * widget, gpointer ui_study_p);
+void ui_study_callbacks_transverse_series_frames(GtkWidget * widget, gpointer ui_study_p);
+void ui_study_callbacks_coronal_series_frames(GtkWidget * widget, gpointer ui_study_p);
+void ui_study_callbacks_sagittal_series_frames(GtkWidget * widget, gpointer ui_study_p);
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
 void ui_study_callbacks_rendering(GtkWidget * widget, gpointer data);
 #endif

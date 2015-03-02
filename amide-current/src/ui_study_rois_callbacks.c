@@ -436,35 +436,31 @@ void ui_study_rois_callbacks_calculate(ui_study_t * ui_study, gboolean all) {
   GnomeApp * app;
   gchar * title;
   gchar * line;
-  guint i=0;
   guint j;
-  volume_t * volume;
   GtkWidget * packing_table;
   GtkWidget * text;
-  roi_list_t * roi_list;
+  roi_list_t * current_roi_list;
   roi_list_t * temp_roi_list;
   roi_analysis_t analysis;
-  ui_roi_list_t * current_roi_list;
+  ui_roi_list_t * temp_ui_roi_list;
+  ui_volume_list_t * current_ui_volume_list;
+  GdkFont * courier_font;
 
-  /* sanity check */
-  if (study_get_volumes(ui_study->study) == NULL)
-    return;
-  
+  /* load in a nice courier font to use */
+  courier_font = gdk_font_load("-*-courier-*-*-*-*-*-*-*-*-*-*-*-*");
+
   /* figure out which volume we're dealing with */
-  if (ui_study->current_volume == NULL)
-    volume = study_get_first_volume(ui_study->study);
-  else
-    volume = ui_study->current_volume;
+  current_ui_volume_list = ui_study->current_volumes;
 
   /* get the list of roi's we're going to be calculating over */
   if (all)
-    roi_list = roi_list_copy(study_get_rois(ui_study->study));
+    current_roi_list = roi_list_copy(study_get_rois(ui_study->study));
   else {
-    current_roi_list = ui_study->current_rois;
-    roi_list = NULL;
-    while (current_roi_list != NULL) {
-      roi_list = roi_list_add_roi(roi_list, current_roi_list->roi);
-      current_roi_list = current_roi_list->next;
+    temp_ui_roi_list = ui_study->current_rois;
+    current_roi_list = NULL;
+    while (temp_ui_roi_list != NULL) {
+      current_roi_list = roi_list_add_roi(current_roi_list, temp_ui_roi_list->roi);
+      temp_ui_roi_list = temp_ui_roi_list->next;
     }
   }
 
@@ -491,47 +487,64 @@ void ui_study_rois_callbacks_calculate(ui_study_t * ui_study, gboolean all) {
   gtk_text_set_line_wrap(GTK_TEXT(text), FALSE);
   gtk_widget_set_usize(GTK_WIDGET(text), 700,0);
   
-  line = g_strdup_printf("Roi Analysis:\t\tStudy: %s\t\tVolume: %s\n",
-			 study_get_name(ui_study->study), volume->name);
-  gtk_text_insert(GTK_TEXT(text), NULL, NULL, NULL, line, -1);
+  line = g_strdup_printf("Roi Analysis:\t\tStudy: %s\n",
+			 study_get_name(ui_study->study));
+  gtk_text_insert(GTK_TEXT(text), courier_font, NULL, NULL, line, -1);
   g_free(line);
 
-  line = g_strdup_printf("-------------------------------------------------\n");
-  gtk_text_insert(GTK_TEXT(text), NULL, NULL, NULL, line, -1);
+  line = g_strdup_printf("---------------------------------------------------------------------------------------------\n");
+  gtk_text_insert(GTK_TEXT(text), courier_font, NULL, NULL, line, -1);
   g_free(line);
 
-  line = g_strdup_printf("Roi #\tFrame\tVoxels\t\tMean\t\tVar\t\t\tStd E\t\tMin\t\t\tMax\t\t\t\tRoi Name\t\tType\n");
-  gtk_text_insert(GTK_TEXT(text), NULL, NULL, NULL, line, -1);
-  g_free(line);
 
-  temp_roi_list = roi_list;
-  while(temp_roi_list != NULL) {
-    for (j=0;j<volume->num_frames;j++) {
-      /* calculate the info for this roi */
-      i++;
-      analysis = roi_calculate_analysis(temp_roi_list->roi,volume,
-					temp_roi_list->roi->grain,
-					j);
+  while (current_ui_volume_list != NULL) {
+
+    /*what volume we're calculating on */
+    line = g_strdup_printf("Calculating on Volume:\t%s\n", current_ui_volume_list->volume->name);
+    gtk_text_insert(GTK_TEXT(text), courier_font, NULL, NULL, line, -1);
+    g_free(line);
+    
+    
+    /* iterate over the roi's */
+    temp_roi_list = current_roi_list;
+    while(temp_roi_list != NULL) {
       
-      /* print the info for this roi */
-      line = 
-	g_strdup_printf("%d\t%d\t\t\t%5.3f\t\t%5.3f\t\t%5.3f\t\t%5.3f\t\t%5.3f\t\t%5.3f\t\t%s\t\t%s\n",
-			i, 
-			j,
-			analysis.voxels,
-			analysis.mean,
-			analysis.var,
-			sqrt(analysis.var/analysis.voxels),
-			analysis.min,
-			analysis.max,
-			temp_roi_list->roi->name,
-			roi_type_names[temp_roi_list->roi->type]);
-      gtk_text_insert(GTK_TEXT(text), NULL, NULL, NULL, line, -1);
+      line = g_strdup_printf("\tRoi: %s\tType: %s\tGrain Size %s\n", 
+			     temp_roi_list->roi->name, 
+			     roi_type_names[temp_roi_list->roi->type],
+			     roi_grain_names[temp_roi_list->roi->grain]);
+      gtk_text_insert(GTK_TEXT(text), courier_font, NULL, NULL, line, -1);
       g_free(line);
+      
+      line = g_strdup_printf("\t%-11s\t%-11s\t%-11s\t%-11s\t%-11s\t%-11s\t%-11s\t%-11s\t%-11s\n",
+			     "   Frame", "Time Midpt", "  Voxels", "   Mean", "    Var", "  Std Dev", "   Std E", "    Min", "    Max");
+      gtk_text_insert(GTK_TEXT(text), courier_font, NULL, NULL, line, -1);
+      g_free(line);
+      
+      /* iterate over the volume's frames */
+      for (j=0;j<current_ui_volume_list->volume->num_frames;j++) {
+	/* calculate the info for this roi */
+	analysis = roi_calculate_analysis(temp_roi_list->roi,current_ui_volume_list->volume,temp_roi_list->roi->grain,j);
+	
+	/* print the info for this roi */
+	line = 
+	  g_strdup_printf("\t%11d\t% 10.3f\t% 10.3f\t%10.3f\t% 10.3f\t% 10.3f\t% 10.3f\t% 10.3f\t% 10.3f\n",
+			  j,
+			  analysis.time_midpoint,
+			  analysis.voxels,
+			  analysis.mean,
+			  analysis.var,
+			  sqrt(analysis.var),
+			  sqrt(analysis.var/analysis.voxels),
+			  analysis.min,
+			  analysis.max);
+	gtk_text_insert(GTK_TEXT(text), courier_font, NULL, NULL, line, -1);
+	g_free(line);
+      }
+      temp_roi_list = temp_roi_list->next; /* go to next roi */
     }
-    temp_roi_list = temp_roi_list->next; /* go to next roi */
+    current_ui_volume_list = current_ui_volume_list->next; /* go to the next volume */
   }
-
 
   /* and throw the text box into the packing table */
   gtk_table_attach(GTK_TABLE(packing_table),
@@ -541,10 +554,13 @@ void ui_study_rois_callbacks_calculate(ui_study_t * ui_study, gboolean all) {
 		   X_PADDING, Y_PADDING);
 
   /* deallocate our roi list if we created it */
-  roi_list = roi_list_free(roi_list);
+  current_roi_list = roi_list_free(current_roi_list);
 
   /* and show all our widgets */
   gtk_widget_show_all(GTK_WIDGET(app));
+
+  /* unref our font */
+  gdk_font_unref(courier_font);
 
   return;
 }

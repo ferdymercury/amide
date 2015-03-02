@@ -730,19 +730,34 @@ void ui_study_callbacks_thickness(GtkAdjustment * adjustment, gpointer data) {
 
 
 /* callbacks for setting up a set of slices in a new window */
-void ui_study_callbacks_transverse_series(GtkWidget * widget, gpointer data) {
+void ui_study_callbacks_transverse_series_planes(GtkWidget * widget, gpointer data) {
   ui_study_t * ui_study = data;
-  ui_series_create(ui_study, TRANSVERSE);
+  ui_series_create(ui_study, TRANSVERSE, PLANES);
   return;
 }
-void ui_study_callbacks_coronal_series(GtkWidget * widget, gpointer data) {
+void ui_study_callbacks_coronal_series_planes(GtkWidget * widget, gpointer data) {
   ui_study_t * ui_study = data;
-  ui_series_create(ui_study, CORONAL);
+  ui_series_create(ui_study, CORONAL, PLANES);
   return;
 }
-void ui_study_callbacks_sagittal_series(GtkWidget * widget, gpointer data) {
+void ui_study_callbacks_sagittal_series_planes(GtkWidget * widget, gpointer data) {
   ui_study_t * ui_study = data;
-  ui_series_create(ui_study, SAGITTAL);
+  ui_series_create(ui_study, SAGITTAL, PLANES);
+  return;
+}
+void ui_study_callbacks_transverse_series_frames(GtkWidget * widget, gpointer data) {
+  ui_study_t * ui_study = data;
+  ui_series_create(ui_study, TRANSVERSE, FRAMES);
+  return;
+}
+void ui_study_callbacks_coronal_series_frames(GtkWidget * widget, gpointer data) {
+  ui_study_t * ui_study = data;
+  ui_series_create(ui_study, CORONAL, FRAMES);
+  return;
+}
+void ui_study_callbacks_sagittal_series_frames(GtkWidget * widget, gpointer data) {
+  ui_study_t * ui_study = data;
+  ui_series_create(ui_study, SAGITTAL, FRAMES);
   return;
 }
 

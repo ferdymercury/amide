@@ -97,6 +97,10 @@ gboolean study_write_xml(study_t * study, gchar * directory) {
     return FALSE;
   }
 
+#ifdef AMIDE_DEBUG
+  g_print("Saving Study %s in %s\n",study->name, directory);
+#endif
+
   /* start creating an xml document */
   doc = xmlNewDoc("1.0");
 

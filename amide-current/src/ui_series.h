@@ -25,6 +25,8 @@
 
 #define UI_SERIES_BORDER 2
 
+typedef enum {PLANES, FRAMES} series_t;
+
 /* ui_series data structures */
 typedef struct ui_series_t {
   GnomeApp * app; /* pointer to the threshold window for this study */
@@ -35,12 +37,13 @@ typedef struct ui_series_t {
   GdkImlibImage ** rgb_images;
   guint num_slices, rows, columns;
   realspace_t coord_frame;
-  realpoint_t start;
+  realpoint_t view_point;
   floatpoint_t thickness;
-  volume_time_t time;
-  volume_time_t duration;
+  volume_time_t view_time;
+  volume_time_t view_duration;
   interpolation_t interpolation;
   floatpoint_t zoom;
+  series_t type;
   guint reference_count;
 } ui_series_t;
 
@@ -49,6 +52,9 @@ void ui_series_slices_free(ui_series_t * ui_series);
 ui_series_t * ui_series_free(ui_series_t * ui_series);
 ui_series_t * ui_series_init(void);
 /* continued in ui_series2.h */
+
+/* external variables */
+extern gchar * series_names[];
 
 
 

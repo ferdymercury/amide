@@ -61,20 +61,46 @@ void ui_study_menus_create(ui_study_t * ui_study) {
     GNOMEUIINFO_END
   };
 
-  /* the submenu under the series button */
-  GnomeUIInfo slide_menu[] = {
+  /* the submenus under the series_type menu */
+  GnomeUIInfo series_space_menu[] = {
     GNOMEUIINFO_ITEM_DATA(N_("_Transverse"),
-			  N_("Look at a series of transaxial images"),
-			  ui_study_callbacks_transverse_series, 
+			  N_("Look at a series of transaxial images in a single frame"),
+			  ui_study_callbacks_transverse_series_planes, 
 			  ui_study, NULL),
     GNOMEUIINFO_ITEM_DATA(N_("_Coronal"),
-			  N_("Look at a series of coronal images"),
-			  ui_study_callbacks_coronal_series, 
+			  N_("Look at a series of coronal images in a single frame"),
+			  ui_study_callbacks_coronal_series_planes, 
 			  ui_study, NULL),
     GNOMEUIINFO_ITEM_DATA(N_("_Sagittal"),
-			  N_("Look at a series of sagittal images"),
-			  ui_study_callbacks_sagittal_series, 
+			  N_("Look at a series of sagittal images in a single frame"),
+			  ui_study_callbacks_sagittal_series_planes, 
 			  ui_study, NULL),
+    GNOMEUIINFO_END
+  };
+  GnomeUIInfo series_time_menu[] = {
+    GNOMEUIINFO_ITEM_DATA(N_("_Transverse"),
+			  N_("Look at a times series of a transaxial plane"),
+			  ui_study_callbacks_transverse_series_frames, 
+			  ui_study, NULL),
+    GNOMEUIINFO_ITEM_DATA(N_("_Coronal"),
+			  N_("Look at a time series of a coronal plane"),
+			  ui_study_callbacks_coronal_series_frames, 
+			  ui_study, NULL),
+    GNOMEUIINFO_ITEM_DATA(N_("_Sagittal"),
+			  N_("Look at a time series of a sagittal plane"),
+			  ui_study_callbacks_sagittal_series_frames, 
+			  ui_study, NULL),
+    GNOMEUIINFO_END
+  };
+
+  /* the submenu under the series button */
+  GnomeUIInfo series_type_menu[] = {
+    GNOMEUIINFO_SUBTREE_HINT(N_("_Space"),
+			     N_("Look at a series of images over a spacial dimension"), 
+			     series_space_menu),
+    GNOMEUIINFO_SUBTREE_HINT(N_("_Time"),
+			     N_("Look at a series of images over time"), 
+			     series_time_menu),
     GNOMEUIINFO_END
   };
 
@@ -82,7 +108,7 @@ void ui_study_menus_create(ui_study_t * ui_study) {
   GnomeUIInfo view_menu[] = {
     GNOMEUIINFO_SUBTREE_HINT(N_("_Series"),
 			     N_("Look at a series of images"), 
-			     slide_menu),
+			     series_type_menu),
 #if AMIDE_LIBVOLPACK_SUPPORT
     GNOMEUIINFO_ITEM_DATA(N_("_Rendering"),
 			  N_("perform volume renderings on the currently selected volumes"),

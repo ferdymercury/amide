@@ -110,6 +110,8 @@ inline realpoint_t volume_voxel_to_realpoint(const volume_t * volume, const voxe
 inline voxelpoint_t volume_realpoint_to_voxel(const volume_t * volume, const realpoint_t real);
 inline gboolean volume_includes_voxel(const volume_t * volume, const voxelpoint_t voxel);
 volume_time_t volume_start_time(const volume_t * volume, guint frame);
+volume_time_t volume_end_time(const volume_t * volume, guint frame);
+volume_time_t volume_min_frame_duration(const volume_t * volume);
 volume_list_t * volume_list_free(volume_list_t * volume_list);
 volume_list_t * volume_list_init(void);
 void volume_list_write_xml(volume_list_t *list, xmlNodePtr node_list, gchar * directory);
@@ -120,6 +122,9 @@ volume_list_t * volume_list_add_volume(volume_list_t *volume_list, volume_t * vo
 volume_list_t * volume_list_add_volume_first(volume_list_t * volume_list, volume_t * vol);
 volume_list_t * volume_list_remove_volume(volume_list_t * volume_list, volume_t * vol);
 volume_list_t * volume_list_copy(volume_list_t * src_volume_list);
+volume_time_t volume_list_start_time(volume_list_t * volume_list);
+volume_time_t volume_list_end_time(volume_list_t * volume_list);
+volume_time_t volume_list_min_frame_duration(volume_list_t * volume_list);
 void volume_get_view_corners(const volume_t * volume,
 			     const realspace_t view_coord_frame,
 			     realpoint_t corner[]);

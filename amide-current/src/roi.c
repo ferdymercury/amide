@@ -110,7 +110,11 @@ gchar * roi_write_xml(roi_t * roi, gchar * directory) {
     count++;
     file_name = g_strdup_printf("ROI_%s_%d.xml", roi->name, count);
   }
+
   /* and we now have a unique filename */
+#ifdef AMIDE_DEBUG
+  g_print("\t- saving roi %s in roi %s\n",roi->name, file_name);
+#endif
 
   /* write the roi xml file */
   doc = xmlNewDoc("1.0");
@@ -671,13 +675,13 @@ void roi_subset_of_volume(roi_t * roi,
   if (subset_index[0].x < 0) subset_index[0].x = 0;
   if (subset_index[0].x > volume->dim.x) subset_index[0].x = volume->dim.x;
   if (subset_index[0].y < 0) subset_index[0].y = 0;
-  if (subset_index[0].y > volume->dim.z) subset_index[0].y = volume->dim.y;
+  if (subset_index[0].y > volume->dim.y) subset_index[0].y = volume->dim.y;
   if (subset_index[0].z < 0) subset_index[0].z = 0;
   if (subset_index[0].z > volume->dim.z) subset_index[0].z = volume->dim.z;
   if (subset_index[1].x < 0) subset_index[1].x = 0;
   if (subset_index[1].x > volume->dim.x) subset_index[1].x = volume->dim.x;
   if (subset_index[1].y < 0) subset_index[1].y = 0;
-  if (subset_index[1].y > volume->dim.z) subset_index[1].y = volume->dim.y;
+  if (subset_index[1].y > volume->dim.y) subset_index[1].y = volume->dim.y;
   if (subset_index[1].z < 0) subset_index[1].z = 0;
   if (subset_index[1].z > volume->dim.z) subset_index[1].z = volume->dim.z;
 
@@ -730,17 +734,15 @@ roi_analysis_t roi_calculate_analysis(roi_t * roi,
   /* figure out the height */
   height = fabs(roi_corner[1].z-roi_corner[0].z);
   
-  /* initialize the analysis data structure based on the center of the
-     roi, we always assume at least this voxel is in..... */
-  volume_p =
-    realspace_alt_coord_to_alt(center,
-			       roi->coord_frame,
-			       volume->coord_frame);
+  /* initialize the analysis data structure based on the center of the roi */
+  volume_p =  realspace_alt_coord_to_alt(center, roi->coord_frame, volume->coord_frame);
   i = volume_realpoint_to_voxel(volume,volume_p);
-  temp_data = VOLUME_CONTENTS(volume, frame, i);
-  
-  analysis.voxels = 1.0; 
-  analysis.mean = 0.0;
+  if (!volume_includes_voxel(volume,i)) temp_data = EMPTY;
+  else temp_data = VOLUME_CONTENTS(volume,frame,i);
+
+  /* initialize values */
+  analysis.voxels = 0.0; 
+  analysis.mean = 0;
   analysis.min = analysis.max = temp_data;
   analysis.var = 0;
 
@@ -816,7 +818,8 @@ roi_analysis_t roi_calculate_analysis(roi_t * roi,
 	      };
 	      
 	      if (voxel_in) {
-		temp_data = VOLUME_CONTENTS(volume,frame,i);
+		if (!volume_includes_voxel(volume,i)) temp_data = EMPTY;
+		else temp_data = VOLUME_CONTENTS(volume,frame,i);
 	  
 		analysis.mean += temp_data*voxel_grain_size;
 		analysis.voxels += voxel_grain_size;
@@ -833,7 +836,10 @@ roi_analysis_t roi_calculate_analysis(roi_t * roi,
   }
 
   /* finish mean calculation */
-  analysis.mean /= analysis.voxels;
+  if (analysis.voxels > CLOSE) /* make sure we don't div by 0 */
+    analysis.mean /= analysis.voxels;
+  else
+    analysis.mean /= CLOSE;
   
   /* now iterate over the volume again to calculate the variance.... */
   for (i.z = init.z; i.z<(init.z+dim.z);i.z++) {
@@ -875,10 +881,12 @@ roi_analysis_t roi_calculate_analysis(roi_t * roi,
 	      };
 	      
 	      if (voxel_in) {
-		temp_data = VOLUME_CONTENTS(volume,frame,i);
+		if (!volume_includes_voxel(volume,i)) temp_data = EMPTY;
+		else temp_data = VOLUME_CONTENTS(volume,frame,i);
 		
 		analysis.var += 
-		  voxel_grain_size*pow((temp_data-analysis.mean),2.0);
+		  voxel_grain_size*
+		  (temp_data-analysis.mean)*(temp_data-analysis.mean);
 	      }
 	    }
 	  }
@@ -887,15 +895,18 @@ roi_analysis_t roi_calculate_analysis(roi_t * roi,
     }
   }
 
-  /* and divide to get the final var, not I'm using N and not (N-1), cause
+  /* and divide to get the final var, note I'm using N and not (N-1), cause
      my mean is calculated from the whole data set and not just a sample of it.
      If anyone else with more statistical experience disagrees, please speak
      up */
-  analysis.var /= analysis.var/analysis.voxels;
+  if (analysis.voxels > CLOSE) /* make sure we don't div by 0 */
+    analysis.var /= analysis.voxels;
+  else
+    analysis.var /= CLOSE;
 
-  /* and make sure we don't double count the center voxel if we don't have to */
-  if (analysis.voxels >= 1.0+CLOSE)
-    analysis.voxels -= 1.0;
+  /* and calculate the time midpoint of the data */
+  analysis.time_midpoint = 
+    (volume_end_time(volume, frame) + volume_start_time(volume, frame))/2.0;
 
   return analysis;
 }

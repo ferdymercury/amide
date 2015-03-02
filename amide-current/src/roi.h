@@ -57,6 +57,7 @@ struct _roi_list_t {
 
 /* structure containing the results of an roi analysis */
 typedef struct roi_analysis_t {
+  volume_time_t time_midpoint;
   volume_data_t mean;
   volume_data_t voxels;
   volume_data_t var;

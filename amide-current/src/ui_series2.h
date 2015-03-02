@@ -28,7 +28,7 @@
 
 /* external functions */
 void ui_series_update_canvas_image(ui_study_t * ui_study);
-void ui_series_create(ui_study_t * ui_study, view_t rot);
+void ui_series_create(ui_study_t * ui_study, view_t view, series_t series_type);
 
 
 /* internal functions */

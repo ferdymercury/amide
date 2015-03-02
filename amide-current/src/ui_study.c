@@ -226,7 +226,10 @@ GtkAdjustment * ui_study_update_plane_adjustment(ui_study_t * ui_study, view_t v
     
     /* make sure our view center makes sense */
     if (zp_start < lower) {
-      zp_start = (upper-lower)/2.0+lower;
+      if (zp_start < lower-ui_study->current_thickness)
+	zp_start = (upper-lower)/2.0+lower;
+      else
+	zp_start = lower;
       switch(view) {
       case TRANSVERSE:
 	ui_study->current_view_center.z = zp_start;
@@ -240,7 +243,10 @@ GtkAdjustment * ui_study_update_plane_adjustment(ui_study_t * ui_study, view_t v
 	break;
       }
     } else if (zp_start > upper) {
-      zp_start = (upper-lower)/2.0+lower;
+      if (zp_start > lower+ui_study->current_thickness)
+	zp_start = (upper-lower)/2.0+lower;
+      else
+	zp_start = upper;
       switch(view) {
       case TRANSVERSE:
 	ui_study->current_view_center.z = zp_start;

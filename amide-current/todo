@@ -4,10 +4,13 @@ big things:
 * allow looking at only a subset of the data (i.e. cropping)
 * magnifying glass
 * gnuplot? interface for drawing graphs of ROI statistics
+* dragging on the canvas changes the view thickness
+* aligning of data sets by specifying three points in each
+
 
 small things:
-* make volume rendering less buggy.... 
-* have a separate dialog for changing the view parameters
+* figure out what's going wrong with my use of gtk_gamma_curve
+	to set the density and gradient classification functions
 * figure out why gnome-help won't go to the right section
 * have item tree indicate which object is currently focused, not just selected.
 * have bottom scale indicate the width of data we're looking at...
@@ -15,3 +18,4 @@ small things:
 * make caching of slices smarter.  We don't need to regenerate all slices
 	when removing one slice from the list...
 * ui_main delete events should call ui_study_delete_event
+* re-write realspace functions so that a pregenerated inverse matrix can be used

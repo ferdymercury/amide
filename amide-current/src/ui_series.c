@@ -40,6 +40,10 @@
 #include "ui_series2.h"
 #include "ui_series_callbacks.h"
 
+
+/* external variables */
+gchar * series_names[] = {"over Space", "over Time"};
+
 /* destroy the ui_series slices data */
 void ui_series_slices_free(ui_series_t * ui_series) {
   guint i;
@@ -106,11 +110,12 @@ ui_series_t * ui_series_init(void) {
   ui_series->rgb_images = NULL;
   ui_series->volumes = NULL;
   ui_series->interpolation = NEAREST_NEIGHBOR;
-  ui_series->time = 0.0;
-  ui_series->duration = 1.0;
+  ui_series->view_time = 0.0;
+  ui_series->view_duration = 1.0;
   ui_series->zoom = 1.0;
   ui_series->thickness = -1.0;
-  ui_series->start = realpoint_init;
+  ui_series->view_point = realpoint_init;
+  ui_series->type = PLANES;
 
   return ui_series;
 }
@@ -119,24 +124,39 @@ ui_series_t * ui_series_init(void) {
 /* function to make the adjustments for the scrolling scale */
 GtkAdjustment * ui_series_create_scroll_adjustment(ui_study_t * ui_study) { 
 
+  if (ui_study->series->type == PLANES) {
+    realpoint_t view_corner[2];
 
-  floatpoint_t length, thickness;
-  GtkAdjustment * new_adjustment;
+    volumes_get_view_corners(ui_study->series->volumes, ui_study->series->coord_frame, view_corner);
+    view_corner[0] = realspace_base_coord_to_alt(view_corner[0], ui_study->series->coord_frame);
+    view_corner[1] = realspace_base_coord_to_alt(view_corner[1], ui_study->series->coord_frame);
+    
+    return GTK_ADJUSTMENT(gtk_adjustment_new(ui_study->series->view_point.z,
+					     view_corner[0].z,
+					     view_corner[1].z,
+					     ui_study->series->thickness,
+					     ui_study->series->thickness,
+					     ui_study->series->thickness));
+  } else { /* FRAMES */
+    volume_time_t start_time, end_time;
+    start_time = volume_list_start_time(ui_study->series->volumes);
+    end_time = volume_list_end_time(ui_study->series->volumes);
 
-  length = volumes_get_length(ui_study->series->volumes, ui_study->series->coord_frame);
-  thickness = ui_study->series->thickness;
+    return GTK_ADJUSTMENT(gtk_adjustment_new(ui_study->series->view_time,
+					     start_time, 
+					     end_time,
+					     ui_study->series->view_duration, 
+					     ui_study->series->view_duration,
+					     ui_study->series->view_duration));
 
-  new_adjustment = GTK_ADJUSTMENT(gtk_adjustment_new(ui_study->series->start.z,
-						     0, length, 
-						     thickness, thickness,
-						     thickness));
-  return new_adjustment;
+  }
 }
 
 /* funtion to update the canvas iamge */
 void ui_series_update_canvas_image(ui_study_t * ui_study) {
 
-  floatpoint_t zp_length;
+  floatpoint_t view_start, view_end;
+  volume_time_t time_start, time_end, temp_time;
   realpoint_t temp_point;
   guint i, start_i;
   gint width, height;
@@ -145,6 +165,8 @@ void ui_series_update_canvas_image(ui_study_t * ui_study) {
   GdkCursor * cursor;
   GdkWindow * parent=NULL;
   realspace_t view_coord_frame;
+  realpoint_t view_corner[2];
+
 
   /* push our desired cursor onto the cursor stack */
   cursor = ui_study->cursor[UI_STUDY_WAIT];
@@ -162,12 +184,23 @@ void ui_series_update_canvas_image(ui_study_t * ui_study) {
 
 
   /* get the view axis to use*/
-  width = 0.8*gdk_screen_width();
-  height = 0.8*gdk_screen_height();
+  width = 0.9*gdk_screen_width();
+  height = 0.9*gdk_screen_height();
 
   /* figure out some parameters */
-  zp_length = volumes_get_length(ui_study->series->volumes,ui_study->series->coord_frame);
-  ui_study->series->num_slices = ceil(zp_length/ui_study->series->thickness);
+  volumes_get_view_corners(ui_study->series->volumes, ui_study->series->coord_frame, view_corner);
+  view_corner[0] = realspace_base_coord_to_alt(view_corner[0], ui_study->series->coord_frame);
+  view_corner[1] = realspace_base_coord_to_alt(view_corner[1], ui_study->series->coord_frame);
+  view_end = view_corner[1].z;
+  view_start = view_corner[0].z;
+  time_start = volume_list_start_time(ui_study->series->volumes);
+  time_end = volume_list_end_time(ui_study->series->volumes);
+  g_print("temp_start %5.3f time_end %5.3f duration %5.3f\n",time_start, time_end, 
+	  ui_study->series->view_duration);
+  if (ui_study->series->type == PLANES)
+    ui_study->series->num_slices = ceil((view_end-view_start)/ui_study->series->thickness);
+  else /* FRAMES */
+    ui_study->series->num_slices = ceil((time_end-time_start)/ui_study->series->view_duration);
 
   /* allocate space for pointers to our slices if needed */
   if (ui_study->series->slices == NULL) {
@@ -199,14 +232,20 @@ void ui_series_update_canvas_image(ui_study_t * ui_study) {
      of the ui_series data structure */
   if (ui_study->series->rgb_images[0] != NULL) 
     gnome_canvas_destroy_image(ui_study->series->rgb_images[0]);
-  view_coord_frame = ui_study->series->coord_frame;
-  view_coord_frame.offset = realpoint_init;
 
+  temp_point = ui_study->series->view_point;
+  temp_time =  ui_study->series->view_time;
+  if (ui_study->series->type == PLANES)
+    temp_point.z = view_start;
+  else /* FRAMES */
+    temp_time = time_start;
+  view_coord_frame = ui_study->series->coord_frame;
+  view_coord_frame.offset = realspace_alt_coord_to_base(temp_point, ui_study->series->coord_frame);
   ui_study->series->rgb_images[0] = 
     image_from_volumes(&(ui_study->series->slices[0]),
 		       ui_study->series->volumes,
-		       ui_study->series->time,
-		       ui_study->series->duration,
+		       temp_time+CLOSE,
+		       ui_study->series->view_duration-CLOSE,
 		       ui_study->series->thickness,
 		       view_coord_frame,
 		       ui_study->scaling,
@@ -225,12 +264,9 @@ void ui_series_update_canvas_image(ui_study_t * ui_study) {
     if (ui_study->series->rows < 1)
       ui_study->series->rows = 1;
     if ((ui_study->series->images = 
-	 (GnomeCanvasItem **) g_malloc(sizeof(GnomeCanvasItem *)
-				       * ui_study->series->rows
-				       * ui_study->series->columns)) 
-	== NULL) {
-      g_warning("%s: couldn't allocate space for pointers to GnomeCanavasItem's",
-		PACKAGE);
+	 (GnomeCanvasItem **) g_malloc(sizeof(GnomeCanvasItem *) * ui_study->series->rows
+				       * ui_study->series->columns)) == NULL) {
+      g_warning("%s: couldn't allocate space for pointers to GnomeCanavasItem's",PACKAGE);
       return;
     }
     for (i=0; i < ui_study->series->columns * ui_study->series->rows ; i++)
@@ -239,7 +275,17 @@ void ui_series_update_canvas_image(ui_study_t * ui_study) {
 
 
   /* figure out what's the first image we want to display */
-  i = ui_study->series->num_slices*(ui_study->series->start.z/zp_length);
+  if (ui_study->series->type == PLANES) 
+    i = ui_study->series->num_slices*((ui_study->series->view_point.z-view_start)/(view_end-view_start));
+  else  /* FRAMES */
+    i = ui_study->series->num_slices*((ui_study->series->view_time-time_start)/(time_end-time_start));
+
+  if (ui_study->series->num_slices <= ui_study->series->columns*ui_study->series->rows)
+    i = 0;
+  else if (i > (ui_study->series->num_slices -  ui_study->series->columns*ui_study->series->rows))
+    i = ui_study->series->num_slices - ui_study->series->columns*ui_study->series->rows;
+  if (i < 0)
+    i = 0;
   if (ui_study->series->num_slices <= ui_study->series->columns*ui_study->series->rows)
     i = 0;
   else if (i > (ui_study->series->num_slices -  ui_study->series->columns*ui_study->series->rows))
@@ -252,11 +298,16 @@ void ui_series_update_canvas_image(ui_study_t * ui_study) {
 
   for (; ((i-start_i) < (ui_study->series->rows*ui_study->series->columns))
 	 && (i < ui_study->series->num_slices); i++) {
-    temp_point = ui_study->series->start;
-    temp_point.z = i*ui_study->series->thickness;
-    view_coord_frame.offset = 
-      realspace_alt_coord_to_base(temp_point,
-				  ui_study->series->coord_frame);
+    temp_point = ui_study->series->view_point;
+    temp_time = ui_study->series->view_time;
+    if (ui_study->series->type == PLANES) 
+      temp_point.z = i*ui_study->series->thickness+view_start;
+    else
+      temp_time = i*ui_study->series->view_duration + time_start;
+    view_coord_frame = ui_study->series->coord_frame;
+    view_coord_frame.offset = realspace_alt_coord_to_base(temp_point, ui_study->series->coord_frame);
+
+    g_print("temp time %5.3f duration %5.3f\n",temp_time+CLOSE, ui_study->series->view_duration-CLOSE);
     
     if (i != 0) /* we've already done image 0 */
       if (ui_study->series->rgb_images[i] != NULL)
@@ -266,8 +317,8 @@ void ui_series_update_canvas_image(ui_study_t * ui_study) {
       ui_study->series->rgb_images[i] = 
 	image_from_volumes(&(ui_study->series->slices[i]),
 			   ui_study->series->volumes,
-			   ui_study->series->time,
-			   ui_study->series->duration,
+			   temp_time+CLOSE,
+			   ui_study->series->view_duration-CLOSE,
 			   ui_study->series->thickness,
 			   view_coord_frame,
 			   ui_study->scaling,
@@ -325,7 +376,7 @@ void ui_series_update_canvas_image(ui_study_t * ui_study) {
 }
 
 /* function that sets up the series dialog */
-void ui_series_create(ui_study_t * ui_study, view_t view) {
+void ui_series_create(ui_study_t * ui_study, view_t view, series_t series_type) {
   
   GnomeApp * app;
   gchar * title = NULL;
@@ -333,7 +384,7 @@ void ui_series_create(ui_study_t * ui_study, view_t view) {
   GnomeCanvas * series_canvas;
   GtkAdjustment * adjustment;
   GtkWidget * scale;
-  ui_volume_list_t * ui_volumes;
+  volume_time_t min_duration;
 
   /* sanity checks */
   if (study_get_volumes(ui_study->study) == NULL)
@@ -346,18 +397,18 @@ void ui_series_create(ui_study_t * ui_study, view_t view) {
     return;
 
   ui_study->series = ui_series_init();
+  ui_study->series->type = series_type;
 
-  title = g_strdup_printf("Series: %s (%s)",study_get_name(ui_study->study), view_names[view]);
+  title = g_strdup_printf("Series: %s (%s - %s)",
+			  study_get_name(ui_study->study), 
+			  view_names[view], 
+			  series_names[series_type]);
   app = GNOME_APP(gnome_app_new(PACKAGE, title));
   g_free(title);
   ui_study->series->app = app;
 
-  /* figure out the currrent number of volumes, and make a copy in our series's volume list */
-  ui_volumes = ui_study->current_volumes;
-  while (ui_volumes != NULL) {
-    ui_study->series->volumes = volume_list_add_volume(ui_study->series->volumes,ui_volumes->volume);
-    ui_volumes = ui_volumes->next;
-  }
+  /* make a copy of the volume list for the series */
+  ui_study->series->volumes = ui_volume_list_return_volume_list(ui_study->current_volumes);
 
   /* setup the callbacks for app */
   gtk_signal_connect(GTK_OBJECT(app), "delete_event",
@@ -369,16 +420,20 @@ void ui_series_create(ui_study_t * ui_study, view_t view) {
   gnome_app_set_contents(app, GTK_WIDGET(packing_table));
 
   /* save the coord_frame of the series */
-  ui_study->series->coord_frame = study_get_coord_frame(ui_study->study);
   ui_study->series->coord_frame = 
-    realspace_get_orthogonal_coord_frame(ui_study->series->coord_frame, view);
-  ui_study->series->start = ui_study->current_view_center;
+    realspace_get_orthogonal_coord_frame(study_get_coord_frame(ui_study->study), view);
+  ui_study->series->view_point = 
+    realspace_alt_coord_to_alt(ui_study->current_view_center,
+			       study_get_coord_frame(ui_study->study),
+			       ui_study->series->coord_frame);
 
   /* save some parameters */
   ui_study->series->thickness = ui_study->current_thickness;
   ui_study->series->interpolation = ui_study->current_interpolation;
-  ui_study->series->time = ui_study->current_time;
-  ui_study->series->duration = ui_study->current_duration;
+  ui_study->series->view_time = ui_study->current_time;
+  min_duration = volume_list_min_frame_duration(ui_study->series->volumes);
+  ui_study->series->view_duration = 
+    (min_duration > ui_study->current_duration) ? min_duration : ui_study->current_duration;
   ui_study->series->zoom = ui_study->current_zoom;
 
   /* setup the canvas */

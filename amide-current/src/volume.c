@@ -142,6 +142,9 @@ gchar * volume_write_xml(volume_t * volume, gchar * directory) {
   }
 
   /* and we now have unique filenames */
+#ifdef AMIDE_DEBUG
+  g_print("\t- saving volume %s in file %s\n",volume->name, file_name);
+#endif
 
   /* write the volume xml file */
   doc = xmlNewDoc("1.0");
@@ -156,8 +159,8 @@ gchar * volume_write_xml(volume_t * volume, gchar * directory) {
   xml_save_string(doc->children, "color_table", color_table_names[volume->color_table]);
   xml_save_data(doc->children, "max", volume->max);
   xml_save_data(doc->children, "min", volume->min);
-  xml_save_data(doc->children, "threshold_max", volume->max);
-  xml_save_data(doc->children, "threshold_min", volume->min);
+  xml_save_data(doc->children, "threshold_max", volume->threshold_max);
+  xml_save_data(doc->children, "threshold_min", volume->threshold_min);
   xml_save_realspace(doc->children, "coord_frame", volume->coord_frame);
   xml_save_realpoint(doc->children, "corner", volume->corner);
 
@@ -434,8 +437,8 @@ volume_time_t volume_start_time(const volume_t * volume, guint frame) {
   volume_time_t time;
   guint i_frame;
 
-  if (frame > volume->num_frames)
-    frame = volume->num_frames;
+  if (frame >= volume->num_frames)
+    frame = volume->num_frames-1;
 
   time = volume->scan_start;
 
@@ -445,6 +448,29 @@ volume_time_t volume_start_time(const volume_t * volume, guint frame) {
   return time;
 }
 
+/* returns the end time of a given frame */
+volume_time_t volume_end_time(const volume_t * volume, guint frame) {
+
+  if (frame >= volume->num_frames)
+    frame = volume->num_frames-1;
+
+  return volume_start_time(volume, frame) + volume->frame_duration[frame];
+}
+
+/* return the minimal frame duration in this volume */
+volume_time_t volume_min_frame_duration(const volume_t * volume) {
+
+  volume_time_t min_frame_duration;
+  guint i_frame;
+
+  min_frame_duration = volume->frame_duration[0];
+
+  for(i_frame=1;i_frame<volume->num_frames;i_frame++)
+    if (volume->frame_duration[i_frame] < min_frame_duration)
+      min_frame_duration = volume->frame_duration[i_frame];
+
+  return min_frame_duration;
+}
 
 /* free up a list of volumes */
 volume_list_t * volume_list_free(volume_list_t * volume_list) {
@@ -619,6 +645,7 @@ volume_list_t * volume_list_remove_volume(volume_list_t * volume_list, volume_t 
   return volume_list;
 }
 
+
 /* makes a new volume_list which is a copy of a previous volume_list */
 volume_list_t * volume_list_copy(volume_list_t * src_volume_list) {
 
@@ -638,6 +665,59 @@ volume_list_t * volume_list_copy(volume_list_t * src_volume_list) {
 
   return dest_volume_list;
 }
+
+
+/* function to get the earliest time in a list of volumes */
+volume_time_t volume_list_start_time(volume_list_t * volume_list) {
+  volume_time_t start, temp;
+
+  /* sanity check */
+  g_return_val_if_fail(volume_list != NULL, 0.0);
+
+  start = volume_start_time(volume_list->volume,0);
+  if (volume_list->next != NULL) {
+    temp = volume_list_start_time(volume_list->next);
+    if (temp < start)
+      start = temp;
+  }
+  
+  return start;
+}
+
+/* function to get the latest time in a list of volumes */
+volume_time_t volume_list_end_time(volume_list_t * volume_list) {
+  volume_time_t end, temp;
+
+  /* sanity check */
+  g_return_val_if_fail(volume_list != NULL, 0.0);
+
+  end = volume_end_time(volume_list->volume,volume_list->volume->num_frames-1);
+  if (volume_list->next != NULL) {
+    temp = volume_list_end_time(volume_list->next);
+    if (temp > end)
+      end = temp;
+  }
+  
+  return end;
+}
+
+/* function to return the minimum frame duration of a list of volumes */
+volume_time_t volume_list_min_frame_duration(volume_list_t * volume_list) {
+  volume_time_t min_duration, temp;
+
+  /* sanity check */
+  g_return_val_if_fail(volume_list != NULL, 0.0);
+
+  min_duration = volume_min_frame_duration(volume_list->volume);
+  if (volume_list->next != NULL) {
+    temp = volume_list_min_frame_duration(volume_list->next);
+    if (temp < min_duration)
+      min_duration = temp;
+  }
+  
+  return min_duration;
+}
+
 
 
 /* takes a volume and a view_axis, and gives the corners necessary for
@@ -1010,16 +1090,14 @@ volume_t * volume_get_slice(const volume_t * volume,
   /* ----- figure out what frames of this volume to include ----*/
 
   /* figure out what frame to start at */
-  start_frame = volume->num_frames + 1;
+  start_frame = 0; 
   i_frame = 0;
   while (i_frame < volume->num_frames) {
     volume_start = volume_start_time(volume,i_frame);
-    if (start>volume_start)
+    if (start > volume_start-CLOSE)
       start_frame = i_frame;
     i_frame++;
   }
-  if (start_frame >= volume->num_frames)
-    start_frame = volume->num_frames-1;
   volume_start = volume_start_time(volume, start_frame);
 
   /* and figure out what frame to end at */
@@ -1027,7 +1105,7 @@ volume_t * volume_get_slice(const volume_t * volume,
   i_frame = start_frame;
   while ((i_frame < volume->num_frames) && (num_frames > volume->num_frames)) {
     volume_end = volume_start_time(volume,i_frame)+volume->frame_duration[i_frame];
-    if ((start+duration) < volume_end)
+    if ((start+duration) < volume_end+CLOSE)
       num_frames = i_frame-start_frame+1;
     i_frame++;
   }
@@ -1130,13 +1208,6 @@ volume_t * volume_get_slice(const volume_t * volume,
     alt.y = (i_axis == YAXIS) ? (1.0-CLOSE)*(volume_min_voxel_size/2.0) : 0.0;
     alt.z = (i_axis == ZAXIS) ? (1.0-CLOSE)*(volume_min_voxel_size/2.0) : 0.0;
     half_size[i_axis] = realspace_alt_dim_to_alt(alt, slice->coord_frame, volume->coord_frame);
-
-    /* correct for non-square voxel sizes */
-    //half_size[i_axis].x = half_size[i_axis].x * volume->voxel_size.x/volume_min_dim;
-    //    half_size[i_axis].y = half_size[i_axis].y * volume->voxel_size.y/volume_min_dim;
-    //    half_size[i_axis].z = half_size[i_axis].z * volume->voxel_size.z/volume_min_dim;
-    // g_print("stride %d \t %5.3f %5.3f %5.3f\n",i_axis, stride[i_axis].x,stride[i_axis].y,stride[i_axis].z);
-    // g_print("1/2       \t %5.3f %5.3f %5.3f\n",half_size[i_axis].x,half_size[i_axis].y,half_size[i_axis].z);
   }
 
 

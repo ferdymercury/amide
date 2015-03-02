@@ -341,7 +341,7 @@ void ui_roi_dialog_create(ui_study_t * ui_study, roi_t * roi) {
   gnome_property_box_append_page (GNOME_PROPERTY_BOX(roi_dialog), GTK_WIDGET(packing_table), label);
 
   /* widgets to change the dimensions of the ROI (in roi space) */
-  label = gtk_label_new("Dimensions (mm from center)");
+  label = gtk_label_new("Dimensions (mm from center of roi)");
   gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 0,2,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
   table_row++;

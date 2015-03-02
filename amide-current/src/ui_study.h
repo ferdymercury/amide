@@ -102,12 +102,12 @@ typedef struct ui_study_t {
   gboolean study_selected;
   GtkWidget * time_dialog;
   GtkWidget * time_button;
-  scaling_t scaling; /* scale on this slice or the whole volume */
   ui_study_mode_t current_mode; /* are we currently working on an roi or a volume */
   volume_t * current_volume; /* the last volume double clicked on */
   roi_t * current_roi; /* the last roi double clicked on */
   ui_volume_list_t * current_volumes; /* the currently selected volumes */ 
   ui_roi_list_t * current_rois; /* the currently selected rois */
+  scaling_t scaling; /* scale on a slice or the whole volume */
   volume_time_t current_time;
   volume_time_t current_duration;
   floatpoint_t current_thickness;

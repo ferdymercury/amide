@@ -45,7 +45,11 @@ void ui_series_callbacks_scroll_change(GtkAdjustment* adjustment, gpointer data)
 
   ui_study_t * ui_study = data;
 
-  ui_study->series->start.z = adjustment->value;
+  if (ui_study->series->type == PLANES)
+    ui_study->series->view_point.z = adjustment->value;
+  else
+    ui_study->series->view_time = adjustment->value;
+
   ui_series_update_canvas_image(ui_study);
 
   return;
@@ -65,4 +69,9 @@ void ui_series_callbacks_delete_event(GtkWidget* widget, GdkEvent * event,
 
   return;
 }
+
+
+
+
+
 

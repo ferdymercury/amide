@@ -64,6 +64,7 @@ typedef struct realspace_t {
 #define CLOSE 0.00001 /* what's close enough to be equal.... */
 #define SMALL 0.01 /* in milimeter's, used as a lower limit on some dimensions */
 
+
 /* convenience functions */
 
 /* returns the boolean value of fp1==fp2 (within a factor of CLOSE) */

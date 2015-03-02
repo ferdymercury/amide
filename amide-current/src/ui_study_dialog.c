@@ -109,7 +109,7 @@ void ui_study_dialog_create(ui_study_t * ui_study) {
     return;
   
   /* sanity checks */
-  temp_string = g_strdup_printf("%s: Study Modification Dialog",PACKAGE);
+  temp_string = g_strdup_printf("%s: Study Parameter Modification Dialog",PACKAGE);
   study_dialog = gnome_property_box_new();
   gtk_window_set_title(GTK_WINDOW(study_dialog), temp_string);
   g_free(temp_string);
