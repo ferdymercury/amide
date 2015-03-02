@@ -224,6 +224,7 @@ static void space_rotate_on_vector(AmitkSpace * space, AmitkPoint * vector, amid
   return;
 }
 
+
 static void space_transform(AmitkSpace * space, AmitkSpace * transform_space) {
 
   space->offset = point_add(space->offset, transform_space->offset);

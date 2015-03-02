@@ -268,10 +268,10 @@ AmitkSpace * alignment_calculate(AmitkDataSet * moving_ds, AmitkDataSet * fixed_
 
   /* and figure out the shift: t = fixed_centroid - R*moving_centroid,
      but we also need to compensate because the transformation space will rotate
-     relative to the moving_ds's offset, not the fixed_centroid (hence offset_shift) */
+     relative to the moving_ds's center, not the fixed_centroid (hence offset_shift) */
   shift = point_sub(fixed_centroid, matrix_mult_point(matrix_r, moving_centroid));
-  offset_shift = matrix_mult_point(matrix_r,AMITK_SPACE_OFFSET(moving_ds));
-  offset_shift = point_sub(offset_shift, AMITK_SPACE_OFFSET(moving_ds));
+  offset_shift = matrix_mult_point(matrix_r,amitk_volume_get_center(AMITK_VOLUME(moving_ds)));
+  offset_shift = point_sub(offset_shift, amitk_volume_get_center(AMITK_VOLUME(moving_ds)));
   shift = point_add(offset_shift, shift);
   amitk_space_set_offset(transform_space, shift); 
   

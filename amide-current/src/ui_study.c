@@ -708,7 +708,10 @@ void ui_study_update_help_info(ui_study_t * ui_study, AmitkHelpInfo which_info,
       (which_info == AMITK_HELP_INFO_CANVAS_DRAWING_MODE)) {
     location_text[0] = g_strdup_printf(_("[x,y,z] = [% 5.2f,% 5.2f,% 5.2f] mm"), 
 				       point.x, point.y, point.z);
-    location_text[1] = g_strdup_printf(_("value  = % 5.3g"), value);
+    if (!isnan(value))
+      location_text[1] = g_strdup_printf(_("value  = % 5.3g"), value);
+    else
+      location_text[1] = g_strdup_printf(_("value  = none"));
   } else if (which_info == AMITK_HELP_INFO_UPDATE_SHIFT) {
     location_text[0] = g_strdup_printf(_("shift (x,y,z) ="));
     location_text[1] = g_strdup_printf(_("[% 5.2f,% 5.2f,% 5.2f] mm"), 

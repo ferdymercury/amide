@@ -246,8 +246,8 @@ AmitkDataSet * libmdc_import(const gchar * filename,
   
   saved_time_locale = g_strdup(setlocale(LC_TIME,NULL));
   saved_numeric_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
-  setlocale(LC_TIME,"C");  
-  setlocale(LC_NUMERIC,"C");  
+  setlocale(LC_TIME,"POSIX");  
+  setlocale(LC_NUMERIC,"POSIX");  
 
   
   /* setup some defaults */
@@ -847,8 +847,8 @@ void libmdc_export(AmitkDataSet * ds,
   
   saved_time_locale = g_strdup(setlocale(LC_TIME,NULL));
   saved_numeric_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
-  setlocale(LC_TIME,"C");  
-  setlocale(LC_NUMERIC,"C");  
+  setlocale(LC_TIME,"POSIX");  
+  setlocale(LC_NUMERIC,"POSIX");  
 
   
   /* setup some defaults */
@@ -917,7 +917,7 @@ void libmdc_export(AmitkDataSet * ds,
     break;
   }
 
-  fi.ifname = strdup(filename);
+  fi.ifname = g_strdup(filename);
   fi.iformat = MDC_FRMT_RAW;
   if (resliced) {
     fi.type = libmdc_type_number(AMITK_FORMAT_FLOAT);

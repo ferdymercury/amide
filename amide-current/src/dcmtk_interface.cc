@@ -84,6 +84,7 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   DcmDataset * dcm_dataset;
   OFCondition result;
   Uint16 return_uint16=0;
+  Sint32 return_sint32=0;
   Float64 return_float64=0.0;
   Uint16 bits_allocated;
   Uint16 pixel_representation;
@@ -96,6 +97,7 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   AmitkVoxel i;
   AmitkFormat format;
   gboolean continue_work=TRUE;
+  gboolean found_value;
   const void * buffer=NULL;
   void * ds_pointer;
   long unsigned num_bytes;
@@ -110,10 +112,12 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   gint hours, minutes, seconds;
   gchar * object_name;
 
+  /* note - dcmtk always uses POSIX locale - look to setlocale stuff in libmdc_interface.c if this ever comes up*/
+
   result = dcm_format.loadFile(filename);
   if (result.bad()) {
     g_warning("could not read DICOM file %s, dcmtk returned %s",filename, result.text());
-    return NULL;
+    goto error;
   }
 
   //  dcm_metainfo = dcm_format.getMetaInfo();
@@ -124,54 +128,56 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   dcm_dataset = dcm_format.getDataset();
   //  dcm_dataset = &(dcm_dir.getDataset());
   if (dcm_dataset == NULL) {
-    g_warning("could not find dataset in DICOM file %s\n", filename);
-    return NULL;
+    g_warning(_("could not find dataset in DICOM file %s\n"), filename);
+    goto error;
   }
 
   modality = AMITK_MODALITY_OTHER;
   if (dcm_dataset->findAndGetString(DCM_Modality, return_str).good()) {
-
-    /* first, process modalities we know we don't read */
-    if ((g_strcasecmp(return_str, "PR") == 0)) {
-      amitk_append_str_with_newline(perror_buf, _("Modality %s is not understood.  Ignoring File %s"), return_str, filename);
-      return NULL;
+    if (return_str != NULL) {
+      
+      /* first, process modalities we know we don't read */
+      if ((g_strcasecmp(return_str, "PR") == 0)) {
+	amitk_append_str_with_newline(perror_buf, _("Modality %s is not understood.  Ignoring File %s"), return_str, filename);
+	goto error;
+      }
+      
+      /* now to modalities we think we understand */
+      if ((g_strcasecmp(return_str, "CR") == 0) ||
+	  (g_strcasecmp(return_str, "CT") == 0) ||
+	  (g_strcasecmp(return_str, "DF") == 0) ||
+	  (g_strcasecmp(return_str, "DS") == 0) ||
+	  (g_strcasecmp(return_str, "DX") == 0) ||
+	  (g_strcasecmp(return_str, "MG") == 0) ||
+	  (g_strcasecmp(return_str, "PX") == 0) ||
+	  (g_strcasecmp(return_str, "RF") == 0) ||
+	  (g_strcasecmp(return_str, "RG") == 0) ||
+	  (g_strcasecmp(return_str, "XA") == 0) ||
+	  (g_strcasecmp(return_str, "XA") == 0))
+	modality = AMITK_MODALITY_CT;
+      else if ((g_strcasecmp(return_str, "MA") == 0) ||
+	       (g_strcasecmp(return_str, "MR") == 0) ||
+	       (g_strcasecmp(return_str, "MS") == 0)) 
+	modality = AMITK_MODALITY_MRI;
+      else if ((g_strcasecmp(return_str, "ST") == 0) ||
+	       (g_strcasecmp(return_str, "NM") == 0))
+	modality = AMITK_MODALITY_SPECT;
+      else if ((g_strcasecmp(return_str, "PT") == 0))
+	modality = AMITK_MODALITY_PET;
     }
-    
-    /* now to modalities we think we understand */
-    if ((g_strcasecmp(return_str, "CR") == 0) ||
-	(g_strcasecmp(return_str, "CT") == 0) ||
-	(g_strcasecmp(return_str, "DF") == 0) ||
-	(g_strcasecmp(return_str, "DS") == 0) ||
-	(g_strcasecmp(return_str, "DX") == 0) ||
-	(g_strcasecmp(return_str, "MG") == 0) ||
-	(g_strcasecmp(return_str, "PX") == 0) ||
-	(g_strcasecmp(return_str, "RF") == 0) ||
-	(g_strcasecmp(return_str, "RG") == 0) ||
-	(g_strcasecmp(return_str, "XA") == 0) ||
-	(g_strcasecmp(return_str, "XA") == 0))
-      modality = AMITK_MODALITY_CT;
-    else if ((g_strcasecmp(return_str, "MA") == 0) ||
-	     (g_strcasecmp(return_str, "MR") == 0) ||
-	     (g_strcasecmp(return_str, "MS") == 0)) 
-      modality = AMITK_MODALITY_MRI;
-    else if ((g_strcasecmp(return_str, "ST") == 0) ||
-	     (g_strcasecmp(return_str, "NM") == 0))
-      modality = AMITK_MODALITY_SPECT;
-    else if ((g_strcasecmp(return_str, "PT") == 0))
-      modality = AMITK_MODALITY_PET;
   }
 
 
   /* get basic data */
   if (dcm_dataset->findAndGetUint16(DCM_Columns, return_uint16).bad()) {
-    g_warning("could not find # of columns - Failed to load file %s\n", filename);
-    return NULL;
+    g_warning(_("could not find # of columns - Failed to load file %s\n"), filename);
+    goto error;
   }
   dim.x = return_uint16;
 
   if (dcm_dataset->findAndGetUint16(DCM_Rows, return_uint16).bad()) {
-    g_warning("could not find # of rows - Failed to load file %s\n", filename);
-    return NULL;
+    g_warning(_("could not find # of rows - Failed to load file %s\n"), filename);
+    goto error;
   }
   dim.y = return_uint16;
 
@@ -188,24 +194,26 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   /* TimeSlices can also indicate # of bed positions, so only use for number of frames
      if this is explicitly a DYNAMIC data set */
   if (dcm_dataset->findAndGetString(DCM_SeriesType, return_str, OFTrue).good()) 
-    if (strstr(return_str, "DYNAMIC") != NULL)
-      if (dcm_dataset->findAndGetUint16(DCM_NumberOfTimeSlices, return_uint16).good()) 
-	*pnum_frames = return_uint16;
+    if (return_str != NULL)
+      if (strstr(return_str, "DYNAMIC") != NULL)
+	if (dcm_dataset->findAndGetUint16(DCM_NumberOfTimeSlices, return_uint16).good()) 
+	  *pnum_frames = return_uint16;
 
   if (dcm_dataset->findAndGetString(DCM_SeriesType, return_str, OFTrue).good()) 
-    if (strstr(return_str, "GATED\\IMAGE") != NULL)
-      if (dcm_dataset->findAndGetUint16(DCM_NumberOfTimeSlots, return_uint16).good()) 
-	*pnum_gates = return_uint16;
+    if (return_str != NULL) 
+      if (strstr(return_str, "GATED\\IMAGE") != NULL)
+	if (dcm_dataset->findAndGetUint16(DCM_NumberOfTimeSlots, return_uint16).good()) 
+	  *pnum_gates = return_uint16;
 
   if (dcm_dataset->findAndGetUint16(DCM_BitsAllocated, return_uint16).bad()) {
-    g_warning("could not find # of bits allocated - Failed to load file %s\n", filename);
-    return NULL;
+    g_warning(_("could not find # of bits allocated - Failed to load file %s\n"), filename);
+    goto error;
   }
   bits_allocated = return_uint16;
 
   if (dcm_dataset->findAndGetUint16(DCM_PixelRepresentation, return_uint16).bad()) {
-    g_warning("could not find pixel representation - Failed to load file %s\n", filename);
-    return NULL;
+    g_warning(_("could not find pixel representation - Failed to load file %s\n"), filename);
+    goto error;
   }
   pixel_representation = return_uint16;
 
@@ -223,8 +231,8 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
     else format = AMITK_FORMAT_UINT;
     break;
   default:
-    g_warning("unsupported # of bits allocated (%d) - Failed to load file %s\n", bits_allocated, filename);
-    return NULL;
+    g_warning(_("unsupported # of bits allocated (%d) - Failed to load file %s\n"), bits_allocated, filename);
+    goto error;
   }
 
   /* malloc data set */
@@ -248,9 +256,9 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
 
   /* try to figure out the correct z thickness */
   voxel_size.z = -1;
-  if (dcm_dataset->findAndGetString(DCM_SpacingBetweenSlices, return_str).good()) {
-    voxel_size.z = atof(return_str);
-  }
+  if (dcm_dataset->findAndGetFloat64(DCM_SpacingBetweenSlices, return_float64).good()) 
+    voxel_size.z = return_float64;
+
   if (voxel_size.z <= 0.0) 
     if (dcm_dataset->findAndGetFloat64(DCM_SliceThickness, return_float64).good()) {
       voxel_size.z = return_float64;
@@ -259,31 +267,67 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
       voxel_size.z = 1;
     }
 
-  if (dcm_dataset->findAndGetString(DCM_ImagePositionPatient, return_str).good()) {
-    /* note, ImagePositionPatient is defined as the center of the upper left hand voxel */
-    if (sscanf(return_str, "%lg\\%lg\\%lg", &(new_offset.x), &(new_offset.y), &(new_offset.z)) == 3) {
-      new_offset.z *= -1.0; /* DICOM specifies z axis in wrong direction */
-      // not doing the half voxel correction... values seem more correct without, at least for GE 
-      //      new_offset.x -= 0.5*voxel_size.x;
-      //      new_offset.y -= 0.5*voxel_size.y;
-      //      new_offset.z -= 0.5*voxel_size.z;
-      amitk_space_set_offset(AMITK_SPACE(ds), new_offset);
+  /* ImageOrientationPatient contains a vector along the row direction, as well as the column direction,
+     note though that the column direction in DICOM is in the wrong direction - it's from top to bottom,
+     the z axis is off as well */
+  new_axes[AMITK_AXIS_Z] = base_axes[AMITK_AXIS_Z];
+  if (dcm_dataset->findAndGetFloat64(DCM_ImageOrientationPatient, return_float64, 0).good()) {
+    new_axes[AMITK_AXIS_X].x = return_float64;
+    if (dcm_dataset->findAndGetFloat64(DCM_ImageOrientationPatient, return_float64, 1).good()) {
+      new_axes[AMITK_AXIS_X].y = return_float64;
+      if (dcm_dataset->findAndGetFloat64(DCM_ImageOrientationPatient, return_float64, 2).good()) {
+	new_axes[AMITK_AXIS_X].z = return_float64;
+	if (dcm_dataset->findAndGetFloat64(DCM_ImageOrientationPatient, return_float64, 3).good()) {
+	  new_axes[AMITK_AXIS_Y].x = return_float64;
+	  if (dcm_dataset->findAndGetFloat64(DCM_ImageOrientationPatient, return_float64, 4).good()) {
+	    new_axes[AMITK_AXIS_Y].y = return_float64;
+	    if (dcm_dataset->findAndGetFloat64(DCM_ImageOrientationPatient, return_float64, 5).good()) {
+	      new_axes[AMITK_AXIS_Y].z = return_float64;
+	      new_axes[AMITK_AXIS_X].y *= -1.0;
+	      new_axes[AMITK_AXIS_X].z *= -1.0;
+	      new_axes[AMITK_AXIS_Y].y *= -1.0;
+	      new_axes[AMITK_AXIS_Y].z *= -1.0;
+	      POINT_CROSS_PRODUCT(new_axes[AMITK_AXIS_X], new_axes[AMITK_AXIS_Y], new_axes[AMITK_AXIS_Z]);
+	      /* spin the coordinate frame by 180 degrees to get it to correspond to what we use */
+	      amitk_axes_rotate_on_vector(new_axes, base_axes[AMITK_AXIS_X], M_PI);
+	      amitk_space_set_axes(AMITK_SPACE(ds), new_axes, zero_point);
+	    }
+	  }
+	}
+      }
     }
-  } else if (dcm_dataset->findAndGetFloat64(DCM_SliceLocation, return_float64).good()) {
-    /* if no ImagePositionPatient, try using SliceLocation */
-    new_offset.z = -return_float64; /* DICOM specifies z axis in wrong direction */
-    amitk_space_set_offset(AMITK_SPACE(ds), new_offset);
   }
 
-  if (dcm_dataset->findAndGetString(DCM_ImageOrientationPatient, return_str).good()) {
-    if (sscanf(return_str, "%lg\\%lg\\%lg\\%lg\\%lg\\%lg", 
-	       &(new_axes[AMITK_AXIS_X].x), &(new_axes[AMITK_AXIS_X].y), &(new_axes[AMITK_AXIS_X].z),
-	       &(new_axes[AMITK_AXIS_Y].x), &(new_axes[AMITK_AXIS_Y].y), &(new_axes[AMITK_AXIS_Y].z)) == 6) {
-      POINT_CROSS_PRODUCT(new_axes[AMITK_AXIS_X], new_axes[AMITK_AXIS_Y], new_axes[AMITK_AXIS_Z]);
-      amitk_space_set_axes(AMITK_SPACE(ds), new_axes, AMITK_SPACE_OFFSET(ds));
+  /* note, ImagePositionPatient is defined as the center of the upper left hand voxel 
+     in Patient space, not with respect to the Gantry */
+  found_value=FALSE;
+  if (dcm_dataset->findAndGetFloat64(DCM_ImagePositionPatient, return_float64, 0).good()) {
+    new_offset.x = return_float64;
+    if (dcm_dataset->findAndGetFloat64(DCM_ImagePositionPatient, return_float64, 1).good()) {
+      new_offset.y = return_float64;
+      if (dcm_dataset->findAndGetFloat64(DCM_ImagePositionPatient, return_float64, 2).good()) {
+      	new_offset.z = return_float64;
+	// not doing the half voxel correction... values seem more correct without, at least for GE 
+	//      new_offset.x -= 0.5*voxel_size.x;
+	//      new_offset.y -= 0.5*voxel_size.y;
+	// new_offset.z -= 0.5*voxel_size.z;
+	new_offset.z = -1.0*(new_offset.z+voxel_size.z*dim.z); /* DICOM specifies z axis in wrong direction */
+	new_offset.y = -1.0*(new_offset.y+voxel_size.y*dim.y); /* DICOM specifies y axis in wrong direction */
+	amitk_space_set_offset(AMITK_SPACE(ds), amitk_space_s2b(AMITK_SPACE(ds), new_offset));
+	found_value=TRUE;
+      }
     }
   }
-    
+  if (!found_value) { /* see if we can get it otherwise */
+    if (dcm_dataset->findAndGetFloat64(DCM_SliceLocation, return_float64).good()) {
+      /* if no ImagePositionPatient, try using SliceLocation */
+      new_offset.x = new_offset.y = 0.0;
+      new_offset.z = -1.0*(return_float64+voxel_size.z*dim.z); /* DICOM specifies z axis in wrong direction */
+      amitk_space_set_offset(AMITK_SPACE(ds), new_offset);
+    }
+  }
+
+
   amitk_data_set_set_voxel_size(ds, voxel_size);
   amitk_data_set_calc_far_corner(ds);
 
@@ -313,11 +357,10 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   }
 
 
-  if (dcm_dataset->findAndGetString(DCM_RadiopharmaceuticalStartTime, return_str, OFTrue).good()) {
-    if (sscanf(return_str, "%2d%2d%2d\n", &hours, &minutes, &seconds)==3) {
-      dose_time = ((hours*60)+minutes)*60+seconds;
-    }
-  }
+  if (dcm_dataset->findAndGetString(DCM_RadiopharmaceuticalStartTime, return_str, OFTrue).good()) 
+    if (return_str != NULL) 
+      if (sscanf(return_str, "%2d%2d%2d\n", &hours, &minutes, &seconds)==3) 
+	dose_time = ((hours*60)+minutes)*60+seconds;
 
   if ((dose_time >= 0.0) && (acquisition_start_time >= 0.0)) {
     /* correct for if the dose was measured the previous day... note, DICOM can't seem to handle
@@ -328,14 +371,14 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
       decay_time = acquisition_start_time+24*60*60-dose_time; 
   }
 
-  if (dcm_dataset->findAndGetString(DCM_RadionuclideHalfLife, return_str, OFTrue).good()) 
-    half_life = atof(return_str);
+  if (dcm_dataset->findAndGetFloat64(DCM_RadionuclideHalfLife, return_float64, OFTrue).good()) 
+    half_life = return_float64;
 
-  if (dcm_dataset->findAndGetString(DCM_RadionuclideTotalDose, return_str, OFTrue).good()) {
+  if (dcm_dataset->findAndGetFloat64(DCM_RadionuclideTotalDose, return_float64, OFTrue).good()) {
     /* note, for NM data sets, total dose is in MBq. For PET data sets total dose is
        suppose to be in Bq.  However, it seems that the value is sometimes in the 
        wrong units, at least for GE data. */
-    decay_value = atof(return_str);
+    decay_value = return_float64;
     if (decay_value > 10000.0) decay_value /= 1E6; /* if more than 10000, assume its in Bq, and convert */
     if ((decay_time > 0.0) && (half_life > 0.0))
       decay_value *= pow(0.5, decay_time/half_life);
@@ -344,10 +387,12 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   }
 
   if (dcm_dataset->findAndGetString(DCM_Units, return_str, OFTrue).good()) {
-    /* BQML - voxel values are in Bq per ml */
-    if (strcmp(return_str, "BQML")==0) {
-      amitk_data_set_set_cylinder_factor(ds,1.0/1.0E6);
-      amitk_data_set_set_displayed_cylinder_unit(ds, AMITK_CYLINDER_UNIT_MEGABECQUEREL_PER_CC_IMAGE_UNIT);
+    if (return_str != NULL) {
+      /* BQML - voxel values are in Bq per ml */
+      if (strcmp(return_str, "BQML")==0) {
+	amitk_data_set_set_cylinder_factor(ds,1.0/1.0E6);
+	amitk_data_set_set_displayed_cylinder_unit(ds, AMITK_CYLINDER_UNIT_MEGABECQUEREL_PER_CC_IMAGE_UNIT);
+      }
     }
   }
 
@@ -356,18 +401,20 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   }
 
   if (dcm_dataset->findAndGetString(DCM_SeriesDescription, return_str, OFTrue).good()) {
-    if (AMITK_OBJECT_NAME(ds) != NULL)
-      object_name = g_strdup_printf("%s - %s", AMITK_OBJECT_NAME(ds), return_str);
-    else
-      object_name = g_strdup(return_str);
-    amitk_object_set_name(AMITK_OBJECT(ds), object_name);
-    g_free(object_name);
+    if (return_str != NULL) {
+      if (AMITK_OBJECT_NAME(ds) != NULL)
+	object_name = g_strdup_printf("%s - %s", AMITK_OBJECT_NAME(ds), return_str);
+      else
+	object_name = g_strdup(return_str);
+      amitk_object_set_name(AMITK_OBJECT(ds), object_name);
+      g_free(object_name);
+    }
   }
 
   if (dcm_dataset->findAndGetString(DCM_PatientsName, return_str, OFTrue).good()) {
-    if (AMITK_OBJECT_NAME(ds) == NULL)
-      amitk_object_set_name(AMITK_OBJECT(ds), return_str);
-    amitk_data_set_set_subject_name(ds, return_str);
+      if (AMITK_OBJECT_NAME(ds) == NULL)
+	amitk_object_set_name(AMITK_OBJECT(ds), return_str);
+      amitk_data_set_set_subject_name(ds, return_str);
   }
 
   if (dcm_dataset->findAndGetString(DCM_StudyDate, return_str, OFTrue).good()) 
@@ -381,22 +428,24 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
     amitk_data_set_set_subject_dob(ds, return_str);
 
   if (dcm_dataset->findAndGetString(DCM_PatientPosition, return_str, OFTrue).good()) {
-    if (g_strcasecmp(return_str, "HFS")==0)
-      amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_SUPINE_HEADFIRST);
-    else if (g_strcasecmp(return_str, "FFS")==0)
-      amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_SUPINE_FEETFIRST);
-    else if (g_strcasecmp(return_str, "HFP")==0)
-      amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_PRONE_HEADFIRST);
-    else if (g_strcasecmp(return_str, "FFP")==0)
-      amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_PRONE_FEETFIRST);
-    else if (g_strcasecmp(return_str, "HFDR")==0)
-      amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_RIGHT_DECUBITUS_HEADFIRST);
-    else if (g_strcasecmp(return_str, "FFDR")==0)
-      amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_RIGHT_DECUBITUS_FEETFIRST);
-    else if (g_strcasecmp(return_str, "HFDL")==0)
-      amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_LEFT_DECUBITUS_HEADFIRST);
-    else if (g_strcasecmp(return_str, "FFDL")==0)
-      amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_LEFT_DECUBITUS_FEETFIRST);
+    if (return_str != NULL) {
+      if (g_strcasecmp(return_str, "HFS")==0)
+	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_SUPINE_HEADFIRST);
+      else if (g_strcasecmp(return_str, "FFS")==0)
+	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_SUPINE_FEETFIRST);
+      else if (g_strcasecmp(return_str, "HFP")==0)
+	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_PRONE_HEADFIRST);
+      else if (g_strcasecmp(return_str, "FFP")==0)
+	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_PRONE_FEETFIRST);
+      else if (g_strcasecmp(return_str, "HFDR")==0)
+	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_RIGHT_DECUBITUS_HEADFIRST);
+      else if (g_strcasecmp(return_str, "FFDR")==0)
+	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_RIGHT_DECUBITUS_FEETFIRST);
+      else if (g_strcasecmp(return_str, "HFDL")==0)
+	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_LEFT_DECUBITUS_HEADFIRST);
+      else if (g_strcasecmp(return_str, "FFDL")==0)
+	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_LEFT_DECUBITUS_FEETFIRST);
+    }
   }
 
   //  total_planes = dim.z*dim.g*dim.t;
@@ -440,7 +489,7 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   }
 
   if (result.bad()) {
-    g_warning("error reading in pixel data -  DCMTK error: %s - Failed to read file",result.text(), filename);
+    g_warning(_("error reading in pixel data -  DCMTK error: %s - Failed to read file"),result.text(), filename);
     goto error;
   }
 
@@ -454,15 +503,15 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   if (dcm_dataset->findAndGetFloat64(DCM_RescaleIntercept, return_float64,0).good()) 
     *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling_intercept, i) = return_float64;
 
-  if (dcm_dataset->findAndGetString(DCM_FrameReferenceTime, return_str).good()) 
-    amitk_data_set_set_scan_start(ds,atof(return_str)/1000.0);
+  if (dcm_dataset->findAndGetFloat64(DCM_FrameReferenceTime, return_float64).good()) 
+    amitk_data_set_set_scan_start(ds,return_float64/1000.0);
 
   /* and load in the data - plane by plane */
   for (i.t = 0; (i.t < dim.t) && (continue_work); i.t++) {
 
     /* note ... doesn't seem to be a way to encode different frame durations within one dicom file */
-    if (dcm_dataset->findAndGetString(DCM_ActualFrameDuration, return_str).good()) {
-      amitk_data_set_set_frame_duration(ds,i.t, atof(return_str)/1000.0);
+    if (dcm_dataset->findAndGetSint32(DCM_ActualFrameDuration, return_sint32).good()) {
+      amitk_data_set_set_frame_duration(ds,i.t, ((gdouble) return_sint32)/1000.0);
       /* make sure it's not zero */
       if (amitk_data_set_get_frame_duration(ds,i.t) < EPSILON) 
 	amitk_data_set_set_frame_duration(ds,i.t, EPSILON);
@@ -487,26 +536,18 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   amitk_data_set_calc_far_corner(ds); /* set the far corner of the volume */
   amitk_data_set_calc_max_min(ds, update_func, update_data);
 
-
-
-
   goto function_end;
 
 
  error:
 
-  if (ds != NULL) 
+  if (ds != NULL) {
     ds = AMITK_DATA_SET(amitk_object_unref(ds));
-
-
-
+    ds = NULL;
+  }
 
 
  function_end:
-
-  //  if (buffer != NULL)
-  //    g_free(buffer);
-
   return ds;
 }
 
@@ -661,7 +702,7 @@ static AmitkDataSet * import_files_as_dataset(GList * image_files,
   guint num_images;
   GList * slices=NULL;
   gboolean first_slice;
-  gboolean continue_work;
+  gboolean continue_work=TRUE;
   gint divider;
   gdouble theta;
 
@@ -687,9 +728,9 @@ static AmitkDataSet * import_files_as_dataset(GList * image_files,
 
     slice_name = (gchar *) g_list_nth_data(image_files,image);
     slice_ds = read_dicom_file(slice_name, preferences, &num_frames, &num_gates, NULL, NULL, perror_buf);
-    if (slice_ds == NULL) 
+    if (slice_ds == NULL) {
       goto error;
-    else if (AMITK_DATA_SET_DIM_Z(slice_ds) != 1) {
+    } else if (AMITK_DATA_SET_DIM_Z(slice_ds) != 1) {
       g_warning(_("no support for multislice files within DICOM directory format"));
       goto error;
     } 
@@ -712,8 +753,6 @@ static AmitkDataSet * import_files_as_dataset(GList * image_files,
     slices = g_list_sort(slices, sort_slices_func);
   num_images = g_list_length(slices);
 
-
-  
   image=0;
   while(slices != NULL) {
     slice_ds = (AmitkDataSet *) g_list_nth_data(slices,0);
@@ -726,7 +765,7 @@ static AmitkDataSet * import_files_as_dataset(GList * image_files,
       if (num_frames > 1) {
 	x = div(num_images, num_frames);
 	if (x.rem != 0) {
-	  amitk_append_str_with_newline(perror_buf, (_("Cannot evenly divide the number of slices by the number of frames for data set %s - ignoring dynamic data"), slice_name));
+ 	  amitk_append_str_with_newline(perror_buf, _("Cannot evenly divide the number of slices by the number of frames for data set %s - ignoring dynamic data"), slice_name);
 	  dim.t = num_frames=1;
 	} else {
 	  dim.t = num_frames;
@@ -735,7 +774,7 @@ static AmitkDataSet * import_files_as_dataset(GList * image_files,
       } else if (num_gates > 1) {
 	x = div(num_images, num_gates);
 	if (x.rem != 0) {
-	  amitk_append_str_with_newline(perror_buf, (_("Cannot evenly divide the number of slices by the number of gates for data set %s - ignoring gated data"), slice_name));
+ 	  amitk_append_str_with_newline(perror_buf, _("Cannot evenly divide the number of slices by the number of gates for data set %s - ignoring gated data"), slice_name);
 	  dim.g = num_gates=1;
 	} else {
 	  dim.g = num_gates;
@@ -983,55 +1022,88 @@ static AmitkDataSet * import_files_as_dataset(GList * image_files,
   return ds;
 }
 
-static void get_series_information(const gchar * filename, 
-				   gchar ** pseries_instance_uid, 
-				   gchar ** pmodality, 
-				   gchar ** pseries_number,
-				   gchar ** pseries_description) {
+typedef struct slice_info_t {
+  gchar * filename;
+  gchar * series_instance_uid;
+  gchar * modality;
+  gchar * series_number;
+  gchar * series_description;
+} slice_info_t;
+
+static void free_slice_info(slice_info_t * info) {
+
+  if (info->filename != NULL)
+    g_free(info->filename);
+
+  if (info->series_instance_uid != NULL)
+    g_free(info->series_instance_uid);
+
+  if (info->modality != NULL)
+    g_free(info->modality);
+  
+  if (info->series_number != NULL)
+    g_free(info->series_number);
+
+  if (info->series_description != NULL)
+    g_free(info->series_description);
+
+  g_free(info);
+
+  return;
+}
+
+static slice_info_t * slice_info_new(void) {
+
+  slice_info_t * info;
+
+  info = g_try_new(slice_info_t, 1);
+  info->filename=NULL;
+  info->series_instance_uid=NULL;
+  info->modality=NULL;
+  info->series_number=NULL;
+  info->series_description=NULL;
+
+  return info;
+}
+
+
+static slice_info_t * get_slice_info(const gchar * filename) {
 
   OFCondition result;
   DcmFileFormat dcm_format;
   DcmDataset * dcm_dataset;
   const char * return_str=NULL;
+  slice_info_t * info=NULL;
 
   result = dcm_format.loadFile(filename);
-  if (result.bad()) return;
+  if (result.bad()) return NULL;
 
   dcm_dataset = dcm_format.getDataset();
-  if (dcm_dataset == NULL) {
-    g_warning("could not find dataset in DICOM file %s\n", filename);
-    return;
-  }
+  if (dcm_dataset == NULL) return NULL;
 
-  if (pseries_instance_uid != NULL) {
-    dcm_dataset->findAndGetString(DCM_SeriesInstanceUID, return_str, OFTrue);
-    if (return_str != NULL)
-      *pseries_instance_uid = g_strdup(return_str);
-  }
+  info = slice_info_new();
+  info->filename = g_strdup(filename);
 
-  if (pmodality != NULL) {
-    dcm_dataset->findAndGetString(DCM_Modality, return_str, OFTrue);
-    if (return_str != NULL)
-      *pmodality = g_strdup(return_str);
-  }
+  dcm_dataset->findAndGetString(DCM_SeriesInstanceUID, return_str, OFTrue);
+  if (return_str != NULL)
+      info->series_instance_uid = g_strdup(return_str);
 
-  if (pseries_number != NULL) {
-    dcm_dataset->findAndGetString(DCM_SeriesNumber, return_str, OFTrue);
-    if (return_str != NULL)
-      *pseries_number = g_strdup(return_str);
-  }
+  dcm_dataset->findAndGetString(DCM_Modality, return_str, OFTrue);
+  if (return_str != NULL)
+      info->modality = g_strdup(return_str);
 
-  if (pseries_description != NULL) {
-    dcm_dataset->findAndGetString(DCM_SeriesDescription, return_str, OFTrue);
-    if (return_str != NULL) 
-      *pseries_description = g_strdup(return_str);
-  }
+  dcm_dataset->findAndGetString(DCM_SeriesNumber, return_str, OFTrue);
+  if (return_str != NULL)
+      info->series_number = g_strdup(return_str);
 
-
-  return;
+  dcm_dataset->findAndGetString(DCM_SeriesDescription, return_str, OFTrue);
+  if (return_str != NULL) 
+      info->series_description = g_strdup(return_str);
+  
+  return info;
 }
 
-static gboolean check_same(gchar * str1, gchar * str2) {
+static gboolean check_str(gchar * str1, gchar * str2) {
 
   if ((str1 == NULL) && (str2 == NULL))
     return TRUE;
@@ -1043,6 +1115,56 @@ static gboolean check_same(gchar * str1, gchar * str2) {
   return FALSE;
 }
 
+static gboolean check_same(slice_info_t * slice1, slice_info_t * slice2) {
+
+  gint j, count;
+  gchar ** slice1_uid_split=NULL;
+  gchar ** slice2_uid_split=NULL;
+
+  gchar * new_series_description=NULL;
+  gchar * new_modality=NULL;
+  gchar * new_series_number=NULL;
+  gint string_cmp_val;
+  gboolean same_dataset;
+
+
+  if ((slice1->series_instance_uid == NULL) || (slice2->series_instance_uid == NULL)) 
+    return FALSE;
+  else if ((slice1->series_instance_uid != NULL) && (slice2->series_instance_uid != NULL)) {
+    slice1_uid_split = g_strsplit(slice1->series_instance_uid, ".", -1);
+    slice2_uid_split = g_strsplit(slice2->series_instance_uid, ".", -1); 
+
+    count=0;
+    while (slice1_uid_split[count] != NULL) count++;
+
+    /* check all but last number in series instance uid */
+    same_dataset=TRUE;
+    for (j=0; (j<(count-1) && same_dataset); j++) {
+      if (slice2_uid_split[j] == NULL)
+	same_dataset=FALSE;
+      else if (strcmp(slice1_uid_split[j], slice2_uid_split[j]) != 0)
+	same_dataset=FALSE;
+    }
+
+    if (slice1_uid_split != NULL) g_strfreev(slice1_uid_split);
+    if (slice2_uid_split != NULL) g_strfreev(slice2_uid_split);
+
+    if (!same_dataset) return FALSE;
+  }
+
+
+  if (!check_str(slice1->series_description, slice2->series_description))
+    return FALSE;
+
+  if (!check_str(slice1->series_number, slice2->series_number))
+    return FALSE;
+
+  if (!check_str(slice1->modality, slice2->modality))
+    return FALSE;
+
+  return TRUE;
+}
+
 static GList * import_files(const gchar * filename,
 			    AmitkPreferences * preferences,
 			    AmitkUpdateFunc update_func,
@@ -1052,127 +1174,155 @@ static GList * import_files(const gchar * filename,
   AmitkDataSet * ds;
   GList * data_sets = NULL;
   GList * image_files=NULL;
+  GList * raw_info=NULL;
+  GList * all_slices=NULL; /* list of lists */
+  GList * temp_all_slices;
+  GList * sorted_slices=NULL; /* pointer to a list in all_slices */
   gchar * image_name;
   gchar * error_buf=NULL;
-  gchar * uid_string=NULL;
-  gchar * series_description=NULL;
-  gchar * modality=NULL;
-  gchar * series_number=NULL;
+  slice_info_t * info=NULL;
+  slice_info_t * current_info=NULL;
+  gchar * dirname=NULL;
+  gchar * basename=NULL;
+  gchar * new_filename;
+  DIR* dir;
+  struct dirent* entry;
+  gboolean continue_work=TRUE;
+  gboolean all_datasets;
+  gint count;
+  GtkWidget * question;
+  gint return_val;
   
+  info = get_slice_info(filename);
+  if (info == NULL) {
+    g_warning(_("could not find dataset in DICOM file %s\n"), filename);
+    return NULL;
+  }
+  raw_info = g_list_append(raw_info, info); 
 
-
-  /* find all files in the directory that are related to the current file */
-  get_series_information(filename,&uid_string, &modality, &series_number, &series_description);
-
-  if (uid_string != NULL) {
-    gint j, count;
-    gchar * dirname=NULL;
-    gchar ** uid_string_split=NULL;
-    gchar * new_uid_string=NULL;
-    gchar ** new_uid_string_split=NULL;
-    gchar * new_series_description=NULL;
-    gchar * new_modality=NULL;
-    gchar * new_series_number=NULL;
-    gchar * new_filename;
-    DIR* dir;
-    struct dirent* entry;
-    gint string_cmp_val;
-    gboolean continue_work=TRUE;
-    gboolean same_dataset;
-
-    uid_string_split = g_strsplit(uid_string, ".", -1);
-    j=0;
-    while (uid_string_split[j] != NULL) j++;
-    count = j;
-
-    if (update_func != NULL) 
-      continue_work = (*update_func)(update_data, _("Scanning Files to find DICOM Slices"), (gdouble) 0.0);
+  /* ------- find all dicom files in the directory ------------ */
+  if (update_func != NULL) 
+    continue_work = (*update_func)(update_data, _("Scanning Files to find additional DICOM Slices"), (gdouble) 0.0);
     
-    /* open up the directory */
-    dirname = g_path_get_dirname(filename);
-    if ((dir = opendir(dirname))!=NULL) {
+  /* open up the directory */
+  dirname = g_path_get_dirname(filename);
+  basename = g_path_get_basename(filename);
+  if ((dir = opendir(dirname))!=NULL) {
+    while (((entry = readdir(dir)) != NULL) && (continue_work)) {
 
-      while (((entry = readdir(dir)) != NULL) && (continue_work)) {
+      if (update_func != NULL)
+	continue_work = (*update_func)(update_data, NULL, -1.0);
 
-	if (update_func != NULL)
-	  continue_work = (*update_func)(update_data, NULL, -1.0);
+      if (dirname == NULL)
+	new_filename = g_strdup_printf("%s", entry->d_name);
+      else
+	new_filename = g_strdup_printf("%s%s%s", dirname, G_DIR_SEPARATOR_S,entry->d_name);
 
-	if (dirname == NULL)
-	  new_filename = g_strdup_printf("%s", entry->d_name);
-	else
-	  new_filename = g_strdup_printf("%s%s%s", dirname, G_DIR_SEPARATOR_S,entry->d_name);
-
+      if (strcmp(basename, entry->d_name) != 0) { /* we've already got the initial filename */
 	if (dcmtk_test_dicom(new_filename)) {
-	  get_series_information(new_filename, &new_uid_string, &new_modality, &new_series_number, &new_series_description);
-
-	  if (new_uid_string != NULL)
-	    if (check_same(series_description, new_series_description))
-	      if (check_same(series_number, new_series_number))
-		if (check_same(modality, new_modality)) {
-
-		  /* check all but last number in series instance uid */
-		  new_uid_string_split = g_strsplit(new_uid_string, ".", -1); 
-		  same_dataset=TRUE;
-		  for (j=0; (j<(count-1) && same_dataset); j++) {
-		    if (new_uid_string_split[j] == NULL)
-		      same_dataset=FALSE;
-		    else if (strcmp(new_uid_string_split[j], uid_string_split[j]) != 0)
-		      same_dataset=FALSE;
-		  }
-		  
-		  if (same_dataset)
-		    image_files = g_list_append(image_files, g_strdup(new_filename)); /* we have a match */
-
-		  g_free(new_uid_string);
-		  new_uid_string = NULL;
-		  if (new_uid_string_split != NULL) g_strfreev(new_uid_string_split);
-		}
-
-	  if (new_modality != NULL) {
-	    g_free(new_modality);
-	    new_modality = NULL;
-	  }
-	  if (new_series_number != NULL) {
-	    g_free(new_series_number);
-	    new_series_number = NULL;
-	  }
-	  if (new_series_description != NULL) {
-	    g_free(new_series_description);
-	    new_series_description = NULL;
-	  }
+	  info = get_slice_info(new_filename);
+	  if (info != NULL) 
+	    raw_info = g_list_append(raw_info, info); /* we have a match */
 	}
-	g_free(new_filename);
       }
+
+      g_free(new_filename);
     }
-
-    clean_up:
-
     if (dir != NULL) closedir(dir);
-    if (dirname != NULL) g_free(dirname);
-    g_free(uid_string);
-    if (uid_string_split != NULL) g_strfreev(uid_string_split);
-  } 
+  }
+  if (dirname != NULL) g_free(dirname);
+  if (basename != NULL) g_free(basename);
 
   if (update_func != NULL) /* remove progress bar */
     (*update_func) (update_data, NULL, (gdouble) 2.0); 
 
-  ds = import_files_as_dataset(image_files, preferences, update_func, update_data, &error_buf);
-  if (ds != NULL)
-    data_sets = g_list_append(data_sets, ds);
+
+
+
+  /* ------------ sort the files ---------------- */
+  while (raw_info != NULL) {
+    current_info = (slice_info_t *) raw_info->data;
+    raw_info = g_list_remove(raw_info, current_info);
+
+    /* go through the list of slice lists, find one that matches */
+    temp_all_slices = all_slices; 
+    while ((temp_all_slices != NULL) && (current_info != NULL)){
+      sorted_slices = (GList *) temp_all_slices->data;
+      g_assert(sorted_slices->data != NULL);
+      info = (slice_info_t *) sorted_slices->data;
+
+      /* current slice matches the first slice in the current list, add it to this list */
+      if (check_same(current_info, info)) {
+	sorted_slices = g_list_append(sorted_slices, current_info);
+	current_info = NULL;
+      }
+
+      temp_all_slices = temp_all_slices->next;
+    }
+
+    /* current info doesn't match anything, add it on as a new list */
+    if (current_info != NULL) 
+      all_slices = g_list_append(all_slices, g_list_append(NULL, current_info));
+  }
+
+
+  g_assert(all_slices != NULL);
+
+  /* check if we want to load in everything or not */
+  all_datasets=FALSE;
+  if (g_list_length(all_slices) > 1) {
+    /* make sure we really want to delete */
+    question = gtk_message_dialog_new(NULL,
+				      GTK_DIALOG_DESTROY_WITH_PARENT,
+				      GTK_MESSAGE_QUESTION,
+				      GTK_BUTTONS_YES_NO,
+				      _("Multiple data sets were found in the same directory as the specified file. In addition to the dataset corresponding to the specified file, would you like to load in these additional datasets?"));
+  
+    /* and wait for the question to return */
+    return_val = gtk_dialog_run(GTK_DIALOG(question));
+
+    gtk_widget_destroy(question);
+    if (return_val == GTK_RESPONSE_YES)
+      all_datasets=TRUE;
+  }
+
+  count=0;
+  while (all_slices != NULL) {
+    sorted_slices = (GList *) all_slices->data;
+    all_slices = g_list_remove(all_slices, sorted_slices);
+
+    /* transfer file names */
+    image_files = NULL;
+    while (sorted_slices != NULL) {
+      info = (slice_info_t *) sorted_slices->data;
+      sorted_slices = g_list_remove(sorted_slices, info);
+      image_files = g_list_append(image_files, info->filename);
+      info->filename=NULL;
+      free_slice_info(info);
+    }
+
+    if (all_datasets || (count==0)) {
+      count++;
+      ds = import_files_as_dataset(image_files, preferences, update_func, update_data, &error_buf);
+
+      if (ds != NULL)
+	data_sets = g_list_append(data_sets, ds);
+    }
+
+    /* cleanup */
+    while (image_files != NULL) {
+      image_name = (gchar *) g_list_nth_data(image_files,0);
+      image_files = g_list_remove(image_files, image_name); 
+      g_free(image_name);
+    }
+  }
+
+
 
   /* cleanup */
   if (error_buf != NULL) {
     g_warning(error_buf);
     g_free(error_buf);
-  }
-
-  if (series_description != NULL)
-    g_free(series_description);
-
-  while (image_files != NULL) {
-    image_name = (gchar *) g_list_nth_data(image_files,0);
-    image_files = g_list_remove(image_files, image_name); 
-    g_free(image_name);
   }
 
   return data_sets;
@@ -1322,7 +1472,7 @@ GList * dcmtk_import(const gchar * filename,
 
   result = dcm_format.loadFile(filename);
   if (result.bad()) {
-    g_warning("could not read DICOM file %s, dcmtk returned %s",filename, result.text());
+    g_warning(_("could not read DICOM file %s, dcmtk returned %s"),filename, result.text());
     return NULL;
   }
 

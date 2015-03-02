@@ -34,7 +34,8 @@
 
 /* external functions */
 /* the space returned is the transform needed to change moving_ds's space to the
-   aligned space */
+   aligned space, incoding an axes rotation, as well as the necessary shift
+   with respect to the dataset's center */
 AmitkSpace * alignment_calculate(AmitkDataSet * moving_ds, 
 				 AmitkDataSet * fixed_ds, 
 				 GList * marks,

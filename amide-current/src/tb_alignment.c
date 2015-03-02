@@ -403,8 +403,10 @@ static void finish_cb(GtkWidget* widget, gpointer druid, gpointer data) {
   g_return_if_fail(alignment->transform_space != NULL);
 
   /* apply the alignment transform */
-  amitk_space_transform(AMITK_SPACE(alignment->moving_ds),alignment->transform_space);
-
+  amitk_space_transform_axes(AMITK_SPACE(alignment->moving_ds),AMITK_SPACE_AXES(alignment->transform_space),
+  			     amitk_volume_get_center(AMITK_VOLUME(alignment->moving_ds)));
+  amitk_space_shift_offset(AMITK_SPACE(alignment->moving_ds), AMITK_SPACE_OFFSET(alignment->transform_space));
+  
   /* close the dialog box */
   cancel_cb(widget, data);
 

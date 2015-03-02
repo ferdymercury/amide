@@ -1,4 +1,14 @@
-0.8.18
+0.8.19
+	* fixed string error in dcmtk_interface.cc [1]
+ 	* somewhat more correct placement/orientation of dicom data
+ 	* fixed bug for reading in dynamic dicom data
+ 	* DCMTK returns number strings as POSIX [2]
+ 	* added progress bars for filters
+	* object movement in alignment wizard now propagates correctly
+	[1] Found by Kris Thielemans
+ 	[2] Found by Marco Bucci
+
+0.8.18 2006.10.08
 	* validate strings from xmedcon as utf8 [1]
  	* another potential fix for 64bit check xml_check_file_32bit_okay [2]
  	* added export dataset dialog
@@ -18,7 +28,7 @@
 	[7] Suggested by Patrick Chow
  
 
-0.8.17 2006.08
+0.8.17 2006.08.30
  	* added toolbox for doing image math between data sets [1]
  	* now saves weight/dob/dose/etc. when exporting with xmedcon [1]
 	* fixed bug loading DICOM on windows [2]

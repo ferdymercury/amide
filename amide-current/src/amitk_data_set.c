@@ -4441,41 +4441,51 @@ error:
    2. don't have a separate function for each data type, as getting the data_set data,
    is a tiny fraction of the computational time, use amitk_data_set_get_internal_value instead
  */
-static void filter_fir(const AmitkDataSet * data_set,
-		       AmitkDataSet * filtered_ds,
-		       AmitkRawData * kernel,
-		       AmitkVoxel kernel_size) {
-
-
+static gboolean filter_fir(const AmitkDataSet * data_set,
+			   AmitkDataSet * filtered_ds,
+			   AmitkRawData * kernel,
+			   AmitkVoxel kernel_size,
+			   AmitkUpdateFunc update_func, 
+			   gpointer update_data) {
+  
   AmitkVoxel subset_size;
   AmitkVoxel i_outer;
   AmitkVoxel i_inner;
   AmitkVoxel j_inner;
   AmitkVoxel half;
+  AmitkVoxel ds_dim;
   AmitkRawData * subset=NULL;
   gsl_fft_complex_wavetable * wavetable=NULL;
   gsl_fft_complex_workspace * workspace = NULL;
+  gchar * temp_string;
+  gint image_num;
+  gint total_planes;
+  gboolean continue_work=TRUE;
 
-  g_return_if_fail(kernel_size.t == 1);
-  g_return_if_fail(kernel_size.g == 1);
-  g_return_if_fail((kernel_size.z & 0x1)); /* needs to be odd */
-  g_return_if_fail((kernel_size.y & 0x1)); 
-  g_return_if_fail((kernel_size.x & 0x1)); 
-  g_return_if_fail(2*kernel_size.z < AMITK_FILTER_FFT_SIZE);
-  g_return_if_fail(2*kernel_size.y < AMITK_FILTER_FFT_SIZE);
-  g_return_if_fail(2*kernel_size.x < AMITK_FILTER_FFT_SIZE);
+  g_return_val_if_fail(kernel_size.t == 1, FALSE);
+  g_return_val_if_fail(kernel_size.g == 1, FALSE);
+  g_return_val_if_fail((kernel_size.z & 0x1), FALSE); /* needs to be odd */
+  g_return_val_if_fail((kernel_size.y & 0x1), FALSE); 
+  g_return_val_if_fail((kernel_size.x & 0x1), FALSE); 
+  g_return_val_if_fail(2*kernel_size.z < AMITK_FILTER_FFT_SIZE, FALSE);
+  g_return_val_if_fail(2*kernel_size.y < AMITK_FILTER_FFT_SIZE, FALSE);
+  g_return_val_if_fail(2*kernel_size.x < AMITK_FILTER_FFT_SIZE, FALSE);
+
+  ds_dim = AMITK_DATA_SET_DIM(data_set);
 
   /* initialize gsl's FFT stuff */
   wavetable = gsl_fft_complex_wavetable_alloc(AMITK_FILTER_FFT_SIZE);
   workspace = gsl_fft_complex_workspace_alloc (AMITK_FILTER_FFT_SIZE);
   if ((wavetable == NULL) || (workspace == NULL)) {
     g_warning(_("Filtering: Failed to allocate wavetable and workspace"));
+    continue_work=FALSE;
     goto exit_strategy;
   }
 
   /* get space for our data subset*/
   if ((subset = amitk_raw_data_new()) == NULL) {
     g_warning(_("couldn't allocate space for the subset structure"));
+    continue_work=FALSE;
     goto exit_strategy;
   }
   subset->format = AMITK_FORMAT_DOUBLE;
@@ -4495,26 +4505,37 @@ static void filter_fir(const AmitkDataSet * data_set,
 
   if ((subset->data = amitk_raw_data_get_data_mem(subset)) == NULL) {
     g_warning(_("Couldn't allocate space for the subset data"));
+    continue_work=FALSE;
     goto exit_strategy;
   }
 
   /* FFT the kernel */
   amitk_filter_3D_FFT(kernel, wavetable, workspace);
 
+  if (update_func != NULL) {
+    temp_string = g_strdup_printf(_("Filtering Data Set:  %s"), AMITK_OBJECT_NAME(data_set));
+    continue_work = (*update_func)(update_data, temp_string, (gdouble) 0.0);
+    g_free(temp_string);
+  }
+  total_planes = ds_dim.z*ds_dim.t*ds_dim.g;
+
   /* start the overlap and add FFT method */
   i_outer.t = i_inner.t = j_inner.t = 0;
   i_outer.g = i_inner.g = j_inner.g = 0;
-  for (i_outer.t = 0; i_outer.t < AMITK_DATA_SET_DIM_T(data_set); i_outer.t++) {
-    for (i_outer.g = 0; i_outer.g < AMITK_DATA_SET_DIM_G(data_set); i_outer.g++) {
+  for (i_outer.t = 0; (i_outer.t < ds_dim.t) && continue_work; i_outer.t++) {
+    for (i_outer.g = 0; (i_outer.g < ds_dim.g) && continue_work; i_outer.g++) {
 #if AMIDE_DEBUG
-      g_print("Filtering Frame %d/Gate %d\t", i_outer.t, i_outer.g);
+      g_print("Filtering Frame %d/Gate %d\n", i_outer.t, i_outer.g);
 #endif
-      for (i_outer.z = 0; i_outer.z < AMITK_DATA_SET_DIM_Z(data_set); i_outer.z+= subset_size.z) {
-	for (i_outer.y = 0; i_outer.y < AMITK_DATA_SET_DIM_Y(data_set); i_outer.y+= subset_size.y) {
-	  for (i_outer.x = 0; i_outer.x < AMITK_DATA_SET_DIM_X(data_set); i_outer.x+= subset_size.x) {
-#if AMIDE_DEBUG
-	    g_print(".");
-#endif
+      for (i_outer.z = 0; (i_outer.z < ds_dim.z) && continue_work; i_outer.z+= subset_size.z) {
+
+	if (update_func != NULL) {
+	  image_num = i_outer.z+i_outer.t*ds_dim.z+i_outer.g*ds_dim.z*ds_dim.t;
+	  continue_work = (*update_func)(update_data, NULL, ((gdouble) image_num)/((gdouble) total_planes));
+	}
+
+	for (i_outer.y = 0; i_outer.y < ds_dim.y; i_outer.y+= subset_size.y) {
+	  for (i_outer.x = 0; i_outer.x < ds_dim.x; i_outer.x+= subset_size.x) {
   
 	    /* initialize the subset */
 	    for (j_inner.z = 0; j_inner.z < subset->dim.z; j_inner.z++) 
@@ -4524,13 +4545,13 @@ static void filter_fir(const AmitkDataSet * data_set,
 	  
 	    /* copy data over from the actual data set */
 	    for (i_inner.z = 0, j_inner.z=0; 
-		 ((i_inner.z < subset_size.z) && (i_inner.z+i_outer.z) < AMITK_DATA_SET_DIM_Z(data_set)); 
+		 ((i_inner.z < subset_size.z) && (i_inner.z+i_outer.z) < ds_dim.z);
 		 i_inner.z++, j_inner.z++) 
 	      for (i_inner.y = 0, j_inner.y=0; 
-		   ((i_inner.y < subset_size.y) && (i_inner.y+i_outer.y) < AMITK_DATA_SET_DIM_Y(data_set)); 
+		   ((i_inner.y < subset_size.y) && (i_inner.y+i_outer.y) < ds_dim.y);
 		   i_inner.y++, j_inner.y++) 
 		for (i_inner.x = 0, j_inner.x=0; 
-		     ((i_inner.x < subset_size.x) && (i_inner.x+i_outer.x) < AMITK_DATA_SET_DIM_X(data_set)); 
+		     ((i_inner.x < subset_size.x) && (i_inner.x+i_outer.x) < ds_dim.x);
 		     i_inner.x++, j_inner.x+=2) 
 		  AMITK_RAW_DATA_DOUBLE_SET_CONTENT(subset, j_inner) = 
 		    amitk_data_set_get_internal_value(data_set, voxel_add(i_outer, i_inner)); /* should be zero for out of range */
@@ -4545,7 +4566,6 @@ static void filter_fir(const AmitkDataSet * data_set,
 	    /* and inverse FFT */
 	    amitk_filter_inverse_3D_FFT(subset, wavetable, workspace);
 	  
-	    
 	    /* and add in, at the same time we're shifting the data set over by half the
 	       kernel size */
 	    for (((i_inner.z = (i_outer.z == 0) ? 0 : -half.z),
@@ -4568,9 +4588,6 @@ static void filter_fir(const AmitkDataSet * data_set,
 	  }
 	}
       }
-#if AMIDE_DEBUG
-      g_print("\n");
-#endif
     }
   } /* i_outer.t */
 
@@ -4596,7 +4613,10 @@ static void filter_fir(const AmitkDataSet * data_set,
     subset = NULL;
   }
 
-  return;
+  if (update_func != NULL) /* remove progress bar */
+    (*update_func)(update_data, NULL, (gdouble) 2.0); 
+
+  return continue_work;
 
 }
 
@@ -4612,32 +4632,36 @@ static void filter_fir(const AmitkDataSet * data_set,
    is a tiny fraction of the computational time, use amitk_data_set_get_internal_value instead
    2. data set can be the same as filtered_ds
  */
-void filter_median_3D(const AmitkDataSet * data_set, AmitkDataSet * filtered_ds,
-		      AmitkVoxel kernel_dim) {
+static gboolean filter_median_3D(const AmitkDataSet * data_set, AmitkDataSet * filtered_ds,
+				 AmitkVoxel kernel_dim, AmitkUpdateFunc update_func, gpointer update_data) {
 
   amide_data_t * partial_sort_data;
   AmitkVoxel i,j, mid_dim, output_dim;
   gint loc, median_size;
   AmitkRawData * output_data;
   AmitkVoxel ds_dim;
+  gchar * temp_string;
+  gint image_num;
+  gint total_planes;
   div_t x;
   gint divider;
+  gboolean continue_work=TRUE;
 
 
-  g_return_if_fail(AMITK_IS_DATA_SET(data_set));
-  g_return_if_fail(AMITK_IS_DATA_SET(filtered_ds));
-  g_return_if_fail(VOXEL_EQUAL(AMITK_DATA_SET_DIM(data_set), AMITK_DATA_SET_DIM(filtered_ds)));
+  g_return_val_if_fail(AMITK_IS_DATA_SET(data_set), FALSE);
+  g_return_val_if_fail(AMITK_IS_DATA_SET(filtered_ds), FALSE);
+  g_return_val_if_fail(VOXEL_EQUAL(AMITK_DATA_SET_DIM(data_set), AMITK_DATA_SET_DIM(filtered_ds)), FALSE);
 
-  g_return_if_fail(AMITK_RAW_DATA_FORMAT(AMITK_DATA_SET_RAW_DATA(filtered_ds)) == AMITK_FORMAT_FLOAT);
-  g_return_if_fail(REAL_EQUAL(AMITK_DATA_SET_SCALE_FACTOR(filtered_ds), 1.0));
-  g_return_if_fail(VOXEL_EQUAL(AMITK_RAW_DATA_DIM(filtered_ds->internal_scaling_factor), one_voxel));
-  g_return_if_fail(kernel_dim.t == 1); /* haven't written support yet */
-  g_return_if_fail(kernel_dim.g == 1); /* haven't written support yet */
+  g_return_val_if_fail(AMITK_RAW_DATA_FORMAT(AMITK_DATA_SET_RAW_DATA(filtered_ds)) == AMITK_FORMAT_FLOAT, FALSE);
+  g_return_val_if_fail(REAL_EQUAL(AMITK_DATA_SET_SCALE_FACTOR(filtered_ds), 1.0), FALSE);
+  g_return_val_if_fail(VOXEL_EQUAL(AMITK_RAW_DATA_DIM(filtered_ds->internal_scaling_factor), one_voxel), FALSE);
+  g_return_val_if_fail(kernel_dim.t == 1, FALSE); /* haven't written support yet */
+  g_return_val_if_fail(kernel_dim.g == 1, FALSE); /* haven't written support yet */
 
   /* check it's odd */
-  g_return_if_fail(kernel_dim.x & 0x1);
-  g_return_if_fail(kernel_dim.y & 0x1);
-  g_return_if_fail(kernel_dim.z & 0x1);
+  g_return_val_if_fail(kernel_dim.x & 0x1, FALSE);
+  g_return_val_if_fail(kernel_dim.y & 0x1, FALSE);
+  g_return_val_if_fail(kernel_dim.z & 0x1, FALSE);
 
   ds_dim = AMITK_DATA_SET_DIM(data_set);
   if (ds_dim.z < kernel_dim.z) {
@@ -4664,22 +4688,34 @@ void filter_median_3D(const AmitkDataSet * data_set, AmitkDataSet * filtered_ds,
   output_dim.t = output_dim.g = 1;
   if ((output_data = amitk_raw_data_new_with_data(AMITK_FORMAT_FLOAT, output_dim)) == NULL) {
     g_warning(_("couldn't allocate space for the internal raw data"));
-    return;
+    return FALSE;
   }
   amitk_raw_data_FLOAT_initialize_data(output_data, 0.0);
   partial_sort_data = g_try_new(amide_data_t, median_size);
-  g_return_if_fail(partial_sort_data != NULL);
+  g_return_val_if_fail(partial_sort_data != NULL, FALSE);
+
+  if (update_func != NULL) {
+    temp_string = g_strdup_printf(_("Filtering Data Set:  %s"), AMITK_OBJECT_NAME(data_set));
+    continue_work = (*update_func)(update_data, temp_string, (gdouble) 0.0);
+    g_free(temp_string);
+  }
+  total_planes = ds_dim.z*ds_dim.t*ds_dim.g;
+  divider = ((total_planes/AMIDE_UPDATE_DIVIDER) < 1) ? 1 : (total_planes/AMIDE_UPDATE_DIVIDER);
 
 
   /* iterate over all the voxels in the data_set */
   i.t = i.g = 0;
-  for (j.t=0; j.t < AMITK_DATA_SET_NUM_FRAMES(data_set); j.t++) {
-    for (j.g=0; j.g < AMITK_DATA_SET_NUM_GATES(data_set); j.g++) {
-      divider = ((output_dim.z/20.0) < 1) ? 1 : (output_dim.z/20.0);
-      g_print("Filtering Frame %d/Gate %d\t", j.t, j.g);
-      for (i.z=0; i.z < output_dim.z; i.z++) {
-	x = div(i.z,divider);
-	if (x.rem == 0) g_print(".");
+  for (j.t=0; (j.t < AMITK_DATA_SET_NUM_FRAMES(data_set)) && continue_work; j.t++) {
+    for (j.g=0; (j.g < AMITK_DATA_SET_NUM_GATES(data_set)) && continue_work; j.g++) {
+      for (i.z=0; (i.z < output_dim.z) && continue_work; i.z++) {
+
+	if (update_func != NULL) {
+	  image_num = i.z+j.t*ds_dim.z+j.g*ds_dim.z*ds_dim.t;
+	  x = div(image_num,divider);
+	  if (x.rem == 0)
+	    continue_work = (*update_func)(update_data, NULL, ((gdouble) image_num)/((gdouble) total_planes));
+	}
+
 	for (i.y=0; i.y < output_dim.y; i.y++) {
 	  for (i.x=0; i.x < output_dim.x; i.x++) {
 	    
@@ -4715,11 +4751,6 @@ void filter_median_3D(const AmitkDataSet * data_set, AmitkDataSet * filtered_ds,
 	      }
 	    } /* end initializing data */
 	    
-	    // remove 
-	    if (loc != median_size) {
-	      g_print("initialize descrepency : %d %d\n", loc, median_size);
-	    }
-	    
 	    /* and store median value */
 	    AMITK_RAW_DATA_FLOAT_SET_CONTENT(output_data, i) = 
 	      amitk_filter_find_median_by_partial_sort(partial_sort_data, median_size);
@@ -4735,7 +4766,6 @@ void filter_median_3D(const AmitkDataSet * data_set, AmitkDataSet * filtered_ds,
 	  for (i.x=0, j.x=0; i.x < output_dim.x; i.x++, j.x++)
 	    AMITK_RAW_DATA_FLOAT_SET_CONTENT(filtered_ds->raw_data, j) = 
 	      AMITK_RAW_DATA_FLOAT_CONTENT(output_data, i);
-      g_print("\n");
     } /* j.g */
   } /* j.t */
 
@@ -4743,13 +4773,18 @@ void filter_median_3D(const AmitkDataSet * data_set, AmitkDataSet * filtered_ds,
   g_object_unref(output_data); 
   g_free(partial_sort_data);
 
-  return;
+  if (update_func != NULL) /* remove progress bar */
+    (*update_func)(update_data, NULL, (gdouble) 2.0); 
+
+  return continue_work;
 }
   
 /* see notes for filter_median_3D */
-void filter_median_linear(const AmitkDataSet * data_set,
-			  AmitkDataSet * filtered_ds,
-			  const gint kernel_size) {
+static gboolean filter_median_linear(const AmitkDataSet * data_set,
+				     AmitkDataSet * filtered_ds,
+				     const gint kernel_size,
+				     AmitkUpdateFunc update_func, 
+				     gpointer update_data) {
 
   AmitkVoxel kernel_dim;
 
@@ -4758,23 +4793,26 @@ void filter_median_linear(const AmitkDataSet * data_set,
   kernel_dim.z = 1;
   kernel_dim.g = 1;
   kernel_dim.t = 1;
-  filter_median_3D(data_set, filtered_ds, kernel_dim);
+  if (!filter_median_3D(data_set, filtered_ds, kernel_dim, update_func, update_data))
+    return FALSE;
   
   kernel_dim.x = 1;
   kernel_dim.y = kernel_size;
   kernel_dim.z = 1;
   kernel_dim.g = 1;
   kernel_dim.t = 1;
-  filter_median_3D(filtered_ds,filtered_ds,kernel_dim);
+  if (!filter_median_3D(filtered_ds,filtered_ds,kernel_dim, update_func, update_data))
+    return FALSE;
   
   kernel_dim.x = 1;
   kernel_dim.y = 1;
   kernel_dim.z = kernel_size;
   kernel_dim.g = 1;
   kernel_dim.t = 1;
-  filter_median_3D(filtered_ds,filtered_ds,kernel_dim);
+  if (!filter_median_3D(filtered_ds,filtered_ds,kernel_dim, update_func, update_data))
+    return FALSE;
 
-  return;
+  return TRUE;
 }
 
 
@@ -4791,6 +4829,7 @@ AmitkDataSet *amitk_data_set_get_filtered(const AmitkDataSet * ds,
   AmitkDataSet * filtered=NULL;
   gchar * temp_string;
   AmitkVoxel kernel_dim;
+  gboolean good=TRUE;
 
   g_return_val_if_fail(AMITK_IS_DATA_SET(ds), NULL);
   g_return_val_if_fail(ds->raw_data != NULL, NULL);
@@ -4873,21 +4912,21 @@ AmitkDataSet *amitk_data_set_get_filtered(const AmitkDataSet * ds,
 	g_warning(_("failed to calculate 3D gaussian kernel"));
 	goto error;
       }
-      filter_fir(ds, filtered, kernel, kernel_size_3D);
+      good = filter_fir(ds, filtered, kernel, kernel_size_3D, update_func, update_data);
       g_object_unref(kernel);
     }
     break;
 #endif
 
   case AMITK_FILTER_MEDIAN_LINEAR:
-    filter_median_linear(ds, filtered, kernel_size);
+    good = filter_median_linear(ds, filtered, kernel_size, update_func, update_data);
     break;
 
 
   case AMITK_FILTER_MEDIAN_3D:
     kernel_dim.t = kernel_dim.g = 1;
     kernel_dim.z = kernel_dim.y = kernel_dim.x = kernel_size;
-    filter_median_3D(ds, filtered, kernel_dim);
+    good = filter_median_3D(ds, filtered, kernel_dim, update_func, update_data);
     break;
 
 
@@ -4895,6 +4934,8 @@ AmitkDataSet *amitk_data_set_get_filtered(const AmitkDataSet * ds,
     g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
     goto error;
   }
+
+  if (!good) goto error;
 
 
   /* recalc the temporary parameters */

@@ -79,8 +79,8 @@ AmitkDataSet * libecat_import(const gchar * libecat_filename,
   
   saved_time_locale = g_strdup(setlocale(LC_TIME,NULL));
   saved_numeric_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
-  setlocale(LC_TIME,"C");  
-  setlocale(LC_NUMERIC,"C");  
+  setlocale(LC_TIME,"POSIX");  
+  setlocale(LC_NUMERIC,"POSIX");  
 
 
   if (!(libecat_file = matrix_open(libecat_filename, MAT_READ_ONLY, MAT_UNKNOWN_FTYPE))) {

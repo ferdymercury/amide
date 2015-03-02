@@ -3,6 +3,9 @@ misc list of things todo:
 for next release?
 -----------------
 
+* look careful at use of amitk_space_transform, and see if this function is
+	really needed/used correctly - as I don't think this operation 
+	propogates correctly to an object's children
 * add progress bar for image math toolbox
 * add dcmtk export - requred by Matthew Leonard
 * dcmtk shouldn't be required for mac os x install - figure out how to embed

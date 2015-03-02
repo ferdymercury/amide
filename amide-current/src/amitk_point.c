@@ -68,7 +68,7 @@ AmitkPoint amitk_point_read_xml(xmlNodePtr nodes, gchar * descriptor, gchar **pe
   gchar * saved_locale;
   
   saved_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
-  setlocale(LC_NUMERIC,"C");
+  setlocale(LC_NUMERIC,"POSIX");
 
   temp_str = xml_get_string(nodes, descriptor);
 
@@ -107,7 +107,7 @@ void amitk_point_write_xml(xmlNodePtr node, gchar * descriptor, AmitkPoint point
   gchar * saved_locale;
 
   saved_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
-  setlocale(LC_NUMERIC,"C");
+  setlocale(LC_NUMERIC,"POSIX");
 
 #ifdef AMIDE_WIN32_HACKS
   snprintf(temp_str, 128, "%10.9f\t%10.9f\t%10.9f", point.x,point.y,point.z);

@@ -327,6 +327,7 @@ static void object_transform(AmitkSpace * space, AmitkSpace * transform_space) {
 
   children = object->children;
   while (children != NULL) {
+    g_print("transform children\n");
     amitk_space_transform(children->data, transform_space);
     children = children->next;
   }

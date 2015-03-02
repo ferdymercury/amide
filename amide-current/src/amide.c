@@ -339,7 +339,7 @@ int main (int argc, char *argv []) {
 #ifndef AMIDE_WIN32_HACKS
   /* setup i18n */
   setlocale(LC_ALL, "");
-  //  setlocale(LC_NUMERIC, "C"); /* don't switch radix sign (it's a period not a comma dammit */
+  //  setlocale(LC_NUMERIC, "POSIX"); /* don't switch radix sign (it's a period not a comma dammit */
   bindtextdomain(GETTEXT_PACKAGE, GNOMELOCALEDIR);
   textdomain(GETTEXT_PACKAGE);
   program = gnome_program_init(PACKAGE, VERSION, LIBGNOMEUI_MODULE, argc, argv, 
@@ -378,6 +378,9 @@ int main (int argc, char *argv []) {
   /* as of gtk 2.2.4, get "General case not implemented" warnings from gdkproperty-win32.c
      that appear to be unwarrented */
   g_log_set_handler ("Gdk", G_LOG_LEVEL_WARNING, amide_log_handler_nopopup, preferences);
+
+  /* have those annoying UTF-8 error warnings go to a console, instead of distracting the user */
+  g_log_set_handler ("Pango", G_LOG_LEVEL_WARNING, amide_log_handler_nopopup, preferences);
 #endif
   
   /* startup initializations */
