@@ -94,7 +94,6 @@ typedef struct ui_study_t {
   GtkWidget * thickness_spin_button;
   GtkWidget * color_table_menu;
   GtkWidget * add_roi_option_menu;
-  GtkFileSelection * file_selection; /* needs to be passed to some callbacks */
   GtkWidget * tree; /* the tree showing the study data structure info */
   GtkCTreeNode * tree_studies;
   GtkCTreeNode * tree_volumes;
@@ -123,7 +122,7 @@ typedef struct ui_study_t {
 } ui_study_t;
 
 /* external functions */
-void ui_study_create(gchar * study);
+void ui_study_create(study_t * study);
 realspace_t ui_study_get_coords_current_view(ui_study_t * ui_study, view_t view, 
 					     realpoint_t * pfar_corner);
 GtkAdjustment * ui_study_update_plane_adjustment(ui_study_t * ui_study, view_t view);

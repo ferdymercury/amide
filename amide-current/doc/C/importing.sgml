@@ -2,7 +2,7 @@
 
   All imported files are converted into AMIDE's internal float
   representation, which is a compile time option that defaults to
-  double (64 bit).  Importing is heavily dependent on Erik Nolf's
+  float (32 bit).  Importing is heavily dependent on Erik Nolf's
   medcon/libmdc medical imaging conversion library and Merence
   Sibomona/CTI's libecat CTI file library.
   

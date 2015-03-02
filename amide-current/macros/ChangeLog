@@ -1,3 +1,91 @@
+2001-03-01  JP Rosevear  <jpr@ximian.com>
+
+	* gnome-pilot.m4: quote a test and make sure incdir is always set
+	so 'cat' works
+
+2001-02-21  Lauris Kaplinski  <lauris@ximian.com>
+
+	* gnome-print-check.m4: Replaced the awk alchemy with sed alchemy.
+	I seems to work now as long as gnome-config is working - but that is
+	the whole point of gnome-config, isn't it?
+
+2001-02-19  JP Rosevear  <jpr@ximian.com>
+
+	* gnome-pilot.m4: Revert my previous patch now that gnome-pim and
+	evolution are fixed to accomodate the change
+	
+2001-02-19  JP Rosevear  <jpr@ximian.com>
+
+	* gnome-pilot.m4: AC_SUBST the PISOCK_LIBDIR var
+
+2001-02-17  Lauris Kaplinski  <lauris@ximian.com>
+
+	* gnome-print-check.m4: Remove most of stuff here, but now
+	it at least WORKS
+
+2001-02-07  Kenneth Christiansen  <kenneth@gnu.org>
+
+	* autogen.sh: Added test for xml-i18n-tools if 
+	AM_PROG_XML_I18N_TOOLS is found.
+
+2001-01-05  Maciej Stachowiak  <mjs@eazel.com>
+
+	* autogen.sh: Added missing PROG.
+
+2001-01-05  Maciej Stachowiak  <mjs@eazel.com>
+
+	* autogen.sh: xml-i18n-toolize if AM_PROG_XML_I18N_TOOLS is found
+	in configure.in.
+
+2000-11-05  Martin Baulig  <baulig@suse.de>
+
+	* gnome-bonobo-check.m4 (BONOBO_CFLAGS, BONOBO_LIBS): Added
+	stuff for `bonobox'.
+
+2000-08-01  Pavel Roskin  <proski@gnu.org>
+
+	* curses.m4: AC_WARN replaced with AC_MSG_WARN in comments
+
+2000-06-23  Stanislav Brabec  <utx@penguin.cz>
+
+	* gnome-pilot.m4: Use 'PISOCK_INCLUDEDIR' in pisock version check.
+
+2000-06-17  Dan Winship  <danw@helixcode.com>
+
+	* autogen.sh: exit immediately if aclocal, autoheader, automake,
+	or autoconf fails, rather than continuing on with broken state.
+	(In the aclocal case, print a hopefully-useful explanatory
+	message.)
+
+2000-06-13  Martin Baulig  <baulig@suse.de>
+
+	* gnome-bonobo-check.am (AM_BONOBO_USES_OAF): New macro.
+	Checks whether Bonobo uses OAF and defines `BONOBO_USES_OAF'
+	if appropriate. Also provides `BONOBO_USES_OAF' automake
+	conditional.
+
+2000-06-13  Martin Baulig  <baulig@suse.de>
+
+	* Makefile.am (EXTRA_DIST): Added `gnome-gettext.m4'.
+	(gnome_aclocal_DATA): Added `gnome-gettext.m4'.
+
+2000-05-29  Martin Baulig  <baulig@suse.de>
+
+	* gnome-autogen.sh: Moved to the `bin/' directory.
+
+2000-05-29  Martin Baulig  <baulig@suse.de>
+
+	* gnome-autogen.sh: If `USE_GNOME_2_MACROS' is set, use the
+	GNOME 2.0 macros from the `macros2' directory.
+
+2000-05-29  Martin Baulig  <baulig@suse.de>
+
+	* gnome-common.m4, Makefile.am: Install macros to
+	`$(datadir)/aclocal/gnome-macros' when INSIDE_GNOME_COMMON.
+
+	* gnome-autogen.sh: New file. When using gnome-common instead
+	of the macros/ directory, use this in your autogen.sh.
+
 2000-05-15  Russell Steinthal  <rms39@columbia.edu>
 
 	* gnome-pilot.m4 (PILOT_LIBS): An attempt to fix the gnome-pilot

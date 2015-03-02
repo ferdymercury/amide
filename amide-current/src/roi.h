@@ -23,7 +23,12 @@
   02111-1307, USA.
 */
 
-typedef enum {GROUP, ELLIPSOID, CYLINDER, BOX, NUM_ROI_TYPES} roi_type_t;
+
+/* header files that are always needed with this file */
+#include "xml.h"
+#include "realspace.h"
+
+typedef enum {ELLIPSOID, CYLINDER, BOX, NUM_ROI_TYPES} roi_type_t;
 typedef enum {GRAINS_1, GRAINS_8, GRAINS_27, GRAINS_64, NUM_GRAIN_TYPES} roi_grain_t;
 
 typedef struct _roi_t roi_t;
@@ -33,11 +38,11 @@ typedef struct _roi_list_t roi_list_t;
 struct _roi_t {
   gchar * name;
   roi_type_t type;
+  roi_grain_t grain; /* how fine a grain to calculate this roi at */
   realspace_t coord_frame;
   realpoint_t corner; /*far corner,near corner is always 0,0,0 in roi coord frame*/
   roi_t * parent;
   roi_list_t * children;
-  roi_grain_t grain; /* how fine a grain to calculate this roi at */
 
   /* stuff that doesn't need to be saved */
   guint reference_count;
@@ -62,12 +67,16 @@ typedef struct roi_analysis_t {
 /* external functions */
 roi_t * roi_free(roi_t * roi);
 roi_t * roi_init(void);
+gchar * roi_write_xml(roi_t * roi, gchar * directory);
+roi_t * roi_load_xml(gchar * file_name, gchar * directory);
 roi_t * roi_copy(roi_t * src_roi);
 roi_t * roi_add_reference(roi_t * roi);
 void roi_set_name(roi_t * roi, gchar * new_name);
 realpoint_t roi_calculate_center(const roi_t * roi);
 roi_list_t * roi_list_free(roi_list_t *roi_list);
 roi_list_t * roi_list_init(void);
+void roi_list_write_xml(roi_list_t *list, xmlNodePtr node_list, gchar * directory);
+roi_list_t * roi_list_load_xml(xmlNodePtr node_list, gchar * directory);
 gboolean roi_list_includes_roi(roi_list_t *list, roi_t * roi);
 roi_list_t * roi_list_add_roi(roi_list_t * list, roi_t * roi);
 roi_list_t * roi_list_add_roi_first(roi_list_t * list, roi_t * roi);

@@ -30,10 +30,7 @@
 #include <gnome.h>
 #include <math.h>
 #include "amide.h"
-#include "realspace.h"
-#include "color_table.h"
 #include "volume.h"
-#include "color_table2.h"
 #include "rendering.h"
 #include "roi.h"
 #include "study.h"
@@ -250,6 +247,7 @@ void ui_rendering_create(volume_list_t * volumes, realspace_t coord_frame,
   GtkWidget * hbox;
   axis_t i_axis;
   ui_rendering_t * ui_rendering;
+  gchar * temp_string;
 
   /* sanity checks */
   if (volumes == NULL)
@@ -315,7 +313,9 @@ void ui_rendering_create(volume_list_t * volumes, realspace_t coord_frame,
     scale = gtk_hscale_new(adjustment);
     gtk_range_set_update_policy (GTK_RANGE(scale), GTK_UPDATE_DISCONTINUOUS);
     gtk_box_pack_start(GTK_BOX(hbox), scale, TRUE, TRUE, 0);
-    label = gtk_label_new(axis_names[i_axis]);
+    temp_string = g_strdup_printf("%s axis",axis_names[i_axis]);
+    label = gtk_label_new(temp_string);
+    g_free(temp_string);
     gtk_object_set_data(GTK_OBJECT(adjustment), "axis", GINT_TO_POINTER(i_axis));
     gtk_box_pack_end(GTK_BOX(hbox), label, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);

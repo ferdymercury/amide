@@ -25,6 +25,7 @@
 
 
 /* external functions */
+void ui_study_callbacks_save_as(GtkWidget * widget, gpointer data);
 void ui_study_callbacks_import(GtkWidget * widget, gpointer data);
 gint ui_study_callbacks_canvas_event(GtkWidget* widget, GdkEvent * event,
 					 gpointer data);

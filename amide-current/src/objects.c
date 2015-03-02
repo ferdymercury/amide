@@ -28,8 +28,6 @@
 #include <glib.h>
 #include <math.h>
 #include "amide.h"
-#include "realspace.h"
-#include "color_table.h"
 #include "volume.h"
 
 /* this function places a 3D ellipse on a volume 

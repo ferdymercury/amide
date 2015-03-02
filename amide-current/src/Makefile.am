@@ -22,6 +22,8 @@ amide_SOURCES = \
 	objects.h \
 	realspace.c \
 	realspace.h \
+	raw_data.c \
+	raw_data.h \
 	raw_data_import.c \
 	raw_data_import.h \
 	raw_data_import_callbacks.c \
@@ -80,12 +82,15 @@ amide_SOURCES = \
 	ui_volume_dialog.h \
 	ui_volume_dialog_callbacks.c \
 	ui_volume_dialog_callbacks.h \
+	volume.c \
 	volume.h \
-	volume.c
+	xml.c \
+	xml.h
 
 amide_LDADD = \
 	$(GNOMEUI_LIBS) \
 	$(GNOME_LIBDIR) \
+	$(GNOME_XML2_LIBS) \
 	$(INTLLIBS) \
 	$(AMIDE_LIBECAT_LIBS) \
 	$(AMIDE_LIBMDC_LIBS) \

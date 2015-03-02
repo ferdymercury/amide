@@ -26,8 +26,6 @@
 #include "config.h"
 #include <gnome.h>
 #include "amide.h"
-#include "realspace.h"
-#include "color_table.h"
 #include "volume.h"
 #include "roi.h"
 #include "study.h"

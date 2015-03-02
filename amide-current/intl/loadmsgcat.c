@@ -31,8 +31,13 @@
 # include <unistd.h>
 #endif
 
-#if (defined HAVE_MMAP && defined HAVE_MUNMAP) || defined _LIBC
+#if (defined HAVE_MMAP && defined HAVE_MUNMAP && !defined DISALLOW_MMAP) \
+    || (defined _LIBC && defined _POSIX_MAPPED_FILES)
 # include <sys/mman.h>
+# undef HAVE_MMAP
+# define HAVE_MMAP	1
+#else
+# undef HAVE_MMAP
 #endif
 
 #include "gettext.h"
@@ -68,10 +73,7 @@ _nl_load_domain (domain_file)
   size_t size;
   struct stat st;
   struct mo_file_header *data = (struct mo_file_header *) -1;
-#if (defined HAVE_MMAP && defined HAVE_MUNMAP && !defined DISALLOW_MMAP) \
-    || defined _LIBC
   int use_mmap = 0;
-#endif
   struct loaded_domain *domain;
 
   domain_file->decided = 1;
@@ -99,8 +101,7 @@ _nl_load_domain (domain_file)
       return;
     }
 
-#if (defined HAVE_MMAP && defined HAVE_MUNMAP && !defined DISALLOW_MMAP) \
-    || defined _LIBC
+#ifdef HAVE_MMAP
   /* Now we are ready to load the file.  If mmap() is available we try
      this first.  If not available or it failed we try to load it.  */
   data = (struct mo_file_header *) mmap (NULL, size, PROT_READ,
@@ -149,8 +150,7 @@ _nl_load_domain (domain_file)
   if (data->magic != _MAGIC && data->magic != _MAGIC_SWAPPED)
     {
       /* The magic number is wrong: not a message catalog file.  */
-#if (defined HAVE_MMAP && defined HAVE_MUNMAP && !defined DISALLOW_MMAP) \
-    || defined _LIBC
+#ifdef HAVE_MMAP
       if (use_mmap)
 	munmap ((caddr_t) data, size);
       else
@@ -166,10 +166,7 @@ _nl_load_domain (domain_file)
 
   domain = (struct loaded_domain *) domain_file->data;
   domain->data = (char *) data;
-#if (defined HAVE_MMAP && defined HAVE_MUNMAP && !defined DISALLOW_MMAP) \
-    || defined _LIBC
   domain->use_mmap = use_mmap;
-#endif
   domain->mmap_size = size;
   domain->must_swap = data->magic != _MAGIC;
 
@@ -187,9 +184,8 @@ _nl_load_domain (domain_file)
 	((char *) data + W (domain->must_swap, data->hash_tab_offset));
       break;
     default:
-      /* This is an illegal revision.  */
-#if (defined HAVE_MMAP && defined HAVE_MUNMAP && !defined DISALLOW_MMAP) \
-    || defined _LIBC
+      /* This is an invalid revision.  */
+#ifdef HAVE_MMAP
       if (use_mmap)
 	munmap ((caddr_t) data, size);
       else
@@ -212,9 +208,11 @@ internal_function
 _nl_unload_domain (domain)
      struct loaded_domain *domain;
 {
+#ifdef _POSIX_MAPPED_FILES
   if (domain->use_mmap)
     munmap ((caddr_t) domain->data, domain->mmap_size);
   else
+#endif	/* _POSIX_MAPPED_FILES */
     free ((void *) domain->data);
 
   free (domain);

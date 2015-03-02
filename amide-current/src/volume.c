@@ -26,11 +26,12 @@
 #include "config.h"
 #include <glib.h>
 #include <math.h>
+#include <sys/stat.h>
 #include "amide.h"
-#include "realspace.h"
 #include "color_table.h"
 #include "volume.h"
 #include "objects.h"
+#include "raw_data.h"
 
 /* external variables */
 gchar * interpolation_names[] = {"Nearest Neighbhor", \
@@ -103,6 +104,203 @@ volume_t * volume_init(void) {
 
   return temp_volume;
 }
+
+
+/* function to write out the information content of a volume into an xml
+   file.  Returns a string containing the name of the file. */
+gchar * volume_write_xml(volume_t * volume, gchar * directory) {
+
+  gchar * file_name;
+  gchar * raw_data_name;
+  guint count;
+  struct stat file_info;
+  xmlDocPtr doc;
+  guint num_elements;
+  FILE * file_pointer;
+#if (G_BYTE_ORDER == G_BIG_ENDIAN)
+  guint t;
+  voxelpoint_t i;
+#endif
+
+  /* make a guess as to our filename */
+  count = 1;
+  file_name = g_strdup_printf("Volume_%s.xml", volume->name);
+  raw_data_name = g_strdup_printf("Volume_%s.dat", volume->name);
+
+  /* see if this file already exists */
+  while (stat(file_name, &file_info) == 0) {
+    g_free(file_name);
+    g_free(raw_data_name);
+    count++;
+    file_name = g_strdup_printf("Volume_%s_%d.xml", volume->name, count);
+    raw_data_name = g_strdup_printf("Volume_%s_%d.dat", volume->name, count);
+  }
+
+  /* and we now have unique filenames */
+
+  /* write the volume xml file */
+  doc = xmlNewDoc("1.0");
+  doc->children = xmlNewDocNode(doc, NULL, "Volume", volume->name);
+  xml_save_string(doc->children, "modality", modality_names[volume->modality]);
+  xml_save_data(doc->children, "conversion", volume->conversion);
+  xml_save_realpoint(doc->children, "voxel_size", volume->voxel_size);
+  xml_save_voxelpoint(doc->children, "dim", volume->dim);
+  xml_save_int(doc->children, "num_frames", volume->num_frames);
+  xml_save_time(doc->children, "scan_start", volume->scan_start);
+  xml_save_times(doc->children, "frame_duration", volume->frame_duration, volume->num_frames);
+  xml_save_string(doc->children, "color_table", color_table_names[volume->color_table]);
+  xml_save_data(doc->children, "max", volume->max);
+  xml_save_data(doc->children, "min", volume->min);
+  xml_save_data(doc->children, "threshold_max", volume->max);
+  xml_save_data(doc->children, "threshold_min", volume->min);
+  xml_save_realspace(doc->children, "coord_frame", volume->coord_frame);
+  xml_save_realpoint(doc->children, "corner", volume->corner);
+
+  /* store the name of our associated data file */
+  xml_save_string(doc->children, "raw_data", raw_data_name);
+  xml_save_string(doc->children, "data_format", data_format_names[FLOAT_LE]);
+
+  /* and save */
+  xmlSaveFile(file_name, doc);
+
+  /* and we're done with the xml stuff*/
+  xmlFreeDoc(doc);
+
+  /* now to save the raw data */
+
+  /* sanity check */
+  g_assert(sizeof(float) == sizeof(volume_data_t)); /* can't handle any other case */
+  
+#if (G_BYTE_ORDER == G_BIG_ENDIAN)
+  /* first, transform it to little endian */
+  for (t = 0; t < raw_data_info->volume->num_frames; t++)
+    for (i.z = 0; i.z < volume->dim.z ; i.z++) 
+      for (i.y = 0; i.y < volume->dim.y; i.y++) 
+	for (i.x = 0; i.x < volume->dim.x; i.x++)
+	  VOLUME_SET_CONTENT(volume,t,i) = (gfloat)
+	    AMIDE_FLOAT_TO_LE(VOLUME_GET_CONTENT(volume,t,i));
+#endif
+
+  /* write it on out */
+  if ((file_pointer = fopen(raw_data_name, "w")) == NULL) {
+    g_warning("%s: couldn't save raw data file: %s\n",PACKAGE, raw_data_name);
+    g_free(file_name);
+    g_free(raw_data_name);
+    return NULL;
+  }
+  num_elements = volume_size_data_mem(volume);
+  if (fwrite(volume->data, 1, num_elements, file_pointer) != num_elements) {
+    g_warning("%s: incomplete save of raw data file: %s\n",PACKAGE, raw_data_name);
+    g_free(file_name);
+    g_free(raw_data_name);
+    return NULL;
+  }
+  fclose(file_pointer);
+
+#if (G_BYTE_ORDER == G_BIG_ENDIAN)
+  /* and transform it on back */
+  for (t = 0; t < raw_data_info->volume->num_frames; t++)
+    for (i.z = 0; i.z < volume->dim.z ; i.z++) 
+      for (i.y = 0; i.y < volume->dim.y; i.y++) 
+	for (i.x = 0; i.x < volume->dim.x; i.x++)
+	  VOLUME_SET_CONTENT(volume,t,i) = (gfloat)
+	    AMIDE_FLOAT_FROM_LE(VOLUME_GET_CONTENT(volume,t,i));
+#endif
+
+
+  g_free(raw_data_name);
+  return file_name;
+}
+
+
+/* function to load in a volume xml file */
+volume_t * volume_load_xml(gchar * file_name, gchar * directory) {
+
+  xmlDocPtr doc;
+  volume_t * new_volume;
+  xmlNodePtr nodes;
+  modality_t i_modality;
+  color_table_t i_color_table;
+  data_format_t i_data_format, data_format;
+  gchar * temp_string;
+  gchar * raw_data_name;
+
+  new_volume = volume_init();
+
+  /* parse the xml file */
+  if ((doc = xmlParseFile(file_name)) == NULL) {
+    g_warning("%s: Couldn't Parse AMIDE volume xml file %s/%s\n",PACKAGE, directory,file_name);
+    volume_free(new_volume);
+    return new_volume;
+  }
+
+  /* get the root of our document */
+  if ((nodes = xmlDocGetRootElement(doc)) == NULL) {
+    g_warning("%s: AMIDE volume xml file doesn't appear to have a root: %s/%s\n",
+	      PACKAGE, directory,file_name);
+    volume_free(new_volume);
+    return new_volume;
+  }
+
+  /* get the volume name */
+  temp_string = xml_get_string(nodes->children, "text");
+  if (temp_string != NULL) {
+    volume_set_name(new_volume,temp_string);
+    g_free(temp_string);
+  }
+
+  /* get the document tree */
+  nodes = nodes->children;
+
+  /* figure out the modality */
+  temp_string = xml_get_string(nodes, "modality");
+  for (i_modality=0; i_modality < NUM_MODALITIES; i_modality++) 
+    if (g_strcasecmp(temp_string, modality_names[i_modality]) == 0)
+      new_volume->modality = i_modality;
+  g_free(temp_string);
+
+  /* figure out the color table */
+  temp_string = xml_get_string(nodes, "color_table");
+  for (i_color_table=0; i_color_table < NUM_COLOR_TABLES; i_color_table++) 
+    if (g_strcasecmp(temp_string, color_table_names[i_color_table]) == 0)
+      new_volume->color_table = i_color_table;
+  g_free(temp_string);
+
+  /* and figure out the rest of the parameters */
+
+  /* get the rest of the parameters */
+  new_volume->voxel_size = xml_get_realpoint(nodes, "voxel_size");
+  new_volume->dim = xml_get_voxelpoint(nodes, "dim");
+  new_volume->conversion =  xml_get_data(nodes, "conversion");
+  new_volume->num_frames = xml_get_int(nodes, "num_frames");
+  new_volume->scan_start = xml_get_time(nodes, "scan_start");
+  new_volume->frame_duration = xml_get_times(nodes, "frame_duration", new_volume->num_frames);
+  new_volume->threshold_max =  xml_get_data(nodes, "threshold_max");
+  new_volume->threshold_min =  xml_get_data(nodes, "threshold_min");
+  new_volume->coord_frame = xml_get_realspace(nodes, "coord_frame");
+  new_volume->corner = xml_get_realpoint(nodes, "corner");
+
+  /* get the name of our associated data file */
+  raw_data_name = xml_get_string(nodes, "raw_data");
+
+  /* and figure out the data format */
+  temp_string = xml_get_string(nodes, "data_format");
+  data_format = FLOAT_LE; /* sensible guess in case we don't figure it out from the file */
+  for (i_data_format=0; i_data_format < NUM_DATA_FORMATS; i_data_format++) 
+    if (g_strcasecmp(temp_string, data_format_names[i_data_format]) == 0)
+      data_format = i_data_format;
+  g_free(temp_string);
+
+  /* now load in the raw data */
+  new_volume = raw_data_read_file(raw_data_name, new_volume, data_format, 0);
+   
+  /* and we're done */
+  xmlFreeDoc(doc);
+
+  g_print("dim %d %d %d\n",new_volume->dim.x,new_volume->dim.y,new_volume->dim.z);
+  return new_volume;
+}
+
 
 /* makes a new volume item which is a copy of a previous volume's information. 
    Notes: 
@@ -225,7 +423,8 @@ volume_time_t volume_start_time(const volume_t * volume, guint frame) {
   volume_time_t time;
   guint i_frame;
 
-  g_assert(frame < volume->num_frames);
+  if (frame > volume->num_frames)
+    frame = volume->num_frames;
 
   time = volume->scan_start;
 
@@ -278,6 +477,50 @@ volume_list_t * volume_list_init(void) {
   temp_volume_list->next = NULL;
   
   return temp_volume_list;
+}
+
+/* function to write a list of volumes as xml data.  Function calls
+   volume_write_xml to writeout each volume, and adds information about the
+   volume file to the node_list. */
+void volume_list_write_xml(volume_list_t *list, xmlNodePtr node_list, gchar * directory) {
+
+  gchar * file_name;
+
+  if (list != NULL) { 
+    file_name = volume_write_xml(list->volume, directory);
+    xmlNewChild(node_list, NULL,"Volume_file", file_name);
+    g_free(file_name);
+    
+    /* and recurse */
+    volume_list_write_xml(list->next, node_list, directory);
+  }
+
+  return;
+}
+
+
+/* function to load in a list of volume xml nodes */
+volume_list_t * volume_list_load_xml(xmlNodePtr node_list, gchar * directory) {
+
+  gchar * file_name;
+  volume_list_t * new_volume_list;
+  volume_t * new_volume;
+
+  if (node_list != NULL) {
+    /* first, recurse on through the list */
+    new_volume_list = volume_list_load_xml(node_list->next, directory);
+
+    /* load in this node */
+    file_name = xml_get_string(node_list->children, "text");
+    new_volume = volume_load_xml(file_name,directory);
+    new_volume_list = volume_list_add_volume_first(new_volume_list, new_volume);
+    new_volume = volume_free(new_volume);
+    g_free(file_name);
+
+  } else
+    new_volume_list = NULL;
+
+  return new_volume_list;
 }
 
 

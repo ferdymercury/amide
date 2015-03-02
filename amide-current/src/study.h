@@ -36,6 +36,7 @@ typedef struct study_t {
 
 /* defines */
 
+#define STUDY_FILE_NAME "Study.xml"
 #define study_get_volumes(study) ((study)->volumes)
 #define study_get_rois(study) ((study)->rois)
 #define study_get_name(study) ((study)->name)
@@ -44,6 +45,8 @@ typedef struct study_t {
 /* external functions */
 study_t * study_free(study_t * study);
 study_t * study_init(void);
+gboolean study_write_xml(study_t * study, gchar * directory);
+study_t * study_load_xml(gchar * directory);
 study_t * study_add_reference(study_t * study);
 void study_add_volume(study_t * study, volume_t * volume);
 void study_remove_volume(study_t * study, volume_t * volume);

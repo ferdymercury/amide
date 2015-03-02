@@ -25,12 +25,12 @@
 
 #include "config.h"
 #include <glib.h>
+#include <unistd.h>
 #include "amide.h"
-#include "realspace.h"
-#include "color_table.h"
 #include "volume.h"
 #include "roi.h"
 #include "study.h"
+
 
 study_t * study_free(study_t * study) {
 
@@ -43,10 +43,12 @@ study_t * study_free(study_t * study) {
   /* remove a reference count */
   study->reference_count--;
 
+  /* things we always do */
+  study->volumes = volume_list_free(study->volumes); /*  free volumes */
+  study->rois = roi_list_free(study->rois); /* free rois */
+
   /* if we've removed all reference's, free the study */
   if (study->reference_count == 0) {
-    study->volumes = volume_list_free(study->volumes); /*  free volumes */
-    study->rois = roi_list_free(study->rois); /* free rois */
     g_free(study->name);
     g_free(study);
     study = NULL;
@@ -76,6 +78,123 @@ study_t * study_init(void) {
   return study;
 }
 
+
+/* function to writeout the study to disk in xml format */
+gboolean study_write_xml(study_t * study, gchar * directory) {
+
+  xmlDocPtr doc;
+  xmlNodePtr volume_nodes, roi_nodes;
+  gchar * old_dir;
+
+  /* switch into our new directory */
+  old_dir = g_get_current_dir();
+  if (chdir(directory) != 0) {
+    g_warning("%s: Couldn't change directories in writing study\n",PACKAGE);
+    return FALSE;
+  }
+
+  /* start creating an xml document */
+  doc = xmlNewDoc("1.0");
+
+  /* place our study info into it */
+  doc->children = xmlNewDocNode(doc, NULL, "Study", study->name);
+
+  /* record our version */
+  xml_save_string(doc->children, "AMIDE_Data_File_Version", "1.0");
+
+  /* put in our volume info */
+  volume_nodes = xmlNewChild(doc->children, NULL, "Volumes", NULL);
+  volume_list_write_xml(study->volumes, volume_nodes, directory);
+
+  /* put in our roi info */
+  roi_nodes = xmlNewChild(doc->children, NULL, "ROIs", NULL);
+  roi_list_write_xml(study->rois, roi_nodes, directory);
+
+  /* and save */
+  xmlSaveFile(STUDY_FILE_NAME, doc);
+
+  /* and we're done */
+  xmlFreeDoc(doc);
+
+  /* and return to the old directory */
+  if (chdir(old_dir) != 0) {
+    g_warning("%s: Couldn't return to previous directory in writing study\n",PACKAGE);
+    return FALSE;
+  }
+  g_free(old_dir);
+
+  return TRUE;
+}
+
+/* function to load in a study from disk in xml format */
+study_t * study_load_xml(gchar * directory) {
+
+  xmlDocPtr doc;
+  xmlNodePtr nodes;
+  xmlNodePtr volume_nodes, roi_nodes;
+  gchar * old_dir;
+  gchar * temp_string;
+  study_t * new_study;
+  
+  new_study = study_init();
+
+  /* switch into our new directory */
+  old_dir = g_get_current_dir();
+  if (chdir(directory) != 0) {
+    g_warning("%s: Couldn't change directories in loading study\n",PACKAGE);
+    study_free(new_study);
+    return new_study;
+  }
+
+  /* parse the xml file */
+  if ((doc = xmlParseFile(STUDY_FILE_NAME)) == NULL) {
+    g_warning("%s: Couldn't Parse AMIDE xml file %s/%s\n",PACKAGE, directory,STUDY_FILE_NAME);
+    study_free(new_study);
+    return new_study;
+  }
+
+  /* get the root of our document */
+  if ((nodes = xmlDocGetRootElement(doc)) == NULL) {
+    g_warning("%s: AMIDE xml file doesn't appear to have a root: %s/%s\n",
+	      PACKAGE, directory,STUDY_FILE_NAME);
+    study_free(new_study);
+    return new_study;
+  }
+
+  /* get the study name */
+  temp_string = xml_get_string(nodes->children, "text");
+  if (temp_string != NULL) {
+    study_set_name(new_study,temp_string);
+    g_free(temp_string);
+  }
+
+  /* get the document tree */
+  nodes = nodes->children;
+
+  /* load in the volumes */
+  volume_nodes = xml_get_node(nodes, "Volumes");
+  volume_nodes = volume_nodes->children;
+  new_study->volumes = volume_list_load_xml(volume_nodes, directory);
+  
+  /* and load in the rois */
+  roi_nodes = xml_get_node(nodes, "ROIs");
+  roi_nodes = roi_nodes->children;
+  new_study->rois = roi_list_load_xml(roi_nodes, directory);
+    
+  /* and we're done */
+  xmlFreeDoc(doc);
+    
+  /* and return to the old directory */
+  if (chdir(old_dir) != 0) {
+    g_warning("%s: Couldn't return to previous directory in load study\n",PACKAGE);
+    g_free(old_dir);
+    study_free(new_study);
+    return new_study;
+  }
+  g_free(old_dir);
+
+  return new_study;
+}
 
 /* adds one to the reference count of a study */
 study_t * study_add_reference(study_t * study) {

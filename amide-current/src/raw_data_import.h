@@ -23,15 +23,9 @@
   02111-1307, USA.
 */
 
-typedef enum {UBYTE, SBYTE, 
-	      USHORT_LE, SSHORT_LE, 
-	      UINT_LE, SINT_LE, 
-	      FLOAT_LE, DOUBLE_LE, 
-	      USHORT_BE, SSHORT_BE, 
-	      UINT_BE, SINT_BE,
-	      FLOAT_BE, DOUBLE_BE,
-	      NUM_DATA_FORMATS} data_format_t;
 
+/* header files that are always needed with this file */
+#include "raw_data.h"
 
 /* raw_data information structure */
 typedef struct raw_data_info_t {
@@ -48,8 +42,6 @@ typedef struct raw_data_info_t {
 void raw_data_import_dialog(raw_data_info_t * raw_data_info);
 
 /* external functions */
-guint raw_data_calc_num_bytes(raw_data_info_t * raw_data_info);
-void raw_data_read_file(raw_data_info_t * raw_data_info);
 guint raw_data_ui_num_bytes(raw_data_info_t * raw_data_info);
 volume_t * raw_data_import(gchar * filename);
 

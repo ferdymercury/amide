@@ -32,6 +32,12 @@
 /* typedef's */
 typedef enum {TRANSVERSE, CORONAL, SAGITTAL, NUM_VIEWS} view_t;
 
+/* setup the types for various internal data formats */
+//typedef gdouble volume_data_t;
+typedef gfloat volume_data_t;
+typedef gdouble volume_time_t;
+
+
 /* external variables */
 extern gchar * view_names[];
 

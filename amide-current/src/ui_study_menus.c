@@ -29,8 +29,6 @@
 #include "config.h"
 #include <gnome.h>
 #include "amide.h"
-#include "realspace.h"
-#include "color_table.h"
 #include "volume.h"
 #include "roi.h"
 #include "study.h"
@@ -52,8 +50,10 @@ void ui_study_menus_create(ui_study_t * ui_study) {
   
   /* defining the menus for the study ui interface */
   GnomeUIInfo file_menu[] = {
+    GNOMEUIINFO_MENU_SAVE_AS_ITEM(ui_study_callbacks_save_as, ui_study),
+    GNOMEUIINFO_SEPARATOR,
     GNOMEUIINFO_ITEM_DATA(N_("_Import File"),
-		     N_("Import a non-amide data file"),
+		     N_("Import an image data file into this study"),
 		     ui_study_callbacks_import, 
 		     ui_study, NULL),
     GNOMEUIINFO_SEPARATOR,

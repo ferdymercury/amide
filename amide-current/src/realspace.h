@@ -23,6 +23,9 @@
   02111-1307, USA.
 */
 
+#ifndef __REALSPACE_H__
+#define __REALSPACE_H__
+
 typedef enum {XAXIS, YAXIS, ZAXIS, NUM_AXIS} axis_t;
 
 /* setup the types for various internal data formats */
@@ -163,15 +166,15 @@ realpoint_t realspace_alt_dim_to_alt(const realpoint_t in,
 
 /* external variables */
 extern const gchar * axis_names[];
-extern const realpoint_t default_normal[NUM_VIEWS];
-extern const realpoint_t default_axis[NUM_VIEWS];
-extern const realpoint_t default_rotation[NUM_VIEWS];
+extern const realpoint_t default_normal[NUM_AXIS];
+extern const realpoint_t default_axis[NUM_AXIS];
+extern const realpoint_t default_rotation[NUM_AXIS];
 extern const realpoint_t realpoint_init;
 extern const voxelpoint_t voxelpoint_init;
 
 
 
-
+#endif /* __REALSPACE_H__ */
 
 
 

@@ -14,3 +14,4 @@ small things:
 	is this possible with GTK widgets?
 * make caching of slices smarter.  We don't need to regenerate all slices
 	when removing one slice from the list...
+* ui_main delete events should call ui_study_delete_event

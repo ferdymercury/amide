@@ -23,6 +23,8 @@
   02111-1307, USA.
 */
 
+#ifndef __OBJECTS_H__
+#define __OBJECTS_H__
 
 
 /* functions */
@@ -32,4 +34,5 @@ void objects_place_elliptic_cylinder(volume_t * volume, guint frame, realspace_t
 				     realpoint_t center, realpoint_t radius, floatpoint_t height,
 				     volume_data_t level);
 
+#endif /* __OBJECTS_H__ */
 

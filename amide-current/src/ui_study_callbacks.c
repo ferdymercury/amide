@@ -27,8 +27,10 @@
 #include "config.h"
 #include <gnome.h>
 #include <math.h>
+#include <sys/stat.h>
+#include <dirent.h>
+#include <fnmatch.h>
 #include "amide.h"
-#include "realspace.h"
 #include "color_table.h"
 #include "volume.h"
 #include "rendering.h"
@@ -54,7 +56,7 @@
 
 
 /* function to close the file import widget */
-static void ui_study_callbacks_import_cancel(GtkWidget* widget, gpointer data) {
+static void ui_study_callbacks_file_selection_cancel(GtkWidget* widget, gpointer data) {
 
   GtkFileSelection * file_selection = data;
 
@@ -64,18 +66,152 @@ static void ui_study_callbacks_import_cancel(GtkWidget* widget, gpointer data) {
   return;
 }
 
+
+/* function to handle saving */
+static void ui_study_callbacks_save_as_ok(GtkWidget* widget, gpointer data) {
+
+  GtkWidget * file_selection = data;
+  GtkWidget * question;
+  ui_study_t * ui_study;
+  gchar * save_filename;
+  gchar * temp_string;
+  struct stat file_info;
+  DIR * directory;
+  mode_t mode = 0766;
+  struct dirent * directory_entry;
+
+  /* get a pointer to ui_study */
+  ui_study = gtk_object_get_data(GTK_OBJECT(file_selection), "ui_study");
+
+  /* get the filename */
+  save_filename = gtk_file_selection_get_filename(GTK_FILE_SELECTION(file_selection));
+
+  /* some sanity checks */
+  if ((strcmp(save_filename, ".") == 0) ||
+      (strcmp(save_filename, "..") == 0) ||
+      (strcmp(save_filename, "") == 0) ||
+      (strcmp(save_filename, "/") == 0)) {
+    g_warning("%s: Inappropriate filename: %s\n",PACKAGE, save_filename);
+    return;
+  }
+
+  /* see if the filename already exists */
+  if (stat(save_filename, &file_info) == 0) {
+    /* check if it's okay to writeover the file */
+    temp_string = g_strdup_printf("Overwrite file: %s", save_filename);
+    question = gnome_question_dialog_modal(temp_string, NULL, NULL);
+    g_free(temp_string);
+
+    /* and wait for the question to return */
+    if (gnome_dialog_run_and_close(GNOME_DIALOG(question)) == 1)
+      return; /* we don't want to overwrite the file.... */
+
+    /* and start deleting everything in the filename/directory */
+    if (S_ISDIR(file_info.st_mode)) {
+      directory = opendir(save_filename);
+      while ((directory_entry = readdir(directory)) != NULL) {
+	temp_string = 
+	  g_strdup_printf("%s%s%s", save_filename,G_DIR_SEPARATOR_S, directory_entry->d_name);
+
+	if (fnmatch("*.xml",directory_entry->d_name,FNM_NOESCAPE) == 0) 
+	  if (unlink(temp_string) != 0)
+	    g_warning("%s: Couldn't unlink file: %s\n",PACKAGE, temp_string);
+	if (fnmatch("*.dat",directory_entry->d_name,FNM_NOESCAPE) == 0) 
+	  if (unlink(temp_string) != 0)
+	    g_warning("%s: Couldn't unlink file: %s\n",PACKAGE, temp_string);
+
+	g_free(temp_string);
+      }
+
+    } else if (S_ISREG(file_info.st_mode)) {
+      if (unlink(save_filename) != 0)
+	g_warning("%s: Couldn't unlink file: %s\n",PACKAGE, save_filename);
+
+    } else {
+      g_warning("%s: Unrecognized file type for file: %s, couldn't delete\n",PACKAGE, save_filename);
+      return;
+    }
+
+  } else {
+    /* make the directory */
+    if (mkdir(save_filename, mode) != 0) {
+      g_warning("%s: Couldn't create amide directory: %s\n",PACKAGE, save_filename);
+      return;
+    }
+  }
+
+  /* allright, save our study */
+  if (study_write_xml(ui_study->study, save_filename) == FALSE) {
+    g_warning("%s: Failure Saving File: %s\n",PACKAGE, save_filename);
+    return;
+  }
+
+  /* close the file selection box */
+  ui_study_callbacks_file_selection_cancel(widget, file_selection);
+
+  return;
+}
+
+/* function to load in an amide xml file */
+void ui_study_callbacks_save_as(GtkWidget * widget, gpointer data) {
+  
+  ui_study_t * ui_study = data;
+  GtkFileSelection * file_selection;
+  gchar * temp_string;
+
+  file_selection = GTK_FILE_SELECTION(gtk_file_selection_new(_("Save File")));
+
+  /* take a guess at the filename */
+  temp_string = g_strdup_printf("%s.xif", study_get_name(ui_study->study));
+  gtk_file_selection_set_filename(GTK_FILE_SELECTION(file_selection), temp_string);
+  g_free(temp_string); 
+
+  /* save a pointer to ui_study */
+  gtk_object_set_data(GTK_OBJECT(file_selection), "ui_study", ui_study);
+
+  /* don't want anything else going on till this window is gone */
+  gtk_window_set_modal(GTK_WINDOW(file_selection), TRUE);
+
+  /* connect the signals */
+  gtk_signal_connect(GTK_OBJECT(file_selection->ok_button),
+		     "clicked",
+		     GTK_SIGNAL_FUNC(ui_study_callbacks_save_as_ok),
+		     file_selection);
+  gtk_signal_connect(GTK_OBJECT(file_selection->cancel_button),
+		     "clicked",
+		     GTK_SIGNAL_FUNC(ui_study_callbacks_file_selection_cancel),
+		     file_selection);
+  gtk_signal_connect(GTK_OBJECT(file_selection->cancel_button),
+		     "delete_event",
+		     GTK_SIGNAL_FUNC(ui_study_callbacks_file_selection_cancel),
+		     file_selection);
+
+  /* set the position of the dialog */
+  gtk_window_set_position(GTK_WINDOW(file_selection), GTK_WIN_POS_MOUSE);
+
+  /* run the dialog */
+  gtk_widget_show(GTK_WIDGET(file_selection));
+  gtk_grab_add(GTK_WIDGET(file_selection));
+
+  return;
+}
+
 /* function to start the file importation process */
 static void ui_study_callbacks_import_ok(GtkWidget* widget, gpointer data) {
 
-  ui_study_t * ui_study = data;
+  GtkWidget * file_selection = data;
+  ui_study_t * ui_study;
   gchar * import_filename=NULL;
   gchar * import_filename_base=NULL;
   gchar * import_filename_extension=NULL;
   gchar ** frags=NULL;
   volume_t * import_volume=NULL;
 
+  /* get a pointer to ui_study */
+  ui_study = gtk_object_get_data(GTK_OBJECT(file_selection), "ui_study");
+
   /* get the filename */
-  import_filename = gtk_file_selection_get_filename(ui_study->file_selection);
+  import_filename = gtk_file_selection_get_filename(GTK_FILE_SELECTION(file_selection));
 
   if (import_filename != NULL) {
 
@@ -151,7 +287,7 @@ static void ui_study_callbacks_import_ok(GtkWidget* widget, gpointer data) {
     ; 
   }
 
-
+  g_print("name %s\n",import_volume->name);
   if (import_volume != NULL) {
 
     /* add the volume to the study structure */
@@ -188,7 +324,7 @@ static void ui_study_callbacks_import_ok(GtkWidget* widget, gpointer data) {
   g_strfreev(frags);
 
   /* close the file selection box */
-  ui_study_callbacks_import_cancel(widget, ui_study->file_selection);
+  ui_study_callbacks_file_selection_cancel(widget, file_selection);
 
   return;
 }
@@ -198,11 +334,12 @@ static void ui_study_callbacks_import_ok(GtkWidget* widget, gpointer data) {
 void ui_study_callbacks_import(GtkWidget * widget, gpointer data) {
   
   ui_study_t * ui_study = data;
-
   GtkFileSelection * file_selection;
 
   file_selection = GTK_FILE_SELECTION(gtk_file_selection_new(_("Import File")));
-  ui_study->file_selection=file_selection; /* save for call back use */
+
+  /* save a pointer to ui_study */
+  gtk_object_set_data(GTK_OBJECT(file_selection), "ui_study", ui_study);
 
   /* don't want anything else going on till this window is gone */
   gtk_window_set_modal(GTK_WINDOW(file_selection), TRUE);
@@ -211,14 +348,14 @@ void ui_study_callbacks_import(GtkWidget * widget, gpointer data) {
   gtk_signal_connect(GTK_OBJECT(file_selection->ok_button),
 		     "clicked",
 		     GTK_SIGNAL_FUNC(ui_study_callbacks_import_ok),
-		     ui_study);
+		     file_selection);
   gtk_signal_connect(GTK_OBJECT(file_selection->cancel_button),
 		     "clicked",
-		     GTK_SIGNAL_FUNC(ui_study_callbacks_import_cancel),
+		     GTK_SIGNAL_FUNC(ui_study_callbacks_file_selection_cancel),
 		     file_selection);
   gtk_signal_connect(GTK_OBJECT(file_selection->cancel_button),
 		     "delete_event",
-		     GTK_SIGNAL_FUNC(ui_study_callbacks_import_cancel),
+		     GTK_SIGNAL_FUNC(ui_study_callbacks_file_selection_cancel),
 		     file_selection);
 
   /* set the position of the dialog */
@@ -350,10 +487,6 @@ gint ui_study_callbacks_canvas_event(GtkWidget* widget,
 	  picture_center = picture0 = picture1 = item;
 	  switch(ui_study->current_roi->type) 
 	    {
-	      
-	    case GROUP:
-	      ;
-	      break;
 	    case BOX:
 	      new_roi = 
 		gnome_canvas_item_new(gnome_canvas_root(ui_study->canvas[i]),
@@ -488,7 +621,6 @@ gint ui_study_callbacks_canvas_event(GtkWidget* widget,
 	  
 	  /* and save any roi type specfic info */
 	  switch(ui_study->current_roi->type) {
-	  case GROUP:
 	  case CYLINDER:
 	  case BOX:
 	  case ELLIPSOID:

@@ -29,7 +29,6 @@
 #include <limits.h>
 #include <math.h>
 #include "amide.h"
-#include "realspace.h"
 #include "color_table.h"
 #include "volume.h"
 #include "color_table2.h"

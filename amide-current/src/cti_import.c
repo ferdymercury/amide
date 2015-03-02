@@ -29,8 +29,6 @@
 #include "amide.h"
 #ifdef AMIDE_LIBECAT_SUPPORT
 #include <matrix.h>
-#include "realspace.h"
-#include "color_table.h"
 #include "volume.h"
 #include "cti_import.h"
 

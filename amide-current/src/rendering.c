@@ -31,8 +31,6 @@
 #include <math.h>
 #include <volpack.h>
 #include "amide.h"
-#include "realspace.h"
-#include "color_table.h"
 #include "volume.h"
 #include "rendering.h"
 
@@ -60,6 +58,7 @@ rendering_t * rendering_context_free(rendering_t * context) {
   context->reference_count--;
 
   /* things we always do */
+  context->volume = volume_free(context->volume);
   
   /* if we've removed all reference's, free the roi */
   if (context->reference_count == 0) {
@@ -68,7 +67,12 @@ rendering_t * rendering_context_free(rendering_t * context) {
 #endif
     if (context->vpc != NULL)
       vpDestroyContext(context->vpc);
-    context->volume = volume_free(context->volume);
+    g_free(context->rendering_vol);
+    g_free(context->image);
+    g_free(context->density_ramp_x);
+    g_free(context->density_ramp_y);
+    g_free(context->gradient_ramp_x);
+    g_free(context->gradient_ramp_y);
     g_free(context);
     context = NULL;
   }

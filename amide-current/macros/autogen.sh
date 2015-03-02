@@ -1,8 +1,6 @@
 #!/bin/sh
 # Run this to generate all the initial makefiles, etc.
 
-srcdir=/home/loening/amide
-
 DIE=0
 
 if [ -n "$GNOME2_PATH" ]; then
@@ -19,6 +17,16 @@ fi
   DIE=1
 }
 
+(grep "^AM_PROG_XML_I18N_TOOLS" $srcdir/configure.in >/dev/null) && {
+  (xml-i18n-toolize --version) < /dev/null > /dev/null 2>&1 || {
+    echo 
+    echo "**Error**: You must have \`xml-i18n-toolize' installed to compile Gnome."
+    echo "Get ftp://ftp.gnome.org/pub/GNOME/stable/sources/xml-i18n-tools/xml-i18n-tools-0.6.tar.gz"
+    echo "(or a newer version if it is available)"
+    DIE=1
+  }
+}
+
 (grep "^AM_PROG_LIBTOOL" $srcdir/configure.in >/dev/null) && {
   (libtool --version) < /dev/null > /dev/null 2>&1 || {
     echo
@@ -29,27 +37,27 @@ fi
   }
 }
 
-grep "^AM_GNU_GETTEXT" $srcdir/configure.in >/dev/null && {
-  grep "sed.*POTFILES" $srcdir/configure.in >/dev/null || \
-  (gettext --version) < /dev/null > /dev/null 2>&1 || {
-    echo
-    echo "**Error**: You must have \`gettext' installed to compile Gnome."
-    echo "Get ftp://alpha.gnu.org/gnu/gettext-0.10.35.tar.gz"
-    echo "(or a newer version if it is available)"
-    DIE=1
-  }
-}
+#grep "^AM_GNU_GETTEXT" $srcdir/configure.in >/dev/null && {
+#  grep "sed.*POTFILES" $srcdir/configure.in >/dev/null || \
+#  (gettext --version) < /dev/null > /dev/null 2>&1 || {
+#    echo
+#    echo "**Error**: You must have \`gettext' installed to compile Gnome."
+#    echo "Get ftp://alpha.gnu.org/gnu/gettext-0.10.35.tar.gz"
+#    echo "(or a newer version if it is available)"
+#    DIE=1
+#  }
+#}
 
-grep "^AM_GNOME_GETTEXT" $srcdir/configure.in >/dev/null && {
-  grep "sed.*POTFILES" $srcdir/configure.in >/dev/null || \
-  (gettext --version) < /dev/null > /dev/null 2>&1 || {
-    echo
-    echo "**Error**: You must have \`gettext' installed to compile Gnome."
-    echo "Get ftp://alpha.gnu.org/gnu/gettext-0.10.35.tar.gz"
-    echo "(or a newer version if it is available)"
-    DIE=1
-  }
-}
+#grep "^AM_GNOME_GETTEXT" $srcdir/configure.in >/dev/null && {
+#  grep "sed.*POTFILES" $srcdir/configure.in >/dev/null || \
+#  (gettext --version) < /dev/null > /dev/null 2>&1 || {
+#    echo
+#    echo "**Error**: You must have \`gettext' installed to compile Gnome."
+#    echo "Get ftp://alpha.gnu.org/gnu/gettext-0.10.35.tar.gz"
+#    echo "(or a newer version if it is available)"
+#    DIE=1
+#  }
+#}
 
 (automake --version) < /dev/null > /dev/null 2>&1 || {
   echo
@@ -140,6 +148,10 @@ do
 	echo "Making $dr/aclocal.m4 writable ..."
 	test -r $dr/aclocal.m4 && chmod u+w $dr/aclocal.m4
       fi
+      if grep "^AM_PROG_XML_I18N_TOOLS" configure.in >/dev/null; then
+        echo "Running xml-i18n-toolize... Ignore non-fatal messages."
+	xml-i18n-toolize --copy --force --automake
+      fi
       if grep "^AM_PROG_LIBTOOL" configure.in >/dev/null; then
 	if test -z "$NO_LIBTOOLIZE" ; then 
 	  echo "Running libtoolize..."
@@ -147,16 +159,26 @@ do
 	fi
       fi
       echo "Running aclocal $aclocalinclude ..."
-      aclocal $aclocalinclude
+      aclocal $aclocalinclude || {
+	echo
+	echo "**Error**: aclocal failed. This may mean that you have not"
+	echo "installed all of the packages you need, or you may need to"
+	echo "set ACLOCAL_FLAGS to include \"-I \$prefix/share/aclocal\""
+	echo "for the prefix where you installed the packages whose"
+	echo "macros were not found"
+	exit 1
+      }
+
       if grep "^AM_CONFIG_HEADER" configure.in >/dev/null; then
 	echo "Running autoheader..."
-	autoheader
+	autoheader || { echo "**Error**: autoheader failed."; exit 1; }
       fi
       echo "Running automake --gnu $am_opt ..."
-      automake --add-missing --gnu $am_opt
+      automake --add-missing --gnu $am_opt ||
+	{ echo "**Error**: automake failed."; exit 1; }
       echo "Running autoconf ..."
-      autoconf
-    )
+      autoconf || { echo "**Error**: autoconf failed."; exit 1; }
+    ) || exit 1
   fi
 done
 

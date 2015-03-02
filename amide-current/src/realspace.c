@@ -30,11 +30,11 @@
 #include "realspace.h"
 
 /* external variables */
-const gchar * axis_names[] = {"x axis", "y axis", "z axis"};
+const gchar * axis_names[] = {"x", "y", "z"};
 
-const realpoint_t default_normal[NUM_VIEWS] = {{0.0,0.0,1.0},
-					       {0.0,1.0,0.0},
-					       {1.0,0.0,0.0}};
+const realpoint_t default_normal[NUM_AXIS] = {{0.0,0.0,1.0},
+					      {0.0,1.0,0.0},
+					      {1.0,0.0,0.0}};
 
 const realpoint_t default_axis[NUM_AXIS] = {{1.0,0.0,0.0},
 					    {0.0,1.0,0.0},

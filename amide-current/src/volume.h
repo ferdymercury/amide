@@ -23,14 +23,17 @@
   02111-1307, USA.
 */
 
+/* header files that are always needed with this file */
+#include "xml.h"
+#include "realspace.h"
+#include "color_table.h"
+
 typedef enum {XDIM, YDIM, ZDIM, TDIM, NUM_DIMS} dimension_t;
 typedef enum {NEAREST_NEIGHBOR, BILINEAR, TRILINEAR, NUM_INTERPOLATIONS} interpolation_t;
 typedef enum {PET, SPECT, CT, MRI, OTHER, NUM_MODALITIES} modality_t;
 
 /* setup the types for various internal data formats */
-//typedef gdouble volume_data_t;
-typedef gfloat volume_data_t;
-typedef gdouble volume_time_t;
+/* volume_data_t and volume_time_t are now specified in amide.h */
 
 
 /* the volume structure */
@@ -46,7 +49,7 @@ typedef struct volume_t {
   guint num_frames;
   volume_time_t scan_start;
   volume_time_t * frame_duration; /* array of the duration of each frame */
-  color_table_t color_table; /* the color table to draw this roi in */
+  color_table_t color_table; /* the color table to draw this volume in */
   volume_data_t max; /* can be recalculated, but used enough we'll store... */
   volume_data_t min;
   volume_data_t threshold_max; /* the thresholds to use for this volume */
@@ -98,6 +101,7 @@ struct _volume_list_t {
 /* ------------ external functions ---------- */
 volume_t * volume_free(volume_t * volume);
 volume_t * volume_init(void);
+gchar * volume_write_xml(volume_t * volume, gchar * directory);
 volume_t * volume_copy(volume_t * src_volume);
 volume_t * volume_add_reference(volume_t * volume);
 void volume_set_name(volume_t * volume, gchar * new_name);
@@ -107,6 +111,8 @@ voxelpoint_t volume_real_to_voxel(const volume_t * volume, const realpoint_t rea
 volume_time_t volume_start_time(const volume_t * volume, guint frame);
 volume_list_t * volume_list_free(volume_list_t * volume_list);
 volume_list_t * volume_list_init(void);
+void volume_list_write_xml(volume_list_t *list, xmlNodePtr node_list, gchar * directory);
+volume_list_t * volume_list_load_xml(xmlNodePtr node_list, gchar * directory);
 volume_list_t * volume_list_add_reference(volume_list_t * volume_list_element);
 gboolean volume_list_includes_volume(volume_list_t *list, volume_t * vol);
 volume_list_t * volume_list_add_volume(volume_list_t *volume_list, volume_t * vol);

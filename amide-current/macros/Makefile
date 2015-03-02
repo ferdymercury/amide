@@ -57,7 +57,7 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-host_alias = i686-pc-linux-gnu
+host_alias = i686-pc-linux
 host_triplet = i686-pc-linux-gnu
 AMIDE_LIBECAT_LIBS = -lecat
 AMIDE_LIBMDC_LIBS = -lmdc
@@ -88,6 +88,8 @@ GNOME_DOCKLETS_LIBS =
 GNOME_INCLUDEDIR = -I/usr/include -DNEED_GNOMESUPPORT_H -I/usr/lib/gnome-libs/include -I/usr/lib/glib/include -I/usr/X11R6/include
 GNOME_LIBDIR = -rdynamic -L/usr/lib -L/usr/X11R6/lib
 GNOME_LIBS = -lgnome -lgnomesupport -lesd -laudiofile -lm -ldb1 -lglib -ldl
+GNOME_XML2_CFLAGS = -I/usr/include/libxml -I/usr/include
+GNOME_XML2_LIBS = -L/usr/lib -lxml2 -lz -lm
 GNORBA_CFLAGS = -I/usr/include -DNEED_GNOMESUPPORT_H -I/usr/lib/gnome-libs/include -I/usr/lib/glib/include -I/usr/X11R6/include
 GNORBA_LIBS = -rdynamic -L/usr/lib -L/usr/X11R6/lib -lgnorba -lORBitCosNaming -lORBit -lIIOP -lORBitutil -lnsl -lgnomeui -lart_lgpl -lgdk_imlib -lSM -lICE -lgtk -lgdk -lgmodule -lXext -lX11 -lgnome -lgnomesupport -lesd -laudiofile -lm -ldb1 -lglib -ldl
 GTKXMHTML_LIBS = -rdynamic -lgtkxmhtml -lXpm -ljpeg -lpng -lz -lSM -lICE -lgtk -lgdk -lgmodule -lglib -ldl -lXext -lX11 -lm
@@ -116,7 +118,8 @@ POSUB = po
 RANLIB = ranlib
 USE_INCLUDED_LIBINTL = no
 USE_NLS = yes
-VERSION = 0.2.3
+VERSION = 0.2.4
+XML2_CONFIG = /usr/bin/xml2-config
 ZVT_LIBS = -rdynamic -lzvt -lutil -lSM -lICE -lgtk -lgdk -lgmodule -lglib -ldl -lXext -lX11 -lm
 cflags_set = yes
 cxxflags_set = @cxxflags_set@
@@ -125,12 +128,12 @@ l =
 MACROS =    aclocal-include.m4				  compiler-flags.m4				  curses.m4					  gnome-bonobo-check.m4				  gnome-fileutils.m4				  gnome-ghttp-check.m4				  gnome-gnorba-check.m4				  gnome-guile-checks.m4				  gnome-libgtop-check.m4			  gnome-objc-checks.m4				  gnome-orbit-check.m4				  gnome-print-check.m4				  gnome-pthread-check.m4			  gnome-support.m4				  gnome-undelfs.m4				  gnome-vfs.m4					  gnome-x-checks.m4				  gnome-xml-check.m4				  gnome.m4					  gperf-check.m4				  linger.m4					  need-declaration.m4
 
 
-EXTRA_DIST = $(MACROS) gnome-common.m4 autogen.sh
+EXTRA_DIST = $(MACROS) gnome-common.m4 gnome-gettext.m4 autogen.sh
 MAINTAINERCLEANFILES = macros.dep
 
-#gnome_aclocaldir = $(datadir)/aclocal/gnome
+#gnome_aclocaldir = $(datadir)/aclocal/gnome-macros
 
-#gnome_aclocal_DATA = $(MACROS) gnome-macros.dep gnome-common.m4 autogen.sh
+#gnome_aclocal_DATA = $(MACROS) gnome-macros.dep gnome-common.m4 	gnome-gettext.m4 autogen.sh
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../config.h
 CONFIG_CLEAN_FILES = 

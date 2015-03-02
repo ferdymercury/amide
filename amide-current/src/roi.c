@@ -26,15 +26,13 @@
 #include "config.h"
 #include <glib.h>
 #include <math.h>
+#include <sys/stat.h>
 #include "amide.h"
-#include "realspace.h"
-#include "color_table.h"
 #include "volume.h"
 #include "roi.h"
 
 /* external variables */
-gchar * roi_type_names[] = {"Group", \
-			    "Ellipsoid", \
+gchar * roi_type_names[] = {"Ellipsoid", \
 			    "Elliptic Cylinder", \
 			    "Box"};
 
@@ -90,6 +88,120 @@ roi_t * roi_init(void) {
   temp_roi->children = NULL;
   
   return temp_roi;
+}
+
+/* function to write out the information content of an roi into an xml
+   file.  Returns a string containing the name of the file. */
+gchar * roi_write_xml(roi_t * roi, gchar * directory) {
+
+  gchar * file_name;
+  guint count;
+  struct stat file_info;
+  xmlDocPtr doc;
+  xmlNodePtr roi_nodes;
+
+  /* make a guess as to our filename */
+  count = 1;
+  file_name = g_strdup_printf("ROI_%s.xml", roi->name);
+
+  /* see if this file already exists */
+  while (stat(file_name, &file_info) == 0) {
+    g_free(file_name);
+    count++;
+    file_name = g_strdup_printf("ROI_%s_%d.xml", roi->name, count);
+  }
+  /* and we now have a unique filename */
+
+  /* write the roi xml file */
+  doc = xmlNewDoc("1.0");
+  doc->children = xmlNewDocNode(doc, NULL, "ROI", roi->name);
+  xml_save_string(doc->children, "type", roi_type_names[roi->type]);
+  xml_save_string(doc->children, "grain", roi_grain_names[roi->grain]);
+  xml_save_realspace(doc->children, "coord_frame", roi->coord_frame);
+  xml_save_realpoint(doc->children, "corner", roi->corner);
+
+  /* save our children */
+  roi_nodes = xmlNewChild(doc->children, NULL, "Children", NULL);
+  roi_list_write_xml(roi->children, roi_nodes, directory);
+
+  /* and save */
+  xmlSaveFile(file_name, doc);
+
+  /* and we're done */
+  xmlFreeDoc(doc);
+
+  return file_name;
+}
+
+/* function to load in an ROI xml file */
+roi_t * roi_load_xml(gchar * file_name, gchar * directory) {
+
+  xmlDocPtr doc;
+  roi_t * new_roi;
+  xmlNodePtr nodes;
+  xmlNodePtr children_nodes;
+  roi_type_t i_roi_type;
+  roi_grain_t i_roi_grain;
+  gchar * temp_string;
+
+  new_roi = roi_init();
+
+  /* parse the xml file */
+  if ((doc = xmlParseFile(file_name)) == NULL) {
+    g_warning("%s: Couldn't Parse AMIDE ROI xml file %s/%s\n",PACKAGE, directory,file_name);
+    roi_free(new_roi);
+    return new_roi;
+  }
+
+  /* get the root of our document */
+  if ((nodes = xmlDocGetRootElement(doc)) == NULL) {
+    g_warning("%s: AMIDE ROI xml file doesn't appear to have a root: %s/%s\n",
+	      PACKAGE, directory,file_name);
+    roi_free(new_roi);
+    return new_roi;
+  }
+
+  /* get the roi name */
+  temp_string = xml_get_string(nodes->children, "text");
+  if (temp_string != NULL) {
+    roi_set_name(new_roi,temp_string);
+    g_free(temp_string);
+  }
+
+  /* get the document tree */
+  nodes = nodes->children;
+
+  /* figure out the type */
+  temp_string = xml_get_string(nodes, "type");
+  for (i_roi_type=0; i_roi_type < NUM_ROI_TYPES; i_roi_type++) 
+    if (g_strcasecmp(temp_string, roi_type_names[i_roi_type]) == 0)
+      new_roi->type = i_roi_type;
+  g_free(temp_string);
+
+  /* figure out the grain */
+  temp_string = xml_get_string(nodes, "grain");
+  for (i_roi_grain=0; i_roi_grain < NUM_GRAIN_TYPES; i_roi_grain++) 
+    if (g_strcasecmp(temp_string, roi_grain_names[i_roi_grain]) == 0)
+      new_roi->grain = i_roi_grain;
+  g_free(temp_string);
+
+  /* and figure out the rest of the parameters */
+  new_roi->coord_frame = xml_get_realspace(nodes, "coord_frame");
+  new_roi->corner = xml_get_realpoint(nodes, "corner");
+
+  /* and get any children */
+  temp_string = xml_get_string(nodes->children, "Children");
+  if (temp_string != NULL) {
+    children_nodes = xml_get_node(nodes->children, "Children");
+    new_roi->children = roi_list_load_xml(children_nodes, directory);
+  }
+  g_free(temp_string);
+   
+  /* and we're done */
+  xmlFreeDoc(doc);
+
+
+  return new_roi;
 }
 
 
@@ -200,6 +312,50 @@ roi_list_t * roi_list_init(void) {
   temp_roi_list->roi = NULL;
   
   return temp_roi_list;
+}
+
+
+/* function to write a list of rois as xml data.  Function calls
+   roi_write_xml to writeout each roi, and adds information about the
+   roi file to the node_list. */
+void roi_list_write_xml(roi_list_t *list, xmlNodePtr node_list, gchar * directory) {
+
+  gchar * file_name;
+
+  if (list != NULL) { 
+    file_name = roi_write_xml(list->roi, directory);
+    xmlNewChild(node_list, NULL, "ROI_file", file_name);
+    g_free(file_name);
+    
+    /* and recurse */
+    roi_list_write_xml(list->next, node_list, directory);
+  }
+
+  return;
+}
+
+/* function to load in a list of ROI xml nodes */
+roi_list_t * roi_list_load_xml(xmlNodePtr node_list, gchar * directory) {
+
+  gchar * file_name;
+  roi_list_t * new_roi_list;
+  roi_t * new_roi;
+
+  if (node_list != NULL) {
+    /* first, recurse on through the list */
+    new_roi_list = roi_list_load_xml(node_list->next, directory);
+
+    /* load in this node */
+    file_name = xml_get_string(node_list->children, "text");
+    new_roi = roi_load_xml(file_name,directory);
+    new_roi_list = roi_list_add_roi_first(new_roi_list, new_roi);
+    new_roi = roi_free(new_roi);
+    g_free(file_name);
+
+  } else
+    new_roi_list = NULL;
+
+  return new_roi_list;
 }
 
 /* function to check that an roi is in an roi list */
@@ -355,9 +511,6 @@ GSList * roi_get_volume_intersection_points(const volume_t * view_slice,
 #endif
 
   switch(roi->type) {
-  case GROUP:
-    return NULL; 
-    break;
   case BOX: /* yes, not the most efficient way to do this, but i didn't
 	       feel like figuring out the math.... */
   case CYLINDER:

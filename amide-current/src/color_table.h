@@ -23,6 +23,8 @@
   02111-1307, USA.
 */
 
+#ifndef __COLOR_TABLE_H__
+#define __COLOR_TABLE_H__
 
 /* typedef's */
 typedef enum {BW_LINEAR, \
@@ -64,3 +66,5 @@ extern gchar * color_table_names[];
 /* internal functions */
 color_point_t color_table_hsv_to_rgb(hsv_point_t * hsv);
 
+
+#endif /* __COLOR_TABLE_H__ */

@@ -27,7 +27,6 @@
 #include <gnome.h>
 #include <math.h>
 #include "amide.h"
-#include "realspace.h"
 #include "color_table.h"
 #include "volume.h"
 #include "roi.h"
@@ -811,7 +810,6 @@ void ui_study_tree_add_roi(ui_study_t * ui_study, roi_t * roi) {
   case BOX:
     pixmap = gdk_pixmap_create_from_xpm_d(parent,NULL,NULL,ROI_xpm);
     break;
-  case GROUP:
   default:
     pixmap = gdk_pixmap_create_from_xpm_d(parent,NULL,NULL,ROI_xpm);
     break;
@@ -1348,7 +1346,7 @@ void ui_study_setup_widgets(ui_study_t * ui_study) {
 
 
 /* procedure to set up the study window */
-void ui_study_create(gchar * study) {
+void ui_study_create(study_t * study) {
 
   GnomeApp * app;
   gchar * title=NULL;
@@ -1367,6 +1365,7 @@ void ui_study_create(gchar * study) {
     g_free(temp_string);
   } else {
     // load info into ui_study;
+    ui_study->study = study;
     title = g_strdup_printf("Study: %s",study_get_name(ui_study->study));
   }
 

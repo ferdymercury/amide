@@ -27,8 +27,6 @@
 #include <gnome.h>
 #include <math.h>
 #include "amide.h"
-#include "realspace.h"
-#include "color_table.h"
 #include "volume.h"
 #include "raw_data_import.h"
 #include "raw_data_import_callbacks.h"

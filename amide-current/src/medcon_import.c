@@ -27,8 +27,6 @@
 #include <gnome.h>
 #include "amide.h"
 #ifdef AMIDE_LIBMDC_SUPPORT
-#include "realspace.h"
-#include "color_table.h"
 #include "volume.h"
 #include "medcon_import.h"
 
