@@ -127,7 +127,8 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   struct tm time_structure;
 
   /* note - dcmtk always uses POSIX locale - look to setlocale stuff in libmdc_interface.c if this ever comes up*/
-
+  g_debug(__FILE__ ": Processing file %s", filename);
+  
   result = dcm_format.loadFile(filename);
   if (result.bad()) {
     g_warning("could not read DICOM file %s, dcmtk returned %s",filename, result.text());
