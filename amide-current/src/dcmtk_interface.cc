@@ -89,6 +89,7 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
 
   DcmFileFormat dcm_format;
   DcmMetaInfo * dcm_metainfo;
+  DcmXfer *dcm_syntax=NULL;
   DcmDataset * dcm_dataset;
   OFCondition result;
   Uint16 return_uint16=0;
@@ -136,15 +137,33 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   }
 
   dcm_metainfo = dcm_format.getMetaInfo();
-  //  if (dcm_metainfo == NULL) {
-  //    g_warning("could not find metainfo in DICOM file %s\n", filename);
-  //  }
+  if (dcm_metainfo == NULL) {
+     g_warning(_("could not find metainfo in DICOM file %s\n"), filename);
+  }
 
   dcm_dataset = dcm_format.getDataset();
-  //  dcm_dataset = &(dcm_dir.getDataset());
   if (dcm_dataset == NULL) {
     g_warning(_("could not find dataset in DICOM file %s\n"), filename);
     goto error;
+  }
+
+  if (dcm_metainfo == NULL) {
+    dcm_syntax = new DcmXfer(dcm_dataset->getOriginalXfer());
+  } else {
+    /* What TransSyntax is used to encode the image */
+    if (dcm_metainfo->findAndGetString(DCM_TransferSyntaxUID, return_str).good()) {
+      if (return_str != NULL) {
+        g_debug("TransferSyntaxUID %s", return_str);
+        dcm_syntax = new DcmXfer(return_str);
+      }
+    }
+  }
+
+  if (dcm_syntax == NULL) {
+    g_warning(_("could not determine TransferSyntax %s\n"), filename);
+    goto error;
+  } else {
+    g_debug("TransferSyntax is %s (%d)", dcm_syntax->getXferName(), dcm_syntax->getXfer());
   }
 
   modality = AMITK_MODALITY_OTHER;
