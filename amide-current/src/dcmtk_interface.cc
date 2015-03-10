@@ -329,7 +329,8 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
     goto error;
   }
 
-  /* malloc data set */
+  /* malloc data set, including raw_data->data=g_try_malloc(amitk_raw_data_num_voxels(rd) * amitk_format_sizes[(rd)->format]) 
+        amitk_raw_data_num_voxels(rd) = ((rd)->dim.x * (rd)->dim.y * (rd)->dim.z * (rd)->dim.g * (rd)->dim.t) */
   ds = amitk_data_set_new_with_data(preferences, modality, format, dim, AMITK_SCALING_TYPE_0D_WITH_INTERCEPT);
   if (ds == NULL) {
     g_warning(_("Couldn't allocate space for the data set structure to hold DCMTK data - Failed to load file %s"), filename);
@@ -346,9 +347,9 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
     amitk_data_set_set_dicom_image_type(ds, return_str); /* function can handle NULL strings */
 
   /* get the voxel size */
-  if (dcm_dataset->findAndGetFloat64(DCM_PixelSpacing, return_float64,0).good()) {
+  if (dcm_dataset->findAndGetFloat64(DCM_PixelSpacing, return_float64, 0, OFTrue).good()) {
     voxel_size.y = return_float64;
-    if (dcm_dataset->findAndGetFloat64(DCM_PixelSpacing, return_float64,1).good())
+    if (dcm_dataset->findAndGetFloat64(DCM_PixelSpacing, return_float64,1, OFTrue).good())
       voxel_size.x = return_float64;
     else {
       voxel_size.x = voxel_size.y;
@@ -359,11 +360,11 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
 
   /* try to figure out the correct z thickness */
   voxel_size.z = -1;
-  if (dcm_dataset->findAndGetFloat64(DCM_SpacingBetweenSlices, return_float64).good()) 
+  if (dcm_dataset->findAndGetFloat64(DCM_SpacingBetweenSlices, return_float64, 0, OFTrue).good()) 
     voxel_size.z = return_float64;
 
   if (voxel_size.z <= 0.0) {
-    if (dcm_dataset->findAndGetFloat64(DCM_SliceThickness, return_float64).good()) {
+    if (dcm_dataset->findAndGetFloat64(DCM_SliceThickness, return_float64, 0, OFTrue).good()) {
       voxel_size.z = return_float64;
     } else {
       amitk_append_str_with_newline(perror_buf, _("Could not find the slice thickness, setting to 1 mm for File %s"), filename);
@@ -384,23 +385,25 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   new_axes[AMITK_AXIS_X] = base_axes[AMITK_AXIS_X];
   new_axes[AMITK_AXIS_Y] = base_axes[AMITK_AXIS_Y];
   new_axes[AMITK_AXIS_Z] = base_axes[AMITK_AXIS_Z];
-  if (dcm_dataset->findAndGetFloat64(DCM_ImageOrientationPatient, return_float64, 0).good()) {
+  if (dcm_dataset->findAndGetFloat64(DCM_ImageOrientationPatient, return_float64, 0, OFTrue).good()) {
     new_axes[AMITK_AXIS_X].x = return_float64;
-    if (dcm_dataset->findAndGetFloat64(DCM_ImageOrientationPatient, return_float64, 1).good()) {
+    if (dcm_dataset->findAndGetFloat64(DCM_ImageOrientationPatient, return_float64, 1, OFTrue).good()) {
       new_axes[AMITK_AXIS_X].y = return_float64;
-      if (dcm_dataset->findAndGetFloat64(DCM_ImageOrientationPatient, return_float64, 2).good()) {
+      if (dcm_dataset->findAndGetFloat64(DCM_ImageOrientationPatient, return_float64, 2, OFTrue).good()) {
 	new_axes[AMITK_AXIS_X].z = return_float64;
-	if (dcm_dataset->findAndGetFloat64(DCM_ImageOrientationPatient, return_float64, 3).good()) {
+	if (dcm_dataset->findAndGetFloat64(DCM_ImageOrientationPatient, return_float64, 3, OFTrue).good()) {
 	  new_axes[AMITK_AXIS_Y].x = return_float64;
-	  if (dcm_dataset->findAndGetFloat64(DCM_ImageOrientationPatient, return_float64, 4).good()) {
+	  if (dcm_dataset->findAndGetFloat64(DCM_ImageOrientationPatient, return_float64, 4, OFTrue).good()) {
 	    new_axes[AMITK_AXIS_Y].y = return_float64;
-	    if (dcm_dataset->findAndGetFloat64(DCM_ImageOrientationPatient, return_float64, 5).good()) {
+	    if (dcm_dataset->findAndGetFloat64(DCM_ImageOrientationPatient, return_float64, 5, OFTrue).good()) {
 	      new_axes[AMITK_AXIS_Y].z = return_float64;
 	    }
 	  }
 	}
       }
     }
+  } else {
+    g_warning(_("Couldn't find ImageOrientationPatient in file %s"), filename);    
   }
   new_axes[AMITK_AXIS_X].y *= -1.0;
   new_axes[AMITK_AXIS_X].z *= -1.0;
@@ -413,11 +416,11 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
      in Patient space, not necessarily with respect to the Gantry. At least for GE scanners, 
      the offset is on corner of this voxel */
   found_value=FALSE;
-  if (dcm_dataset->findAndGetFloat64(DCM_ImagePositionPatient, return_float64, 0).good()) {
+  if (dcm_dataset->findAndGetFloat64(DCM_ImagePositionPatient, return_float64, 0, OFTrue).good()) {
     new_offset.x = return_float64;
-    if (dcm_dataset->findAndGetFloat64(DCM_ImagePositionPatient, return_float64, 1).good()) {
+    if (dcm_dataset->findAndGetFloat64(DCM_ImagePositionPatient, return_float64, 1, OFTrue).good()) {
       new_offset.y = return_float64;
-      if (dcm_dataset->findAndGetFloat64(DCM_ImagePositionPatient, return_float64, 2).good()) {
+      if (dcm_dataset->findAndGetFloat64(DCM_ImagePositionPatient, return_float64, 2, OFTrue).good()) {
       	new_offset.z = return_float64;
 
 	/* not doing the half voxel correction... values seem more correct without, at least for GE.
@@ -439,7 +442,7 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
     }
   }
   if (!found_value) { /* see if we can get it otherwise */
-    if (dcm_dataset->findAndGetFloat64(DCM_SliceLocation, return_float64).good()) {
+    if (dcm_dataset->findAndGetFloat64(DCM_SliceLocation, return_float64, 0, OFTrue).good()) {
       /* if no ImagePositionPatient, try using SliceLocation */
       new_offset.x = new_offset.y = 0.0;
       //this looks wrong 2007.11.21 - doing what's done in the DCM_ImagePositionPatient case
@@ -723,17 +726,18 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   i = zero_voxel;
 
   /* store the scaling factor... if there is one */
-  if (dcm_dataset->findAndGetFloat64(DCM_RescaleSlope, return_float64,0).good()) {
+  if (dcm_dataset->findAndGetFloat64(DCM_RescaleSlope, return_float64, 0, OFTrue).good()) {
     *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling_factor, i) = return_float64;
     g_debug("RescaleSlope: %f", return_float64);
   }
 
   /* same for the offset */
-  if (dcm_dataset->findAndGetFloat64(DCM_RescaleIntercept, return_float64).good()) {
+  if (dcm_dataset->findAndGetFloat64(DCM_RescaleIntercept, return_float64, 0, OFTrue).good()) {
     *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling_intercept, i) = return_float64;
     g_debug("RescaleIntercept: %f", return_float64);
   }
 
+  // MR: alternative FrameReferenceDateTime
   if (dcm_dataset->findAndGetFloat64(DCM_FrameReferenceTime, return_float64).good()) 
     amitk_data_set_set_scan_start(ds,return_float64/1000.0);
 
