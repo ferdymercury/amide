@@ -131,7 +131,7 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   
   result = dcm_format.loadFile(filename);
   if (result.bad()) {
-    g_warning("could not read DICOM file %s, dcmtk returned %s",filename, result.text());
+    g_warning(_("could not read DICOM file %s, dcmtk returned %s"),filename, result.text());
     goto error;
   }
 
@@ -246,7 +246,7 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
 	g_warning("in correct NumberOf Frames (%d) - Failed to load file %s\n", dim.z, filename);
     }
   }
-
+  g_debug("Number of frames: %d (%d x %d px.)", dim.z, dim.x, dim.y);
   dim.t = 1; /* no support for multiple time frame of data in a single file */
 
   dim.g = 1; /* no support for multiple gates in a single file */
@@ -351,7 +351,8 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
       voxel_size.z = 1;
     }
   }
-
+  g_debug("Voxel size (mm): %f x %f x %f", voxel_size.x, voxel_size.y, voxel_size.z);
+  
   /* store this number, occasionally used in sorting */
   if (dcm_dataset->findAndGetSint32(DCM_InstanceNumber, return_sint32).good())
     ds->instance_number = return_sint32;
@@ -426,9 +427,13 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
       // new_offset.z = -1.0*(return_float64+voxel_size.z*dim.z); /* DICOM specifies z axis in wrong direction */
       new_offset.z = -1.0*return_float64; /* DICOM specifies z axis in wrong direction */
       amitk_space_set_offset(AMITK_SPACE(ds), new_offset);
+      found_value=TRUE;
     }
   }
 
+  if (!found_value) {
+    g_warning(_("Couldn't find ImagePositionPatient nor SliceLocation in file %s"), filename);    
+  }
 
   amitk_data_set_set_voxel_size(ds, voxel_size);
   amitk_data_set_calc_far_corner(ds);
@@ -650,6 +655,7 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_LEFT_DECUBITUS_HEADFIRST);
       else if (g_ascii_strcasecmp(return_str, "FFDL")==0)
   	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_LEFT_DECUBITUS_FEETFIRST);
+      g_debug("Patient position is %s", return_str);
     }
   }
 
@@ -691,19 +697,23 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   }
 
   if (result.bad()) {
-    g_warning(_("error reading in pixel data -  DCMTK error: %s - Failed to read file %s"),result.text(), filename);
+    g_warning(_("error reading in pixel data -  DCMTK error: %s - Failed to read file %s"), result.text(), filename);
     goto error;
   }
 
   i = zero_voxel;
 
   /* store the scaling factor... if there is one */
-  if (dcm_dataset->findAndGetFloat64(DCM_RescaleSlope, return_float64,0).good())
+  if (dcm_dataset->findAndGetFloat64(DCM_RescaleSlope, return_float64,0).good()) {
     *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling_factor, i) = return_float64;
+    g_debug("RescaleSlope: %f", return_float64);
+  }
 
   /* same for the offset */
-  if (dcm_dataset->findAndGetFloat64(DCM_RescaleIntercept, return_float64).good()) 
+  if (dcm_dataset->findAndGetFloat64(DCM_RescaleIntercept, return_float64).good()) {
     *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling_intercept, i) = return_float64;
+    g_debug("RescaleIntercept: %f", return_float64);
+  }
 
   if (dcm_dataset->findAndGetFloat64(DCM_FrameReferenceTime, return_float64).good()) 
     amitk_data_set_set_scan_start(ds,return_float64/1000.0);
