@@ -43,10 +43,18 @@
 #undef PACKAGE_STRING
 #undef PACKAGE_TARNAME
 #undef PACKAGE_VERSION
-#define HAVE_CONFIG_H /* the autoconf compiled version of DCMTK has a config header file */
+//#define HAVE_CONFIG_H /* the autoconf compiled version of DCMTK has a config header file */
+
+#include <dcmtk/config/osconfig.h>   /* 3.12 JPG2000 make sure OS specific configuration is included first */
 #include <dcmtk/dcmdata/dcddirif.h>     /* for class DicomDirInterface */
 #include <dcmtk/dcmdata/dctk.h>
 #include "dcmtk/dcmjpeg/djdecode.h"    /* for dcmjpeg decoders */
+#include <dcmtk/dcmdata/dcpxitem.h>  /*3.12 for JPEG2000*/
+/*OpenJpeg*/
+#include <openjpeg-2.1/opj_config.h>
+#include <openjpeg-2.1/openjpeg.h>
+static void * amide_J2kToRaw(DcmDataset *data);
+static OPJ_SIZE_T opj_input_memory_stream_read(void * p_buffer, OPJ_SIZE_T p_nb_bytes, void * p_user_data);
 
 const gchar * dcmtk_version = OFFIS_DCMTK_VERSION;
 
@@ -103,7 +111,7 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   const char * scan_time=NULL;
   gchar * temp_str;
   gboolean valid;
-
+  gboolean valid_J2K;
   AmitkPoint voxel_size = one_point;
   AmitkDataSet * ds=NULL;
   AmitkModality modality;
@@ -221,13 +229,13 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
 	      (strcmp(return_str, UID_JPEG2000TransferSyntax) == 0) ||
 	      (strcmp(return_str, UID_JPEG2000Part2MulticomponentImageCompressionLosslessOnlyTransferSyntax) == 0) ||
 	      (strcmp(return_str, UID_JPEG2000Part2MulticomponentImageCompressionTransferSyntax) == 0))
-	    valid = TRUE;
+	    valid_J2K = TRUE;
 
-    if (valid)
-      g_warning("could not decompress data in DICOM file %s likely because this is JPEG 2000 compressed data, dcmtk returned %s", filename, result.text());
-    else
-      g_warning("could not decompress data in DICOM file %s, dcmtk returned %s", filename, result.text());
-    goto error;
+    //if (valid_J2K)
+      //g_warning("could not decompress data in DICOM file %s likely because this is JPEG 2000 compressed data, dcmtk returned %s", filename, result.text());
+    //else
+      //g_warning("could not decompress data in DICOM file %s, dcmtk returned %s", filename, result.text());
+    //goto error;
   }
     
   /* get basic data */
@@ -686,43 +694,52 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
 
   /* a "GetSint16Array" function is also provided, but for some reason I get an error
      when using it.  I'll just use GetUint16Array even for signed stuff */
-  switch(format) {
-  case AMITK_FORMAT_SBYTE:
-  case AMITK_FORMAT_UBYTE:
-    {
-      const Uint8 * temp_buffer;
-      result = dcm_dataset->findAndGetUint8Array(DCM_PixelData, temp_buffer);
-      buffer = (void *) temp_buffer;
-      break;
-    }
-  case AMITK_FORMAT_SSHORT:
-  case AMITK_FORMAT_USHORT:
-    {
-      const Uint16 * temp_buffer;
-      result = dcm_dataset->findAndGetUint16Array(DCM_PixelData, temp_buffer);
-      buffer = (void *) temp_buffer;
-      break;
-    }
-  case AMITK_FORMAT_SINT:
-  case AMITK_FORMAT_UINT:
-    {
-      const Uint32 * temp_buffer;
-      result = dcm_dataset->findAndGetUint32Array(DCM_PixelData, temp_buffer);
-      //      result = dcm_dataset->findAndGetUint16Array(DCM_PixelData, temp_buffer);
-      buffer = (void *) temp_buffer;
-      break;
-    }
-  default:
-    g_warning("unsupported data format in %s at %d\n", __FILE__, __LINE__);
-    goto error;
-    break;
-  }
+  if (!valid_J2K) {
+        switch (format) {
+            case AMITK_FORMAT_SBYTE:
+            case AMITK_FORMAT_UBYTE:
+            {
+                const Uint8 * temp_buffer;
+                result = dcm_dataset->findAndGetUint8Array(DCM_PixelData, temp_buffer);
+                buffer = (void *) temp_buffer;
+                break;
+            }
+            case AMITK_FORMAT_SSHORT:
+            case AMITK_FORMAT_USHORT:
+            {
+                const Uint16 * temp_buffer;
+                result = dcm_dataset->findAndGetUint16Array(DCM_PixelData, temp_buffer);
+                buffer = (void *) temp_buffer;
+                break;
+            }
+            case AMITK_FORMAT_SINT:
+            case AMITK_FORMAT_UINT:
+            {
+                const Uint32 * temp_buffer;
+                result = dcm_dataset->findAndGetUint32Array(DCM_PixelData, temp_buffer);
+                //      result = dcm_dataset->findAndGetUint16Array(DCM_PixelData, temp_buffer);
+                buffer = (void *) temp_buffer;
+                break;
+            }
+            default:
+                g_warning("unsupported data format in %s at %d\n", __FILE__, __LINE__);
+                goto error;
+                break;
+        }
 
-  if (result.bad()) {
-    g_warning(_("error reading in pixel data -  DCMTK error: %s - Failed to read file %s"), result.text(), filename);
-    goto error;
-  }
-
+        if (result.bad()) {
+            g_warning(_("error reading in pixel data -  DCMTK error: %s - Failed to read file %s"), result.text(), filename);
+            goto error;
+        }
+    }
+    else {
+        buffer = amide_J2kToRaw(dcm_dataset);
+        if (!buffer) {
+            g_warning(_("error in amide_J2kToRaw %s"), filename);
+            goto error;
+        }
+    }
+  
   i = zero_voxel;
 
   /* store the scaling factor... if there is one */
@@ -2918,4 +2935,267 @@ gboolean dcmtk_export(AmitkDataSet * ds,
   return successful;
 }
 
+static void * amide_J2kToRaw(DcmDataset *data) {
+#define J2K_CFMT 0 /*#OPJ include <format_defs.h> format use define J2K_CMFT 0 instead*/
+    /*declaration for dcmtk*/
+    AmitkFormat format;
+    gint format_size;
+    Uint16 pixel_representation;
+    Uint16 bits_allocated;
+    Uint16 return_uint16=0;
+    Sint32 return_sint32=0;
+    const char * return_str=NULL;
+    Uint16 x=0;
+    Uint16 y=0;
+    Uint16 z = 0;
+    /*declarationfor openjpeg*/
+
+    opj_dparameters_t l_param;
+    opj_codec_t * l_codec;
+    opj_image_t * l_image;
+    opj_stream_t * l_stream;
+    OPJ_UINT32 l_tile_index;
+    OPJ_BOOL l_go_on = OPJ_TRUE;
+    OPJ_UINT32 l_nb_comps = 0;
+    OPJ_INT32 l_current_tile_x0, l_current_tile_y0, l_current_tile_x1, l_current_tile_y1;
+
+    int da_x0 = 0;
+    int da_y0 = 0;
+    int da_x1 = 1000; /*Still a mystery--Coordinates initialisation for area decoded*/
+    int da_y1 = 1000;
+
+    OFCondition result = EC_Normal;
+
+    /**********************x,y,z,format_size**********************************/
+    /*Format_size*/
+    if (data->findAndGetUint16(DCM_BitsAllocated, return_uint16).bad()) {
+        return NULL;
+    }
+    bits_allocated = return_uint16;
+
+    if (data->findAndGetUint16(DCM_PixelRepresentation, return_uint16).bad()) {
+        return NULL;
+    }
+    pixel_representation = return_uint16;
+
+    switch (bits_allocated) {
+        case 8:
+            if (pixel_representation) format = AMITK_FORMAT_SBYTE;
+            else format = AMITK_FORMAT_UBYTE;
+            break;
+        case 16:
+            if (pixel_representation) format = AMITK_FORMAT_SSHORT;
+            else format = AMITK_FORMAT_USHORT;
+            break;
+        case 32:
+            /* DICOM doesn't actually support anything but 8 and 16bit */
+            if (pixel_representation) format = AMITK_FORMAT_SINT;
+            else format = AMITK_FORMAT_UINT;
+            break;
+        default:
+            return NULL;
+    }
+    format_size = amitk_format_sizes[format];
+
+    /*X Columns*/
+    if (data->findAndGetUint16(DCM_Columns, return_uint16).bad()) {
+        return NULL;
+    }
+    x = return_uint16;
+    /*Y Rows*/
+    if (data->findAndGetUint16(DCM_Rows, return_uint16).bad()) {
+        return NULL;
+    }
+    y = return_uint16;
+    /*Z number of frames*/
+    if (data->findAndGetString(DCM_NumberOfFrames, return_str, OFTrue).bad()) {
+        /* note, I've never actually seen a DICOM file that uses the DCM_Planes tag, it's now retired */
+        if (data->findAndGetUint16(DCM_RETIRED_Planes, return_uint16).bad())
+            z = 1;
+        else
+            z = (int) return_uint16;
+    } else {
+        if (return_str != NULL) {
+            if (sscanf(return_str, "%d", &(return_sint32)) != 1)
+                return NULL;
+            z = (int) return_sint32;
+            if (z < 1)
+                return NULL;
+        }
+    }
+    /*Declaration/initialisation of decoded data */
+    OPJ_UINT32 l_data_size = format_size * x * y * z;
+    OPJ_BYTE * l_data = (OPJ_BYTE *) g_malloc(l_data_size);
+    if (!l_data) {
+        return NULL;
+    }
+
+    /*DCMTK*/
+    DcmElement* element = NULL;
+
+    result = data->findAndGetElement(DCM_PixelData, element);
+
+    if (result.bad() || element == NULL) {
+        g_free(l_data);
+        return NULL;
+    }
+
+    DcmPixelData *dpix = NULL;
+    dpix = OFstatic_cast(DcmPixelData*, element);
+
+    DcmPixelSequence *dseq = NULL;
+    E_TransferSyntax xferSyntax = EXS_Unknown;
+    const DcmRepresentationParameter *rep = NULL;
+
+    // Find the key that is needed to access the right representation of the data within DCMTK
+    dpix->getOriginalRepresentationKey(xferSyntax, rep);
+
+    // Access original data representation and get result within pixel sequence
+    result = dpix->getEncapsulatedRepresentation(xferSyntax, rep, dseq);
+
+    if (result != EC_Normal) {
+        g_free(l_data);
+        return NULL;
+    }
+
+    DcmPixelItem* pixitem = NULL;
+
+    // Access first frame (skipping offset table)
+    dseq->getItem(pixitem, 1);
+
+    if (pixitem == NULL) {
+        g_free(l_data);
+        return NULL;
+    }
+
+    Uint8 *pixData = NULL;
+
+    // Get the length of this pixel item (i.e. fragment, i.e. most of the time, the lenght of the frame)
+    Uint32 length = pixitem->getLength();
+
+    if (length == 0) {
+        g_free(l_data);
+        return NULL;
+    }
+
+    // Finally, get the compressed data for this pixel item
+    result = pixitem->getUint8Array(pixData);
+
+    /*Save Pixdata to buffer_raw*/
+    void * buffer_raw = (void *) g_malloc(length);
+    memcpy(buffer_raw, pixData, length); /* Copy pixData to buffer */
+
+    /****************************Openjpeg Decompression***********************/
+    l_stream = opj_stream_create(length,OPJ_TRUE);
+    if (!l_stream) {
+        g_free(l_data);
+        return 0;
+    }
+    
+    opj_stream_set_user_data(l_stream, buffer_raw, NULL);
+    opj_stream_set_user_data_length(l_stream, (OPJ_UINT64)length);
+    opj_stream_set_read_function(l_stream, opj_input_memory_stream_read);
+        
+
+    /* Set the default decoding parameters*/
+    opj_set_default_decoder_parameters(&l_param);
+
+    l_param.decod_format = J2K_CFMT; /*jpeg2000*/
+
+    /** you may here add custom decoding parameters */
+    /* do not use layer decoding limitations */
+    l_param.cp_layer = 0;
+
+    /* do not use resolutions reductions */
+    l_param.cp_reduce = 0;
+
+    /* to decode only a part of the image data */
+    /*opj_restrict_decoding(&l_param,0,0,1000,1000);*/
+
+    /* Get a decoder handle */
+    l_codec = opj_create_decompress(OPJ_CODEC_J2K);
+
+    /* Setup the decoder decoding parameters using user parameters */
+    if (!opj_setup_decoder(l_codec, &l_param)) {
+        g_free(l_data);
+        g_free(buffer_raw);
+        opj_stream_destroy(l_stream);
+        opj_destroy_codec(l_codec);
+        return 0;
+    }
+    /* Read the main header of the codestream and if necessary the JP2 boxes*/
+    if (!opj_read_header(l_stream, l_codec, &l_image)) {
+        g_free(l_data);
+        g_free(buffer_raw);
+        opj_stream_destroy(l_stream);
+        opj_destroy_codec(l_codec);
+        return 0;
+    }
+
+
+    if (!opj_set_decode_area(l_codec, l_image, da_x0, da_y0, da_x1, da_y1)) {
+        g_free(l_data);
+        g_free(buffer_raw);
+        opj_stream_destroy(l_stream);
+        opj_destroy_codec(l_codec);
+        opj_image_destroy(l_image);
+        return 0;
+    }
+    while (l_go_on) {
+        if (!opj_read_tile_header(l_codec, l_stream, &l_tile_index,
+                &l_data_size,
+                &l_current_tile_x0,
+                &l_current_tile_y0,
+                &l_current_tile_x1,
+                &l_current_tile_y1,
+                &l_nb_comps,
+                &l_go_on)) {
+            g_free(l_data);
+            g_free(buffer_raw);
+            opj_stream_destroy(l_stream);
+            opj_destroy_codec(l_codec);
+            opj_image_destroy(l_image);
+            return 0;
+        }
+
+        if (l_go_on) {
+            if (!opj_decode_tile_data(l_codec, l_tile_index, l_data, l_data_size, l_stream)) {
+                g_free(l_data);
+                g_free(buffer_raw);
+                opj_stream_destroy(l_stream);
+                opj_destroy_codec(l_codec);
+                opj_image_destroy(l_image);
+                return 0;
+            }
+            /** now should inspect image to know the reduction factor and then how to behave with data */
+        }
+    }
+
+
+    void * buffer2[l_data_size];
+    memcpy(buffer2, l_data, l_data_size);
+
+    if (!opj_end_decompress(l_codec, l_stream)) {
+        g_free(l_data);
+        opj_stream_destroy(l_stream);
+        opj_destroy_codec(l_codec);
+        opj_image_destroy(l_image);
+        return 0;
+    }
+
+    /* Free memory */
+    g_free(l_data);
+    g_free(buffer_raw);
+    opj_stream_destroy(l_stream);
+    opj_destroy_codec(l_codec);
+    opj_image_destroy(l_image);
+
+    return &buffer2;
+}
+
+static OPJ_SIZE_T opj_input_memory_stream_read(void * p_buffer, OPJ_SIZE_T p_nb_bytes, void * p_user_data) {
+
+    memcpy(p_buffer, p_user_data, p_nb_bytes);
+    return p_nb_bytes;
+}
 #endif /* AMIDE_LIBDCMDATA_SUPPORT */
