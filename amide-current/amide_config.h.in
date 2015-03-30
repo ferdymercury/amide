@@ -27,6 +27,9 @@
 /* Define to compile with (X)MedCon */
 #undef AMIDE_LIBMDC_SUPPORT
 
+/* Define to compile with openjp2 */
+#undef AMIDE_LIBOPENJP2_SUPPORT
+
 /* Define to compile with VolPack */
 #undef AMIDE_LIBVOLPACK_SUPPORT
 

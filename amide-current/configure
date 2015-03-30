@@ -678,6 +678,8 @@ AMIDE_GTK_EXTRA_GCONF_LIBS
 AMIDE_GTK_EXTRA_GCONF_CFLAGS
 AMIDE_GTK_LIBS
 AMIDE_GTK_CFLAGS
+AMIDE_LIBOPENJP2_LIBS
+AMIDE_LIBOPENJP2_CFLAGS
 AMIDE_LIBDCMDATA_CFLAGS
 AMIDE_LIBDCMDATA_LIBS
 LIBFAME_LIBS
@@ -905,6 +907,7 @@ with_libfame_exec_prefix
 enable_libfametest
 enable_libfame
 enable_libdcmdata
+enable_libopenjp2
 with_html_dir
 enable_gtk_doc
 enable_gtk_doc_html
@@ -933,6 +936,8 @@ PKG_CONFIG_PATH
 PKG_CONFIG_LIBDIR
 FFMPEG_CFLAGS
 FFMPEG_LIBS
+AMIDE_LIBOPENJP2_CFLAGS
+AMIDE_LIBOPENJP2_LIBS
 AMIDE_GTK_CFLAGS
 AMIDE_GTK_LIBS
 AMIDE_GTK_EXTRA_GCONF_CFLAGS
@@ -1589,6 +1594,7 @@ Optional Features:
   --disable-libfametest       Do not try to compile and run a test libfame program
   --enable-libfame   	  Compile in libfame mpeg encoding support if not using ffmpeg default=no
   --enable-libdcmdata	  Compile in DCMTK support for DICOM files default=yes
+ --enable-libopenjp2	Compile in jpeg2000 support default=yes
   --enable-gtk-doc        use gtk-doc to build documentation [[default=no]]
   --enable-gtk-doc-html   build documentation in html format [[default=yes]]
   --enable-gtk-doc-pdf    build documentation in pdf format [[default=no]]
@@ -1635,6 +1641,10 @@ Some influential environment variables:
   FFMPEG_CFLAGS
               C compiler flags for FFMPEG, overriding pkg-config
   FFMPEG_LIBS linker flags for FFMPEG, overriding pkg-config
+  AMIDE_LIBOPENJP2_CFLAGS
+              C compiler flags for AMIDE_LIBOPENJP2, overriding pkg-config
+  AMIDE_LIBOPENJP2_LIBS
+              linker flags for AMIDE_LIBOPENJP2, overriding pkg-config
   AMIDE_GTK_CFLAGS
               C compiler flags for AMIDE_GTK, overriding pkg-config
   AMIDE_GTK_LIBS
@@ -17087,7 +17097,7 @@ if test $M4 = "NOT_FOUND"; then
 fi
 
 
-OPTIMIZATION_CFLAGS="-O2"
+OPTIMIZATION_CFLAGS="-O0"
 echo "setting optimization level to $OPTIMIZATION_CFLAGS"
 
 
@@ -17669,6 +17679,13 @@ rm -f core conftest.err conftest.$ac_objext \
 
 
   rm -f conf.xmedcontest
+
+ac_fn_c_check_header_mongrel "$LINENO" "openjpeg-2.1/opj_config.h" "ac_cv_header_openjpeg_2_1_opj_config_h" "$ac_includes_default"
+if test "x$ac_cv_header_openjpeg_2_1_opj_config_h" = xyes; then :
+  FOUND_OPENJP2=yes
+else
+  FOUND_OPENJP2=no
+fi
 
 
 
@@ -18455,6 +18472,114 @@ else
 	echo "compiling without DCMTK support for DICOM files"
 fi
 
+# Check whether --enable-libopenjp2 was given.
+if test "${enable_libopenjp2+set}" = set; then :
+  enableval=$enable_libopenjp2; enable_libopenjp2="$enableval"
+else
+  enable_libopenjp2=yes
+fi
+
+
+if (test $enable_libopenjp2 = yes) && (test $FOUND_OPENJP2 = yes); then
+	echo "compiling with JPEG 2000 support "
+	AMIDE_LIBOPENJP2_LIBS="-lopenjp2"
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for AMIDE_LIBOPENJP2" >&5
+$as_echo_n "checking for AMIDE_LIBOPENJP2... " >&6; }
+
+if test -n "$AMIDE_LIBOPENJP2_CFLAGS"; then
+    pkg_cv_AMIDE_LIBOPENJP2_CFLAGS="$AMIDE_LIBOPENJP2_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libopenjp2 >= 2.1.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libopenjp2 >= 2.1.0") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_AMIDE_LIBOPENJP2_CFLAGS=`$PKG_CONFIG --cflags "libopenjp2 >= 2.1.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$AMIDE_LIBOPENJP2_LIBS"; then
+    pkg_cv_AMIDE_LIBOPENJP2_LIBS="$AMIDE_LIBOPENJP2_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libopenjp2 >= 2.1.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libopenjp2 >= 2.1.0") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_AMIDE_LIBOPENJP2_LIBS=`$PKG_CONFIG --libs "libopenjp2 >= 2.1.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        AMIDE_LIBOPENJP2_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "libopenjp2 >= 2.1.0" 2>&1`
+        else
+	        AMIDE_LIBOPENJP2_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "libopenjp2 >= 2.1.0" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$AMIDE_LIBOPENJP2_PKG_ERRORS" >&5
+
+	as_fn_error $? "Package requirements (libopenjp2 >= 2.1.0) were not met:
+
+$AMIDE_LIBOPENJP2_PKG_ERRORS
+
+Consider adjusting the PKG_CONFIG_PATH environment variable if you
+installed software in a non-standard prefix.
+
+Alternatively, you may set the environment variables AMIDE_LIBOPENJP2_CFLAGS
+and AMIDE_LIBOPENJP2_LIBS to avoid the need to call pkg-config.
+See the pkg-config man page for more details." "$LINENO" 5
+elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	{ { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "The pkg-config script could not be found or is too old.  Make sure it
+is in your PATH or set the PKG_CONFIG environment variable to the full
+path to pkg-config.
+
+Alternatively, you may set the environment variables AMIDE_LIBOPENJP2_CFLAGS
+and AMIDE_LIBOPENJP2_LIBS to avoid the need to call pkg-config.
+See the pkg-config man page for more details.
+
+To get pkg-config, see <http://pkg-config.freedesktop.org/>.
+See \`config.log' for more details" "$LINENO" 5; }
+else
+	AMIDE_LIBOPENJP2_CFLAGS=$pkg_cv_AMIDE_LIBOPENJP2_CFLAGS
+	AMIDE_LIBOPENJP2_LIBS=$pkg_cv_AMIDE_LIBOPENJP2_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+fi
+
+$as_echo "#define AMIDE_LIBOPENJP2_SUPPORT 1" >>confdefs.h
+
+else
+	echo "compiling without JPEG 2000 support"
+fi
 
 
 ###############################

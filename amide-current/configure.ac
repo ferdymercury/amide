@@ -13,7 +13,7 @@ AM_MAINTAINER_MODE([enable])
 
 AC_PROG_CC
 AC_PROG_CXX
-AM_PROG_LIBTOOL
+AC_PROG_LIBTOOL
 
 AC_CHECK_HEADERS(unistd.h, AC_DEFINE(HAVE_UNISTD_H))
 AC_CHECK_SIZEOF(long,8)
@@ -55,7 +55,8 @@ dnl make sure an optimization level is set. On jhbuild (os x) the CFLAGS gets
 dnl overwritten, so we're using this to make sure some optimization is on
 dnl when compiling. This is especially important to speeding up the 
 dnl reslicing algorithm
-OPTIMIZATION_CFLAGS="-O2"
+dnl OPTIMIZATION_CFLAGS="-O2"
+OPTIMIZATION_CFLAGS="-O0"
 echo "setting optimization level to $OPTIMIZATION_CFLAGS"
 AC_SUBST(OPTIMIZATION_CFLAGS)
 
@@ -100,7 +101,7 @@ AM_PATH_GSL(1.1.1, FOUND_LIBGSL=yes, FOUND_LIBGSL=no)
 AC_CHECK_LIB(ecat, matrix_open, FOUND_LIBECAT=yes, FOUND_LIBECAT=no, -L/sw/lib)
 AC_CHECK_LIB(volpack, vpGetErrorString, FOUND_VOLPACK=yes, FOUND_VOLPACK=no, -lm -L/sw/lib -L/usr/local/lib)
 AM_PATH_XMEDCON(0.10.0, FOUND_XMEDCON=yes, FOUND_XMEDCON=no)
-
+AC_CHECK_HEADER([openjpeg-2.1/opj_config.h],[FOUND_OPENJP2=yes],[FOUND_OPENJP2=no])
 
 
 dnl switch to C++ for DCMTK library stuff - also, if pthread is on the platform, probably need that
@@ -325,6 +326,22 @@ else
 	echo "compiling without DCMTK support for DICOM files"
 fi
 
+dnl Let people compile without jpeg2000 library
+AC_ARG_ENABLE(
+	libopenjp2, 
+	[ --enable-libopenjp2	Compile in jpeg2000 support [default=yes]], 
+	enable_libopenjp2="$enableval", 
+	enable_libopenjp2=yes)
+
+if (test $enable_libopenjp2 = yes) && (test $FOUND_OPENJP2 = yes); then
+	echo "compiling with JPEG 2000 support "
+	AMIDE_LIBOPENJP2_LIBS="-lopenjp2"
+	dnl AC_SUBST(AMIDE_LIBOPENJP2_LIBS)
+        PKG_CHECK_MODULES(AMIDE_LIBOPENJP2, [libopenjp2 >= 2.1.0])
+	AC_DEFINE(AMIDE_LIBOPENJP2_SUPPORT, 1, Define to compile with openjp2)
+else
+	echo "compiling without JPEG 2000 support"
+fi
 
 
 ###############################

@@ -43,18 +43,20 @@
 #undef PACKAGE_STRING
 #undef PACKAGE_TARNAME
 #undef PACKAGE_VERSION
-//#define HAVE_CONFIG_H /* the autoconf compiled version of DCMTK has a config header file */
 
-#include <dcmtk/config/osconfig.h>   /* 3.12 JPG2000 make sure OS specific configuration is included first */
+//#define HAVE_CONFIG_H /* the autoconf compiled version of DCMTK has a config header file */
 #include <dcmtk/dcmdata/dcddirif.h>     /* for class DicomDirInterface */
 #include <dcmtk/dcmdata/dctk.h>
+#include <dcmtk/dcmdata/dcrledrg.h>    /* for RLE decoders */
 #include "dcmtk/dcmjpeg/djdecode.h"    /* for dcmjpeg decoders */
-#include <dcmtk/dcmdata/dcpxitem.h>  /*3.12 for JPEG2000*/
-/*OpenJpeg*/
+
+#ifdef AMIDE_LIBOPENJP2_SUPPORT
+#include <dcmtk/config/osconfig.h>   /* JPG2000 make sure OS specific configuration is included first */
+#include <dcmtk/dcmdata/dcpxitem.h>
 #include <openjpeg-2.1/opj_config.h>
 #include <openjpeg-2.1/openjpeg.h>
-static void * amide_J2kToRaw(DcmDataset *data);
-static OPJ_SIZE_T opj_input_memory_stream_read(void * p_buffer, OPJ_SIZE_T p_nb_bytes, void * p_user_data);
+static void * j2k_to_raw(DcmDataset *pdata, AmitkDataSet const *pds);
+#endif
 
 const gchar * dcmtk_version = OFFIS_DCMTK_VERSION;
 
@@ -111,7 +113,7 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   const char * scan_time=NULL;
   gchar * temp_str;
   gboolean valid;
-  gboolean valid_J2K;
+  gboolean valid_J2K=FALSE;
   AmitkPoint voxel_size = one_point;
   AmitkDataSet * ds=NULL;
   AmitkModality modality;
@@ -215,27 +217,25 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
 					EUC_default,
 					EPC_default,
 					OFFalse);
+  DcmRLEDecoderRegistration::registerCodecs();
 
   /* uncompress the raw data in case this is a JPEG encoded file */
   result = dcm_dataset->chooseRepresentation(EXS_LittleEndianExplicit, NULL);
   if (result.bad()) {
-    valid = FALSE;
 
     /* check if this is JPEG2000, which is not currently freely supported by dcmtk */
-    if (dcm_metainfo != NULL)
-      if (dcm_metainfo->findAndGetString(DCM_TransferSyntaxUID, return_str).good()) 
-	if (return_str != NULL) 
-	  if ((strcmp(return_str, UID_JPEG2000LosslessOnlyTransferSyntax) == 0) ||
-	      (strcmp(return_str, UID_JPEG2000TransferSyntax) == 0) ||
-	      (strcmp(return_str, UID_JPEG2000Part2MulticomponentImageCompressionLosslessOnlyTransferSyntax) == 0) ||
-	      (strcmp(return_str, UID_JPEG2000Part2MulticomponentImageCompressionTransferSyntax) == 0))
-	    valid_J2K = TRUE;
+    return_str = dcm_syntax->getXferID();
+    if (return_str != NULL)
+      if ((strcmp(return_str, UID_JPEG2000LosslessOnlyTransferSyntax) == 0) ||
+              (strcmp(return_str, UID_JPEG2000TransferSyntax) == 0) ||
+              (strcmp(return_str, UID_JPEG2000Part2MulticomponentImageCompressionLosslessOnlyTransferSyntax) == 0) ||
+              (strcmp(return_str, UID_JPEG2000Part2MulticomponentImageCompressionTransferSyntax) == 0))
+        valid_J2K = TRUE;
 
-    //if (valid_J2K)
-      //g_warning("could not decompress data in DICOM file %s likely because this is JPEG 2000 compressed data, dcmtk returned %s", filename, result.text());
-    //else
-      //g_warning("could not decompress data in DICOM file %s, dcmtk returned %s", filename, result.text());
-    //goto error;
+    if (!valid_J2K) {
+      g_warning(_("could not decompress data in DICOM file %s, dcmtk returned %s"), filename, result.text());
+      goto error;
+    }
   }
     
   /* get basic data */
@@ -695,50 +695,50 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   /* a "GetSint16Array" function is also provided, but for some reason I get an error
      when using it.  I'll just use GetUint16Array even for signed stuff */
   if (!valid_J2K) {
-        switch (format) {
-            case AMITK_FORMAT_SBYTE:
-            case AMITK_FORMAT_UBYTE:
-            {
-                const Uint8 * temp_buffer;
-                result = dcm_dataset->findAndGetUint8Array(DCM_PixelData, temp_buffer);
-                buffer = (void *) temp_buffer;
-                break;
-            }
-            case AMITK_FORMAT_SSHORT:
-            case AMITK_FORMAT_USHORT:
-            {
-                const Uint16 * temp_buffer;
-                result = dcm_dataset->findAndGetUint16Array(DCM_PixelData, temp_buffer);
-                buffer = (void *) temp_buffer;
-                break;
-            }
-            case AMITK_FORMAT_SINT:
-            case AMITK_FORMAT_UINT:
-            {
-                const Uint32 * temp_buffer;
-                result = dcm_dataset->findAndGetUint32Array(DCM_PixelData, temp_buffer);
-                //      result = dcm_dataset->findAndGetUint16Array(DCM_PixelData, temp_buffer);
-                buffer = (void *) temp_buffer;
-                break;
-            }
-            default:
-                g_warning("unsupported data format in %s at %d\n", __FILE__, __LINE__);
-                goto error;
-                break;
-        }
+    switch (format) {
+      case AMITK_FORMAT_SBYTE:
+      case AMITK_FORMAT_UBYTE:
+      {
+        const Uint8 * temp_buffer;
+        result = dcm_dataset->findAndGetUint8Array(DCM_PixelData, temp_buffer);
+        buffer = (void *) temp_buffer;
+        break;
+      }
+      case AMITK_FORMAT_SSHORT:
+      case AMITK_FORMAT_USHORT:
+      {
+        const Uint16 * temp_buffer;
+        result = dcm_dataset->findAndGetUint16Array(DCM_PixelData, temp_buffer);
+        buffer = (void *) temp_buffer;
+        break;
+      }
+      case AMITK_FORMAT_SINT:
+      case AMITK_FORMAT_UINT:
+      {
+        const Uint32 * temp_buffer;
+        result = dcm_dataset->findAndGetUint32Array(DCM_PixelData, temp_buffer);
+        //      result = dcm_dataset->findAndGetUint16Array(DCM_PixelData, temp_buffer);
+        buffer = (void *) temp_buffer;
+        break;
+      }
+      default:
+        g_warning("unsupported data format in %s at %d\n", __FILE__, __LINE__);
+        goto error;
+        break;
+    }
 
-        if (result.bad()) {
-            g_warning(_("error reading in pixel data -  DCMTK error: %s - Failed to read file %s"), result.text(), filename);
-            goto error;
-        }
+    if (result.bad()) {
+      g_warning(_("error reading in pixel data - DCMTK error: %s - Failed to read file %s"), result.text(), filename);
+      goto error;
     }
-    else {
-        buffer = amide_J2kToRaw(dcm_dataset);
-        if (!buffer) {
-            g_warning(_("error in amide_J2kToRaw %s"), filename);
-            goto error;
-        }
+  } 
+  else {
+    buffer = j2k_to_raw(dcm_dataset, ds);
+    if (!buffer) {
+      g_warning(_("error while decompressing JPEG2000 from DCMTK file %s"), filename);
+      goto error;
     }
+  }
   
   i = zero_voxel;
 
@@ -774,7 +774,10 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
       /* note, we've already flipped the coordinate axis, so reading in the data straight is correct */
       ds_pointer = amitk_raw_data_get_pointer(AMITK_DATA_SET_RAW_DATA(ds), i);
       memcpy(ds_pointer, (guchar *) buffer, format_size*ds->raw_data->dim.x*ds->raw_data->dim.y*ds->raw_data->dim.z);
-
+      if (valid_J2K) { /* Free allocated buffer */
+        g_free((gpointer)buffer);
+        buffer=NULL;
+      }
     }
   }
 
@@ -798,7 +801,11 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
 
   /* deregister global decompression codecs */
   DJDecoderRegistration::cleanup();
-
+ if (valid_J2K && buffer) { /* Free allocated buffer */
+   //g_free((gpointer)buffer);
+   //buffer=NULL;
+ }
+ 
   return ds;
 }
 
@@ -2935,267 +2942,272 @@ gboolean dcmtk_export(AmitkDataSet * ds,
   return successful;
 }
 
-static void * amide_J2kToRaw(DcmDataset *data) {
-#define J2K_CFMT 0 /*#OPJ include <format_defs.h> format use define J2K_CMFT 0 instead*/
-    /*declaration for dcmtk*/
-    AmitkFormat format;
-    gint format_size;
-    Uint16 pixel_representation;
-    Uint16 bits_allocated;
-    Uint16 return_uint16=0;
-    Sint32 return_sint32=0;
-    const char * return_str=NULL;
-    Uint16 x=0;
-    Uint16 y=0;
-    Uint16 z = 0;
-    /*declarationfor openjpeg*/
+#ifdef AMIDE_LIBOPENJP2_SUPPORT
 
-    opj_dparameters_t l_param;
-    opj_codec_t * l_codec;
-    opj_image_t * l_image;
-    opj_stream_t * l_stream;
-    OPJ_UINT32 l_tile_index;
-    OPJ_BOOL l_go_on = OPJ_TRUE;
-    OPJ_UINT32 l_nb_comps = 0;
-    OPJ_INT32 l_current_tile_x0, l_current_tile_y0, l_current_tile_x1, l_current_tile_y1;
+/* Read num_bytes from user_data (from stream) into buffer. Note that user_data may be of any type, 
+ * it is our responsibility to extract the data from it. In our case user_data has been set to comp_buffer
+ * and we expect this function to be called only once with num_bytes == comp_lenght... */
+static OPJ_SIZE_T opj_input_memory_stream_read(void * buffer, OPJ_SIZE_T num_bytes, void * user_data) {
 
-    int da_x0 = 0;
-    int da_y0 = 0;
-    int da_x1 = 1000; /*Still a mystery--Coordinates initialisation for area decoded*/
-    int da_y1 = 1000;
+  memcpy(buffer, user_data, num_bytes);
+  return num_bytes;
+}
 
-    OFCondition result = EC_Normal;
 
-    /**********************x,y,z,format_size**********************************/
-    /*Format_size*/
-    if (data->findAndGetUint16(DCM_BitsAllocated, return_uint16).bad()) {
-        return NULL;
+/* decompress comp_buffer (comp_length bytes) into raw_buffer (raw_length) 
+ *   TODO J2K format assumed */
+static gboolean j2k_decompress(guint32 comp_length, const guint8 *comp_buffer, guint32 raw_length, guint8 *raw_buffer) {
+  gboolean return_val = FALSE;
+  /* openjpeg stuff */
+  opj_codec_t * codec=NULL;
+  opj_image_t * image=NULL;
+  opj_stream_t * stream=NULL;
+  opj_dparameters_t param; // Decoder parameters
+  OPJ_UINT32 tile_index; // J2K images may contain several tiles
+  OPJ_UINT32 tile_size;
+  OPJ_INT32 current_tile_x0, current_tile_y0, current_tile_x1, current_tile_y1; // tile coordinates
+  OPJ_UINT32 num_comps; // Number of components in tile (not used))
+  OPJ_BOOL go_on = OPJ_TRUE; // Indicates more tiles to process
+  guint8 *pdata;
+  guint32 tile;
+  
+  stream = opj_stream_create(comp_length, OPJ_TRUE); // Internal buffer can hold the whole stream in one read call
+  if (!stream) {
+    goto error;
+  }
+
+  opj_stream_set_user_data(stream, (void *)comp_buffer, NULL);
+  opj_stream_set_user_data_length(stream, (OPJ_UINT64)comp_length);
+  opj_stream_set_read_function(stream, opj_input_memory_stream_read);
+
+
+  /* Set the default decoding parameters*/
+  opj_set_default_decoder_parameters(&param);
+  /* do not use layer decoding limitations */
+  param.cp_layer = 0;
+  /* do not use resolutions reductions */
+  param.cp_reduce = 0;
+  /* to decode only a part of the image data */
+  /*opj_restrict_decoding(&l_param,0,0,1000,1000);*/
+
+  /* Get a decoder handle */
+  if ((codec = opj_create_decompress(OPJ_CODEC_J2K)) == NULL) {
+    goto error;
+  }
+
+  /* Setup the decoder decoding parameters using user parameters */
+  if (!opj_setup_decoder(codec, &param)) {
+    goto error;
+  }
+  /* Read the main header of the codestream and if necessary the JP2 boxes */
+  if (!opj_read_header(stream, codec, &image)) {
+    goto error;
+  }
+  g_debug("J2K image grid (x0, y0, x1, y1): (%d, %d, %d, %d), components: %d", image->x0, image->y0, image->x1, image->y1, image->numcomps);
+
+  /* We do not yet support color images */
+  if (image->numcomps > 1) {
+    g_warning(_("JPEG 2000 color images not supported"));
+    goto error;
+  }
+
+  /* decode the whole image area by default */
+  pdata = raw_buffer;
+  tile = 0;
+  while (go_on) {
+    if (!opj_read_tile_header(codec, stream,
+            &tile_index,
+            &tile_size,
+            &current_tile_x0,
+            &current_tile_y0,
+            &current_tile_x1,
+            &current_tile_y1,
+            &num_comps,
+            &go_on)) {
+      goto error;
     }
-    bits_allocated = return_uint16;
-
-    if (data->findAndGetUint16(DCM_PixelRepresentation, return_uint16).bad()) {
-        return NULL;
+    if (go_on) {
+      tile++;
+      if (pdata + tile_size > raw_buffer + raw_length) {
+        g_debug("raw_buffer size exceeded when decoding tile %u", tile);
+        goto error;
+      }
+      if (!opj_decode_tile_data(codec, tile_index, (OPJ_BYTE *)pdata, tile_size, stream)) {
+        goto error;
+      }
+      pdata+= tile_size;
+      /** now should inspect image to know the reduction factor and then how to behave with data */
     }
-    pixel_representation = return_uint16;
+  }
+  g_debug("J2K processed %u tiles", tile);
+  return_val = opj_end_decompress(codec, stream);
 
-    switch (bits_allocated) {
-        case 8:
-            if (pixel_representation) format = AMITK_FORMAT_SBYTE;
-            else format = AMITK_FORMAT_UBYTE;
-            break;
-        case 16:
-            if (pixel_representation) format = AMITK_FORMAT_SSHORT;
-            else format = AMITK_FORMAT_USHORT;
-            break;
-        case 32:
-            /* DICOM doesn't actually support anything but 8 and 16bit */
-            if (pixel_representation) format = AMITK_FORMAT_SINT;
-            else format = AMITK_FORMAT_UINT;
-            break;
-        default:
-            return NULL;
+  error:
+  /* Free memory */
+  if (image) opj_image_destroy(image);
+  if (codec) opj_destroy_codec(codec);
+  if (stream) opj_stream_destroy(stream);
+
+  return return_val;
+}
+
+/* Extract JPEG 2000 encoding PixelData from the DcmDataset and return the buffer containing
+ * decompressed image(s). Note that MultiFrame DICOM files nor multi-tile JPEG 2000 images
+ * have been tested because of lack of sample data. */
+static void * j2k_to_raw(DcmDataset *dcm_data, AmitkDataSet const *ds) {
+  /* Amitk stuff */
+  AmitkRawData *raw_data;
+  gint format_size;
+  amide_intpoint_t z;
+  guint32 data_size; // overall buffer size for X * Y * Z dimensions
+  guint32 image_size; // for one decompressed image
+  guint8 *data = NULL; // our buffer to hold the z * decompressed images
+  guint8 *pdata;
+  /* DCMTK stuff */
+  DcmElement *element;
+  DcmPixelData *pixel_data;
+  DcmPixelSequence *pixel_sequence; // = NULL;
+  E_TransferSyntax transfer_syntax; // = EXS_Unknown;
+  const DcmRepresentationParameter *representation_parameter; // = NULL;
+  DcmPixelItem *pixel_item; // = NULL;
+  Uint8 *pixel_buffer; // to hold one compressed frame fragment
+  Uint32 pixel_length;
+  Uint32 num_frames; // Number of frames within PixelData
+  Uint32 frame; // current frame
+  Uint32 *frame_offset; // Pointer to an array of frame offset
+  Uint32 offset; // current offset
+  gboolean frame_in_progress;
+  Uint8 *temp_buffer = NULL; // temporary buffer to process current frame
+  Uint32 temp_length; // temporary buffer length, may increase if several fragments
+  Uint32 old_temp_length;
+  
+  OFCondition result;
+
+  raw_data = ds->raw_data;
+  format_size = amitk_format_sizes[AMITK_RAW_DATA_FORMAT(raw_data)];
+  z = AMITK_DATA_SET_DIM_Z(ds);
+  image_size = format_size * AMITK_RAW_DATA_DIM_X(raw_data) * AMITK_RAW_DATA_DIM_Y(raw_data);
+  data_size = image_size * AMITK_RAW_DATA_DIM_Z(raw_data);
+  data = (guint8 *)g_malloc(data_size);
+  
+  result = dcm_data->findAndGetElement(DCM_PixelData, element);
+  if (result.bad()) {
+    goto error;
+  }
+
+  pixel_data = OFstatic_cast(DcmPixelData*, element);
+  
+  // Find the key that is needed to access the right representation of the data within DCMTK
+  pixel_data->getOriginalRepresentationKey(transfer_syntax, representation_parameter);
+
+  // Access original data representation and get result within pixel sequence
+  result = pixel_data->getEncapsulatedRepresentation(transfer_syntax, representation_parameter, pixel_sequence);
+  if (result != EC_Normal) {
+    goto error;
+  }
+
+  // First item is offset table
+  result = pixel_sequence->getItem(pixel_item, 0); 
+  if (result.bad()) {
+    goto error;
+  }
+  pixel_length = pixel_item->getLength();
+  if (pixel_length == 0) { // MonoFrame
+    num_frames = 1;
+  } else {
+    num_frames = pixel_length / 4;
+  }
+  if (num_frames != (Uint32)z) {
+    g_debug("Number of frames expected (%d) do not tally found (%d)", z, num_frames);
+    goto error;
+  }
+  // Get the array of frame offset
+  result = pixel_item->getUint32Array(frame_offset);
+  if (result.bad()) {
+    // Surpisingly this would return bad even if there is an offset table for a single fragment
+    frame_offset = NULL;
+  }
+  /* TODO pass transfer_syntax to j2k_decompress for proper handling (here assumed EXS_JPEG2000) */
+  pdata = data;
+  offset = 0;
+  frame = 0;
+  frame_in_progress = FALSE;
+  for (int frag = 1; ; frag++) {
+    result = pixel_sequence->getItem(pixel_item, frag);
+    if (result.bad()) { // indicates sequence end
+      break;
     }
-    format_size = amitk_format_sizes[format];
-
-    /*X Columns*/
-    if (data->findAndGetUint16(DCM_Columns, return_uint16).bad()) {
-        return NULL;
+    // Get the length of this pixel item (i.e. fragment)
+    pixel_length = pixel_item->getLength();
+    if (pixel_length == 0) {
+      g_debug("Expecting a not empty fragment");
+      goto error;
     }
-    x = return_uint16;
-    /*Y Rows*/
-    if (data->findAndGetUint16(DCM_Rows, return_uint16).bad()) {
-        return NULL;
-    }
-    y = return_uint16;
-    /*Z number of frames*/
-    if (data->findAndGetString(DCM_NumberOfFrames, return_str, OFTrue).bad()) {
-        /* note, I've never actually seen a DICOM file that uses the DCM_Planes tag, it's now retired */
-        if (data->findAndGetUint16(DCM_RETIRED_Planes, return_uint16).bad())
-            z = 1;
-        else
-            z = (int) return_uint16;
-    } else {
-        if (return_str != NULL) {
-            if (sscanf(return_str, "%d", &(return_sint32)) != 1)
-                return NULL;
-            z = (int) return_sint32;
-            if (z < 1)
-                return NULL;
-        }
-    }
-    /*Declaration/initialisation of decoded data */
-    OPJ_UINT32 l_data_size = format_size * x * y * z;
-    OPJ_BYTE * l_data = (OPJ_BYTE *) g_malloc(l_data_size);
-    if (!l_data) {
-        return NULL;
-    }
-
-    /*DCMTK*/
-    DcmElement* element = NULL;
-
-    result = data->findAndGetElement(DCM_PixelData, element);
-
-    if (result.bad() || element == NULL) {
-        g_free(l_data);
-        return NULL;
-    }
-
-    DcmPixelData *dpix = NULL;
-    dpix = OFstatic_cast(DcmPixelData*, element);
-
-    DcmPixelSequence *dseq = NULL;
-    E_TransferSyntax xferSyntax = EXS_Unknown;
-    const DcmRepresentationParameter *rep = NULL;
-
-    // Find the key that is needed to access the right representation of the data within DCMTK
-    dpix->getOriginalRepresentationKey(xferSyntax, rep);
-
-    // Access original data representation and get result within pixel sequence
-    result = dpix->getEncapsulatedRepresentation(xferSyntax, rep, dseq);
-
+    // get the compressed data fragment for this pixel item
+    result = pixel_item->getUint8Array(pixel_buffer);
     if (result != EC_Normal) {
-        g_free(l_data);
-        return NULL;
+      goto error;
     }
-
-    DcmPixelItem* pixitem = NULL;
-
-    // Access first frame (skipping offset table)
-    dseq->getItem(pixitem, 1);
-
-    if (pixitem == NULL) {
-        g_free(l_data);
-        return NULL;
-    }
-
-    Uint8 *pixData = NULL;
-
-    // Get the length of this pixel item (i.e. fragment, i.e. most of the time, the lenght of the frame)
-    Uint32 length = pixitem->getLength();
-
-    if (length == 0) {
-        g_free(l_data);
-        return NULL;
-    }
-
-    // Finally, get the compressed data for this pixel item
-    result = pixitem->getUint8Array(pixData);
-
-    /*Save Pixdata to buffer_raw*/
-    void * buffer_raw = (void *) g_malloc(length);
-    memcpy(buffer_raw, pixData, length); /* Copy pixData to buffer */
-
-    /****************************Openjpeg Decompression***********************/
-    l_stream = opj_stream_create(length,OPJ_TRUE);
-    if (!l_stream) {
-        g_free(l_data);
-        return 0;
-    }
-    
-    opj_stream_set_user_data(l_stream, buffer_raw, NULL);
-    opj_stream_set_user_data_length(l_stream, (OPJ_UINT64)length);
-    opj_stream_set_read_function(l_stream, opj_input_memory_stream_read);
-        
-
-    /* Set the default decoding parameters*/
-    opj_set_default_decoder_parameters(&l_param);
-
-    l_param.decod_format = J2K_CFMT; /*jpeg2000*/
-
-    /** you may here add custom decoding parameters */
-    /* do not use layer decoding limitations */
-    l_param.cp_layer = 0;
-
-    /* do not use resolutions reductions */
-    l_param.cp_reduce = 0;
-
-    /* to decode only a part of the image data */
-    /*opj_restrict_decoding(&l_param,0,0,1000,1000);*/
-
-    /* Get a decoder handle */
-    l_codec = opj_create_decompress(OPJ_CODEC_J2K);
-
-    /* Setup the decoder decoding parameters using user parameters */
-    if (!opj_setup_decoder(l_codec, &l_param)) {
-        g_free(l_data);
-        g_free(buffer_raw);
-        opj_stream_destroy(l_stream);
-        opj_destroy_codec(l_codec);
-        return 0;
-    }
-    /* Read the main header of the codestream and if necessary the JP2 boxes*/
-    if (!opj_read_header(l_stream, l_codec, &l_image)) {
-        g_free(l_data);
-        g_free(buffer_raw);
-        opj_stream_destroy(l_stream);
-        opj_destroy_codec(l_codec);
-        return 0;
-    }
-
-
-    if (!opj_set_decode_area(l_codec, l_image, da_x0, da_y0, da_x1, da_y1)) {
-        g_free(l_data);
-        g_free(buffer_raw);
-        opj_stream_destroy(l_stream);
-        opj_destroy_codec(l_codec);
-        opj_image_destroy(l_image);
-        return 0;
-    }
-    while (l_go_on) {
-        if (!opj_read_tile_header(l_codec, l_stream, &l_tile_index,
-                &l_data_size,
-                &l_current_tile_x0,
-                &l_current_tile_y0,
-                &l_current_tile_x1,
-                &l_current_tile_y1,
-                &l_nb_comps,
-                &l_go_on)) {
-            g_free(l_data);
-            g_free(buffer_raw);
-            opj_stream_destroy(l_stream);
-            opj_destroy_codec(l_codec);
-            opj_image_destroy(l_image);
-            return 0;
+    if (frame_in_progress) {
+      // Has the offset exceeded the current frame ?
+      if (!frame_offset || (frame == num_frames -1) || (offset < frame_offset[frame+1])) {
+        // No or no frame_offset table or last frame
+        // realloc
+        old_temp_length = temp_length;
+        temp_length += pixel_length;
+        temp_buffer = (Uint8 *)g_realloc(temp_buffer, temp_length);
+        // append pixel_buffer
+        memcpy(temp_buffer+old_temp_length, pixel_buffer, pixel_length);
+      } else {
+        // yes or no frame_offset table
+        if (!j2k_decompress(temp_length, temp_buffer, image_size, pdata)) {
+          goto error;
         }
-
-        if (l_go_on) {
-            if (!opj_decode_tile_data(l_codec, l_tile_index, l_data, l_data_size, l_stream)) {
-                g_free(l_data);
-                g_free(buffer_raw);
-                opj_stream_destroy(l_stream);
-                opj_destroy_codec(l_codec);
-                opj_image_destroy(l_image);
-                return 0;
-            }
-            /** now should inspect image to know the reduction factor and then how to behave with data */
-        }
+        pdata+= image_size;
+        frame++;
+        g_free(temp_buffer);
+        // allocate a new temp buffer
+        temp_length = pixel_length;
+        temp_buffer = (Uint8 *)g_malloc(temp_length);
+        memcpy(temp_buffer, pixel_buffer, temp_length);
+      }
+    } else { // first frame
+      // malloc temp_buffer
+      temp_length = pixel_length;
+      temp_buffer = (Uint8 *)g_malloc(temp_length);
+      // copy pixel_buffer
+      memcpy(temp_buffer, pixel_buffer, temp_length);
+      frame_in_progress = TRUE;
     }
-
-
-    void * buffer2[l_data_size];
-    memcpy(buffer2, l_data, l_data_size);
-
-    if (!opj_end_decompress(l_codec, l_stream)) {
-        g_free(l_data);
-        opj_stream_destroy(l_stream);
-        opj_destroy_codec(l_codec);
-        opj_image_destroy(l_image);
-        return 0;
+    // update offset
+    offset+= pixel_length + 8; // must account for Item tag + Item length
+    // sanity check frame < num_frames
+    if (frame >= num_frames) {
+      // We have a problem
+      g_debug("To many frames: %d ! Expected %d", frame+1, num_frames);
+      goto error;
     }
+  }
+  if (frame_in_progress) { // should be the case...
+    // decompress
+    if (!j2k_decompress(temp_length, temp_buffer, image_size, pdata)) {
+      goto error;
+    }
+    pdata+= image_size;
+    frame++;
+    g_free(temp_buffer);
+  } else {
+    g_debug("Expecting more fragments to come...");
+    goto error;
+  }
 
-    /* Free memory */
-    g_free(l_data);
-    g_free(buffer_raw);
-    opj_stream_destroy(l_stream);
-    opj_destroy_codec(l_codec);
-    opj_image_destroy(l_image);
+  return data;
 
-    return &buffer2;
+error:
+  if (temp_buffer) g_free(temp_buffer);
+  if (data) g_free(data);
+  return NULL;
 }
 
-static OPJ_SIZE_T opj_input_memory_stream_read(void * p_buffer, OPJ_SIZE_T p_nb_bytes, void * p_user_data) {
-
-    memcpy(p_buffer, p_user_data, p_nb_bytes);
-    return p_nb_bytes;
-}
+#endif /* AMIDE_LIBOPENJP2_SUPPORT */
 #endif /* AMIDE_LIBDCMDATA_SUPPORT */
