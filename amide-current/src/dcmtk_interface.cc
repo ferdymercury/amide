@@ -3083,8 +3083,8 @@ static void * j2k_to_raw(DcmDataset *dcm_data, AmitkDataSet const *ds) {
   Uint32 offset; // current offset
   gboolean frame_in_progress;
   Uint8 *temp_buffer = NULL; // temporary buffer to process current frame
+  Uint32 temp_length = 0; // temporary buffer length, may increase if several fragments (= 0 to avoid -Wmaybe-uninitialized)
   Uint8 *temp_buffer_tmp;
-  Uint32 temp_length; // temporary buffer length, may increase if several fragments
   Uint32 old_temp_length;
   
   OFCondition result;
