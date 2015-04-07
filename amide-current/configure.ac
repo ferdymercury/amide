@@ -55,8 +55,7 @@ dnl make sure an optimization level is set. On jhbuild (os x) the CFLAGS gets
 dnl overwritten, so we're using this to make sure some optimization is on
 dnl when compiling. This is especially important to speeding up the 
 dnl reslicing algorithm
-dnl OPTIMIZATION_CFLAGS="-O2"
-OPTIMIZATION_CFLAGS="-O0"
+OPTIMIZATION_CFLAGS="-O2"
 echo "setting optimization level to $OPTIMIZATION_CFLAGS"
 AC_SUBST(OPTIMIZATION_CFLAGS)
 

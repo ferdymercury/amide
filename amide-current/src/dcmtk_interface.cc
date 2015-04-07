@@ -733,11 +733,16 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
     }
   } 
   else {
+#ifdef AMIDE_LIBOPENJP2_SUPPORT    
     buffer = j2k_to_raw(dcm_dataset, ds);
     if (!buffer) {
-      g_warning(_("error while decompressing JPEG2000 from DCMTK file %s"), filename);
+      g_warning(_("error while decompressing JPEG 2000 from DCMTK file %s"), filename);
       goto error;
     }
+#else
+    g_warning(_("file %s is JPEG 2000 encoded and supporting libraries have not been compiled in."), filename);
+    goto error;
+#endif
   }
   
   i = zero_voxel;
@@ -3078,6 +3083,7 @@ static void * j2k_to_raw(DcmDataset *dcm_data, AmitkDataSet const *ds) {
   Uint32 offset; // current offset
   gboolean frame_in_progress;
   Uint8 *temp_buffer = NULL; // temporary buffer to process current frame
+  Uint8 *temp_buffer_tmp;
   Uint32 temp_length; // temporary buffer length, may increase if several fragments
   Uint32 old_temp_length;
   
@@ -3088,7 +3094,11 @@ static void * j2k_to_raw(DcmDataset *dcm_data, AmitkDataSet const *ds) {
   z = AMITK_DATA_SET_DIM_Z(ds);
   image_size = format_size * AMITK_RAW_DATA_DIM_X(raw_data) * AMITK_RAW_DATA_DIM_Y(raw_data);
   data_size = image_size * AMITK_RAW_DATA_DIM_Z(raw_data);
-  data = (guint8 *)g_malloc(data_size);
+  data = (guint8 *)g_try_malloc(data_size);
+  if (data == NULL) {
+    g_debug("malloc failed %d", __LINE__);
+    goto error;
+  }
   
   result = dcm_data->findAndGetElement(DCM_PixelData, element);
   if (result.bad()) {
@@ -3155,7 +3165,12 @@ static void * j2k_to_raw(DcmDataset *dcm_data, AmitkDataSet const *ds) {
         // realloc
         old_temp_length = temp_length;
         temp_length += pixel_length;
-        temp_buffer = (Uint8 *)g_realloc(temp_buffer, temp_length);
+        temp_buffer_tmp = (Uint8 *)g_try_realloc(temp_buffer, temp_length);
+        if (temp_buffer_tmp == NULL) {
+          g_debug("malloc failed %d", __LINE__);
+          goto error;
+        }
+        temp_buffer = temp_buffer_tmp;
         // append pixel_buffer
         memcpy(temp_buffer+old_temp_length, pixel_buffer, pixel_length);
       } else {
@@ -3168,13 +3183,21 @@ static void * j2k_to_raw(DcmDataset *dcm_data, AmitkDataSet const *ds) {
         g_free(temp_buffer);
         // allocate a new temp buffer
         temp_length = pixel_length;
-        temp_buffer = (Uint8 *)g_malloc(temp_length);
+        temp_buffer = (Uint8 *)g_try_malloc(temp_length);
+        if (temp_buffer == NULL) {
+          g_debug("malloc failed %d", __LINE__);
+          goto error;
+        }
         memcpy(temp_buffer, pixel_buffer, temp_length);
       }
     } else { // first frame
       // malloc temp_buffer
       temp_length = pixel_length;
-      temp_buffer = (Uint8 *)g_malloc(temp_length);
+      temp_buffer = (Uint8 *)g_try_malloc(temp_length);
+      if (temp_buffer == NULL) {
+        g_debug("malloc failed %d", __LINE__);
+        goto error;
+      }
       // copy pixel_buffer
       memcpy(temp_buffer, pixel_buffer, temp_length);
       frame_in_progress = TRUE;
@@ -3184,7 +3207,7 @@ static void * j2k_to_raw(DcmDataset *dcm_data, AmitkDataSet const *ds) {
     // sanity check frame < num_frames
     if (frame >= num_frames) {
       // We have a problem
-      g_debug("To many frames: %d ! Expected %d", frame+1, num_frames);
+      g_debug("Too many frames: %d ! Expected %d", frame+1, num_frames);
       goto error;
     }
   }

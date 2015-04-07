@@ -17097,7 +17097,7 @@ if test $M4 = "NOT_FOUND"; then
 fi
 
 
-OPTIMIZATION_CFLAGS="-O0"
+OPTIMIZATION_CFLAGS="-O2"
 echo "setting optimization level to $OPTIMIZATION_CFLAGS"
 
 
