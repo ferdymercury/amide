@@ -246,14 +246,12 @@ AC_ARG_ENABLE(
 	enable_vistaio=yes)
 
 if (test $enable_vistaio = yes); then
-        PKG_CHECK_MODULES(VISTAIO, vistaio >= 1.2.17, FOUND_VISTAIO=yes, [
+        PKG_CHECK_MODULES(VISTAIO, libvistaio >= 1.2.17, FOUND_VISTAIO=yes, [
         AC_MSG_ERROR("Resquested vista support but vistaio was not found"); 
                 ]);
         echo "compiling with vistaio support"
-	AMIDE_VISTAIO_LIBS="$VISTAIO_LIBS"
-        AMIDE_VISTAIO_CFLAGS="$VISTAIO_CFLAGS"
-	AC_SUBST(AMIDE_VISTAIO_LIBS)
-        AC_SUBST(AMIDE_VISTAIO_CFLAGS)
+	AC_SUBST(VISTAIO_LIBS)
+        AC_SUBST(VISTAIO_CFLAGS)
 	AC_DEFINE(AMIDE_VISTAIO_SUPPORT, 1, Define to compile with vistaio)
 else
 	echo "compiling without vistaio file support"

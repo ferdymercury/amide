@@ -12,9 +12,6 @@
 /* Define to compile with DCMTK */
 #undef AMIDE_LIBDCMDATA_SUPPORT
 
-/* Define to compile with libecat */
-#undef AMIDE_LIBECAT_SUPPORT
-
 /* Define to compile with Libfame */
 #undef AMIDE_LIBFAME_SUPPORT
 
@@ -35,6 +32,9 @@
 
 /* Define to compile with native GTK support on Mac OS X */
 #undef AMIDE_NATIVE_GTK_OSX
+
+/* Define to compile with vistaio */
+#undef AMIDE_VISTAIO_SUPPORT
 
 /* always defined to indicate that i18n is enabled */
 #undef ENABLE_NLS

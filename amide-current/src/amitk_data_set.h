@@ -221,6 +221,9 @@ typedef enum { /*< skip >*/
 #ifdef AMIDE_LIBMDC_SUPPORT
   AMITK_IMPORT_METHOD_LIBMDC,
 #endif
+#ifdef AMIDE_VISTAIO_SUPPORT
+  AMITK_IMPORT_METHOD_VISTAIO, 
+#endif
   AMITK_IMPORT_METHOD_NUM
 } AmitkImportMethod;
 

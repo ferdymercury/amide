@@ -37,7 +37,6 @@ gboolean vistaio_test_vista(gchar *filename);
 
 
 /* external functions */
-gboolean vistaio_supports(libmdc_format_t format);
 AmitkDataSet * vistaio_import(const gchar * filename, 
 			      AmitkPreferences * preferences,
 			      AmitkUpdateFunc update_func,
@@ -54,4 +53,6 @@ gboolean vistaio_export(AmitkDataSet * ds,
 			gpointer update_data);
 
 
-#endif 
+#endif
+
+#endif /*AMIDE_VISTAIO_SUPPORT*/

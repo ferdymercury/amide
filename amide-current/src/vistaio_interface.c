@@ -1,5 +1,6 @@
-/* vistaio_interface.c
- * -*- c-basic-offset:2 -*- 
+/* -*- c-basic-offset: 2;  -*-  
+ * vistaio_interface.c
+ * 
  * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2001-2015 Andy Loening
  *
@@ -36,18 +37,16 @@
 
 gboolean vistaio_test_vista(gchar *filename)
 {
-	return VistaIOIsVistaFile(filename); 
+  return VistaIOIsVistaFile(filename); 
 }
 
 
-static AmitkDataSet * vistaio_import(const gchar * filename, 
-				     AmitkPreferences * preferences,
-				     AmitkUpdateFunc update_func,
-				     gpointer update_data); 
-
-static VistaIOBoolen vistaio_get_pixel_signedness(VImage image);
-static void vistaio_get_voxel_size(VImage image, AmitkPoint *voxel); 
-
+static VistaIOBoolean vistaio_get_pixel_signedness(VistaIOImage image);
+static void vistaio_get_3dvector(VistaIOImage image, const gchar* name, AmitkPoint *voxel); 
+static AmitkDataSet * do_vistaio_import(const gchar * filename, 
+					AmitkPreferences * preferences,
+					AmitkUpdateFunc update_func,
+					gpointer update_data); 
 
 AmitkDataSet * vistaio_import(const gchar * filename, 
 			     AmitkPreferences * preferences,
@@ -71,7 +70,7 @@ AmitkDataSet * vistaio_import(const gchar * filename,
   setlocale(LC_NUMERIC, saved_numeric_locale);
   g_free(saved_time_locale);
   g_free(saved_numeric_locale);
-
+  return retval; 
   
 }
 
@@ -84,25 +83,23 @@ AmitkDataSet * do_vistaio_import(const gchar * filename,
 
   AmitkVoxel dim;
   AmitkFormat format;
-  AmitkModality modality;
   AmitkPoint voxel = {1, 1, 1};
   AmitkPoint origin = {0, 0, 0}; 
-  AmitkFormat format;
   AmitkModality modality = AMITK_MODALITY_MRI;
+  AmitkDataSet * ds=NULL;
   
-  AmitkDataSet *retval = NULL; 
   VistaIOImage *images = NULL;
   VistaIOAttrList attr_list = NULL;
   VistaIORepnKind in_pixel_repn = VistaIOUnknownRepn;
-  VistaIOBoolen is_pixel_unsigned = FALSE; 
+  VistaIOBoolean is_pixel_unsigned = FALSE; 
   int nimages = 0; 
   gboolean images_good = TRUE; 
   gboolean convert = FALSE; 
 
   gint format_size;
-  gint bytes_per_plane;
-  gint bytes_per_row;
-
+  gint bytes_per_image;
+  gint i, t;
+  void *ds_pointer = NULL; 
   
   /* first read the file */
   FILE *f = fopen(filename, "rb");
@@ -136,7 +133,7 @@ AmitkDataSet * do_vistaio_import(const gchar * filename,
   /* If there are more than one images, compare with the proto type */
   images_good = TRUE;
   
-  for (int i = 1; i < nimages && images_good; ++i) {
+  for (i = 1; i < nimages && images_good; ++i) {
     AmitkPoint voxel_i = {1,1,1};
     AmitkPoint origin_i = {0,0,0};
     
@@ -146,7 +143,7 @@ AmitkDataSet * do_vistaio_import(const gchar * filename,
     images_good &= in_pixel_repn == VistaIOPixelRepn(images[i]);
     images_good &= is_pixel_unsigned == vistaio_get_pixel_signedness(images[i]);
     
-    vistaio_get_voxel_size(images[i], &voxel_i);
+    vistaio_get_3dvector(images[i], "voxel", &voxel_i);
     vistaio_get_3dvector(images[i], "origin3d", &origin_i); 
 
     images_good &= voxel.x == voxel_i.x;
@@ -160,7 +157,8 @@ AmitkDataSet * do_vistaio_import(const gchar * filename,
   }
 
   if (!images_good) {
-    g_warning("File %s containes more than one image of different type or dimensions, only reading first");
+    g_warning("File %s containes more than one image of different type or dimensions, only reading first",
+	      filename);
     dim.t = 1; 
   } else {
     dim.t = nimages; 
@@ -187,17 +185,16 @@ AmitkDataSet * do_vistaio_import(const gchar * filename,
     break;
   case VistaIODoubleRepn:
     format = AMITK_FORMAT_FLOAT;
-    convert = true;
+    convert = TRUE;
     break;
   case VistaIOBitRepn:
     format = AMITK_FORMAT_UBYTE;
-    convert = true;
     break;
     
   default:
-    g_warning(_("Importing data type %d file through VistaIO unsupported in AMIDE, discarding"); 
-    	      in_pixel_repn);
-    goto error1: 
+    g_warning(_("Importing data type %d file through VistaIO unsupported in AMIDE, discarding"),  
+	      in_pixel_repn);
+    goto error1;  
   }
   
   format_size = amitk_format_sizes[format];
@@ -206,8 +203,7 @@ AmitkDataSet * do_vistaio_import(const gchar * filename,
     g_warning(_("Couldn't allocate memory space for the data set structure to hold (X)MedCon data"));
     goto error;
   }
-  bytes_per_row = format_size * dim.x;
-  bytes_per_plane = bytes_per_row * dim.y;
+  bytes_per_image = format_size * dim.x * dim.y * dim.z;
 
   ds->voxel_size = voxel;
 
@@ -217,15 +213,41 @@ AmitkDataSet * do_vistaio_import(const gchar * filename,
   /* todo: get the orientation from the file, sometimes it is stored there */
   amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_UNKNOWN);
 
-
+  amitk_data_set_set_scan_date(ds, "Unknown"); 
   amitk_space_set_offset(AMITK_SPACE(ds), origin);
-    
+
+  ds->scan_start = 0.0;
   
+  g_message("Now copying data: %d bytes per %d image(s)", bytes_per_image, dim.t); 
+  /* now load the data */
+  if (!convert) {
+    ds_pointer = (char*)amitk_raw_data_get_pointer(AMITK_DATA_SET_RAW_DATA(ds), zero_voxel);
+    for (t = 0; t < dim.t; ++t, ds_pointer += bytes_per_image) {
+      memcpy(ds_pointer, VistaIOPixelPtr(images[t],0,0,0), bytes_per_image);
+      amitk_data_set_set_frame_duration(ds, t, 1.0);
+      g_message("Copied image %d\n", t); 
+    }
+  } else {
+    // conversion is always from double to float
+    int pixel_per_image = dim.x * dim.y * dim.z;
+    int p; 
+    float * ds_float = (float*)amitk_raw_data_get_pointer(AMITK_DATA_SET_RAW_DATA(ds), zero_voxel);
+    for (t = 0; t < dim.t; ++t) {
+      double *in_ptr = (double* )VistaIOPixelPtr(images[t],0,0,0);
+      for (p = 0; p < pixel_per_image; ++p, ++ds_float, ++in_ptr)
+	*ds_float = *in_ptr;
+      amitk_data_set_set_frame_duration(ds, t, 1.0);
+    } 
+  }
   
+  amitk_data_set_set_scale_factor(ds, 1.0); /* set the external scaling factor */
+  amitk_data_set_calc_far_corner(ds); /* set the far corner of the volume */
+  amitk_data_set_calc_min_max(ds, update_func, update_data);
+
   
 error1:
-  for (int i = 0; i < nimages; ++i) {
-    VistaIOFreeImage(images[i]); 
+  for (i = 0; i < nimages; ++i) {
+    VistaIODestroyImage(images[i]); 
   }
   
   VistaIOFree(images);
@@ -233,20 +255,23 @@ error1:
   
 error:
   if (f)
-    fclose(f); 
-  return retval; 
+    fclose(f);
+  g_message("Leaving vista import\n"); 
+  return ds; 
 }
 
   
-static VistaIOBoolen vistaio_get_pixel_signedness(VImage image)
+static VistaIOBoolean vistaio_get_pixel_signedness(VistaIOImage image)
 {
-  VistaIOBoolen result = 0; 
-  VistaIOGetAttr (VistaIOImageAttrList(image), "repn-unsigned", NULL, VistaIOBitRepn, 
-		  &result, 0);
-  return result; 
+  VistaIOBoolean result = 0;
+  if (VistaIOAttrFound == VistaIOGetAttr (VistaIOImageAttrList(image), "repn-unsigned", NULL, VistaIOBitRepn, 
+					  &result))
+    return result;
+  else
+    return 0; 
 }
 
-static void vistaio_get_voxel_size(VImage image, const gchar attribute_name, AmitkPoint *voxel)
+static void vistaio_get_3dvector(VistaIOImage image, const gchar* attribute_name, AmitkPoint *voxel)
 {
   VistaIOString voxel_string; 
   if (VistaIOGetAttr (VistaIOImageAttrList(image), attribute_name, NULL, VistaIOStringRepn, 
@@ -255,12 +280,11 @@ static void vistaio_get_voxel_size(VImage image, const gchar attribute_name, Ami
     return;
   }
 
-  if (sscanf(voxel_string, "%f %f %f", &voxel.x, &voxel.y, &voxel.z) != 3) {
+  if (sscanf(voxel_string, "%f %f %f", &voxel->x, &voxel->y, &voxel->z) != 3) {
     g_warning("VistaIO: The string '%s' could not be parsed properly to obtain three float values");
   }
   
 }
 
-}
 
-#endif 
+#endif /* AMIDE_VISTAIO_SUPPORT */

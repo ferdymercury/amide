@@ -1630,26 +1630,26 @@ GList * amitk_data_set_import_file(AmitkImportMethod method,
 #ifdef AMIDE_VISTAIO_SUPPORT
     if (vistaio_test_vista(filename)) {
 	method = AMITK_IMPORT_METHOD_VISTAIO;
-    }	    
+    } else 
 #endif 	    
 #ifdef AMIDE_LIBDCMDATA_SUPPORT
-      if (dcmtk_test_dicom(filename)) {
-	method = AMITK_IMPORT_METHOD_DCMTK;
-      } else 
+    if (dcmtk_test_dicom(filename)) {
+      method = AMITK_IMPORT_METHOD_DCMTK;
+    } else
 #endif
-	if ((g_ascii_strcasecmp(filename_extension, "dat")==0) ||
-	    (g_ascii_strcasecmp(filename_extension, "raw")==0)) {
+     if ((g_ascii_strcasecmp(filename_extension, "dat")==0) ||
+	 (g_ascii_strcasecmp(filename_extension, "raw")==0)) {
 	  /* .dat and .raw are assumed to be raw data */
-	  method = AMITK_IMPORT_METHOD_RAW;
+       method = AMITK_IMPORT_METHOD_RAW;
 #ifdef AMIDE_LIBECAT_SUPPORT      
-	} else if ((g_ascii_strcasecmp(filename_extension, "img")==0) ||
-		   (g_ascii_strcasecmp(filename_extension, "v")==0) ||
-		   (g_ascii_strcasecmp(filename_extension, "atn")==0) ||
-		   (g_ascii_strcasecmp(filename_extension, "scn")==0)) {
+     } else if ((g_ascii_strcasecmp(filename_extension, "img")==0) ||
+		(g_ascii_strcasecmp(filename_extension, "v")==0) ||
+		(g_ascii_strcasecmp(filename_extension, "atn")==0) ||
+		(g_ascii_strcasecmp(filename_extension, "scn")==0)) {
 	  /* if it appears to be a cti file */
-	  method = AMITK_IMPORT_METHOD_LIBECAT;
+	method = AMITK_IMPORT_METHOD_LIBECAT;
 #endif
-	} else { /* fallback methods */
+     } else { /* fallback methods */
 #ifdef AMIDE_LIBMDC_SUPPORT
 	  /* try passing it to the libmdc library.... */
 	  method = AMITK_IMPORT_METHOD_LIBMDC;
@@ -1673,7 +1673,8 @@ GList * amitk_data_set_import_file(AmitkImportMethod method,
 #ifdef AMIDE_VISTAIO_SUPPORT
   case AMITK_IMPORT_METHOD_VISTAIO:
     import_ds = vistaio_import(filename, preferences, update_func, update_data);
-    break; 
+    break;
+#endif     
 #ifdef AMIDE_LIBECAT_SUPPORT      
   case AMITK_IMPORT_METHOD_LIBECAT:
     import_ds =libecat_import(filename, preferences, update_func, update_data);
