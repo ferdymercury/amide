@@ -71,7 +71,7 @@
 #include "dcmtk_interface.h"
 #include "libecat_interface.h"
 #include "libmdc_interface.h"
-
+#include "vistaio_interface.h" 
 
 //#define SLICE_TIMING
 #undef SLICE_TIMING
@@ -1626,7 +1626,12 @@ GList * amitk_data_set_import_file(AmitkImportMethod method,
     if (header_filename != NULL) {
       method = AMITK_IMPORT_METHOD_LIBMDC;
     } else 
-#endif 
+#endif
+#ifdef AMIDE_VISTAIO_SUPPORT
+    if (vistaio_test_vista(filename)) {
+	method = AMITK_IMPORT_METHOD_VISTAIO;
+    }	    
+#endif 	    
 #ifdef AMIDE_LIBDCMDATA_SUPPORT
       if (dcmtk_test_dicom(filename)) {
 	method = AMITK_IMPORT_METHOD_DCMTK;
@@ -1665,6 +1670,10 @@ GList * amitk_data_set_import_file(AmitkImportMethod method,
     import_data_sets = dcmtk_import(filename, pstudyname, preferences, update_func, update_data);
     break;
 #endif
+#ifdef AMIDE_VISTAIO_SUPPORT
+  case AMITK_IMPORT_METHOD_VISTAIO:
+    import_ds = vistaio_import(filename, preferences, update_func, update_data);
+    break; 
 #ifdef AMIDE_LIBECAT_SUPPORT      
   case AMITK_IMPORT_METHOD_LIBECAT:
     import_ds =libecat_import(filename, preferences, update_func, update_data);
