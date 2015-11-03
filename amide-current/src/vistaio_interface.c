@@ -35,6 +35,8 @@
 #include <string.h>
 #include <locale.h>
 
+
+
 gboolean vistaio_test_vista(gchar *filename)
 {
   return VistaIOIsVistaFile(filename); 
@@ -42,7 +44,7 @@ gboolean vistaio_test_vista(gchar *filename)
 
 
 static VistaIOBoolean vistaio_get_pixel_signedness(VistaIOImage image);
-static void vistaio_get_3dvector(VistaIOImage image, const gchar* name, AmitkPoint *voxel); 
+static VistaIOBoolean vistaio_get_3dvector(VistaIOImage image, const gchar* name, AmitkPoint *voxel); 
 static AmitkDataSet * do_vistaio_import(const gchar * filename, 
 					AmitkPreferences * preferences,
 					AmitkUpdateFunc update_func,
@@ -91,7 +93,10 @@ AmitkDataSet * do_vistaio_import(const gchar * filename,
   VistaIOImage *images = NULL;
   VistaIOAttrList attr_list = NULL;
   VistaIORepnKind in_pixel_repn = VistaIOUnknownRepn;
-  VistaIOBoolean is_pixel_unsigned = FALSE; 
+  VistaIOBoolean is_pixel_unsigned = FALSE;
+
+  VistaIOBoolean origin_found = FALSE;
+  
   int nimages = 0; 
   gboolean images_good = TRUE; 
   gboolean convert = FALSE; 
@@ -127,8 +132,11 @@ AmitkDataSet * do_vistaio_import(const gchar * filename,
   dim.z = VistaIOImageNBands(images[0]);
   in_pixel_repn = VistaIOPixelRepn(images[0]);
   is_pixel_unsigned = vistaio_get_pixel_signedness(images[0]);
+
   vistaio_get_3dvector(images[0], "voxel", &voxel);
-  vistaio_get_3dvector(images[0], "origin3d", &origin); 
+  origin_found = vistaio_get_3dvector(images[0], "position", &voxel);
+  if (!origin_found) 
+    origin_found = vistaio_get_3dvector(images[0], "origin3d", &origin); 
 
   /* If there are more than one images, compare with the proto type */
   images_good = TRUE;
@@ -136,7 +144,8 @@ AmitkDataSet * do_vistaio_import(const gchar * filename,
   for (i = 1; i < nimages && images_good; ++i) {
     AmitkPoint voxel_i = {1,1,1};
     AmitkPoint origin_i = {0,0,0};
-    
+    VistaIOBoolean origin_found_i = FALSE;
+        
     images_good &= dim.x == VistaIOImageNColumns(images[i]);
     images_good &= dim.y == VistaIOImageNRows(images[i]);
     images_good &= dim.z == VistaIOImageNBands(images[i]);
@@ -144,8 +153,10 @@ AmitkDataSet * do_vistaio_import(const gchar * filename,
     images_good &= is_pixel_unsigned == vistaio_get_pixel_signedness(images[i]);
     
     vistaio_get_3dvector(images[i], "voxel", &voxel_i);
-    vistaio_get_3dvector(images[i], "origin3d", &origin_i); 
-
+    origin_found_i = vistaio_get_3dvector(images[i], "position", &origin_i);
+    if (!origin_found_i)
+      origin_found_i = vistaio_get_3dvector(images[i], "origin3d", &origin_i);
+    
     images_good &= voxel.x == voxel_i.x;
     images_good &= voxel.y == voxel_i.y;
     images_good &= voxel.z == voxel_i.z;
@@ -211,21 +222,22 @@ AmitkDataSet * do_vistaio_import(const gchar * filename,
   amitk_object_set_name(AMITK_OBJECT(ds),filename);
 
   /* todo: get the orientation from the file, sometimes it is stored there */
+  
+  
   amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_UNKNOWN);
-
   amitk_data_set_set_scan_date(ds, "Unknown"); 
   amitk_space_set_offset(AMITK_SPACE(ds), origin);
 
   ds->scan_start = 0.0;
   
-  g_message("Now copying data: %d bytes per %d image(s)", bytes_per_image, dim.t); 
+  g_debug("Now copying data: %d bytes per %d image(s)", bytes_per_image, dim.t); 
   /* now load the data */
   if (!convert) {
     ds_pointer = (char*)amitk_raw_data_get_pointer(AMITK_DATA_SET_RAW_DATA(ds), zero_voxel);
     for (t = 0; t < dim.t; ++t, ds_pointer += bytes_per_image) {
       memcpy(ds_pointer, VistaIOPixelPtr(images[t],0,0,0), bytes_per_image);
       amitk_data_set_set_frame_duration(ds, t, 1.0);
-      g_message("Copied image %d\n", t); 
+      g_debug("Copied image %d", t); 
     }
   } else {
     // conversion is always from double to float
@@ -256,7 +268,6 @@ error1:
 error:
   if (f)
     fclose(f);
-  g_message("Leaving vista import\n"); 
   return ds; 
 }
 
@@ -271,19 +282,24 @@ static VistaIOBoolean vistaio_get_pixel_signedness(VistaIOImage image)
     return 0; 
 }
 
-static void vistaio_get_3dvector(VistaIOImage image, const gchar* attribute_name, AmitkPoint *voxel)
+static VistaIOBoolean vistaio_get_3dvector(VistaIOImage image, const gchar* attribute_name, AmitkPoint *voxel)
 {
   VistaIOString voxel_string; 
   if (VistaIOGetAttr (VistaIOImageAttrList(image), attribute_name, NULL, VistaIOStringRepn, 
 		      &voxel_string) != VistaIOAttrFound) {
-    g_warning("VistaIO: Attribute '%s' not found in image\n", attribute_name); 
-    return;
+    g_debug("VistaIO: Attribute '%s' not found in image", attribute_name); 
+    return FALSE;
   }
-
-  if (sscanf(voxel_string, "%f %f %f", &voxel->x, &voxel->y, &voxel->z) != 3) {
-    g_warning("VistaIO: The string '%s' could not be parsed properly to obtain three float values");
+  float x,y,z; 
+  if (sscanf(voxel_string, "%f %f %f", &x, &y, &z) != 3) {
+    g_debug("VistaIO: The string '%s' could not be parsed properly to obtain three float values", voxel_string);
+    return FALSE;
+  }else {
+    voxel->x = x;
+    voxel->y = y;
+    voxel->z = z; 
   }
-  
+  return TRUE;
 }
 
 

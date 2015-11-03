@@ -103,6 +103,9 @@ const gchar * amitk_import_menu_names[] = {
 #ifdef AMIDE_LIBECAT_SUPPORT
   N_("_ECAT 6/7 via libecat"),
 #endif
+#ifdef AMIDE_VISTAIO_SUPPORT
+  N_("_Vista image"),
+#endif  
 #ifdef AMIDE_LIBMDC_SUPPORT
   "" /* place holder for AMITK_IMPORT_METHOD_LIBMDC */
 #endif
@@ -118,6 +121,9 @@ const gchar * amitk_import_menu_explanations[] = {
 #ifdef AMIDE_LIBECAT_SUPPORT
   N_("Import a CTI 6.4 or 7.0 file using the libecat library"),
 #endif
+#ifdef AMIDE_VISTAIO_SUPPORT
+  N_("Import images from a vista file"),  
+#endif 
 #ifdef AMIDE_LIBMDC_SUPPORT
   N_("Import via the (X)medcon library (libmdc)"),
 #endif
