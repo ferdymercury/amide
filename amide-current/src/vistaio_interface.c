@@ -34,6 +34,7 @@
 #include <vistaio.h>
 #include <string.h>
 #include <locale.h>
+#include <assert.h>
 
 
 
@@ -77,6 +78,27 @@ AmitkDataSet * vistaio_import(const gchar * filename,
 }
 
 
+typedef struct _IOUpdate IOUpdate; 
+struct _IOUpdate {
+  AmitkUpdateFunc update_func; 
+  gpointer update_data;
+  gboolean cont;
+  gchar *message; 
+};
+
+
+
+static void AmitkIOShowProgress(int pos, int length, void *data) 
+{
+  IOUpdate *update; 
+  assert(data);
+  update = (IOUpdate *)data;
+  if (update->update_func) {
+    update->cont = (*update->update_func)(update->update_data, update->message, ((gdouble) pos)/((gdouble) length));
+  }
+}
+
+
 AmitkDataSet * do_vistaio_import(const gchar * filename, 
 				 AmitkPreferences * preferences,
 				 AmitkUpdateFunc update_func,
@@ -104,27 +126,48 @@ AmitkDataSet * do_vistaio_import(const gchar * filename,
   gint format_size;
   gint bytes_per_image;
   gint i, t;
-  void *ds_pointer = NULL; 
+  void *ds_pointer = NULL;
+  IOUpdate update; 
   
   /* first read the file */
   FILE *f = fopen(filename, "rb");
 
-  /* This shouldn't happen at this point ...*/
   if (!f)  {
     g_warning(_("Can't open file %s "), filename);
     goto error;
   }
 
+  update.update_func = update_func; 
+  update.update_data = update_data;
+  update.cont = TRUE;
+
+  if (update_func != NULL) {
+    update.message = g_strdup_printf(_("Loading file %s"), filename);
+  }
+
+  
+  VistaIOSetProgressIndicator(AmitkIOShowProgress, AmitkIOShowProgress, &update); 
+  
   nimages = VistaIOReadImages(f, &attr_list, &images);
+  
+  if (update_func != NULL) {
+    g_free(update.message);
+    (*update_func)(update_data, NULL, (gdouble) 2.0); 
+  }
+  
+  if (!update.cont) {
+    g_debug("User interrupt");
+    goto error1; 
+  }
+  
   // a vista file?
   if (!nimages) {
-    g_warning(_("File %s doesn't contain vista images"), filename);
+    g_warning(_("File %s doesn't contain vista image(s)"), filename);
     goto error; 
   }
 
   /* amide data sets don't seem to support images of different sizes
-     so here we check that ll images are of the same type and dimensions */
-  
+     so here we check that all images are of the same type and dimensions */
 
   /* get proto type from first image  */
   dim.x = VistaIOImageNColumns(images[0]);
@@ -168,7 +211,7 @@ AmitkDataSet * do_vistaio_import(const gchar * filename,
   }
 
   if (!images_good) {
-    g_warning("File %s containes more than one image of different type or dimensions, only reading first",
+    g_warning("File %s containes more than one image of different type, scaling, or dimensions, only reading first",
 	      filename);
     dim.t = 1; 
   } else {
@@ -177,7 +220,7 @@ AmitkDataSet * do_vistaio_import(const gchar * filename,
   dim.g = 1;
 
   /* Now we can create the images */
-    /* pick our internal data format */
+  /* pick our internal data format */
   switch(in_pixel_repn) {
   case VistaIOSByteRepn:
     format = AMITK_FORMAT_SBYTE;
@@ -194,10 +237,12 @@ AmitkDataSet * do_vistaio_import(const gchar * filename,
   case VistaIOFloatRepn:
     format = AMITK_FORMAT_FLOAT;
     break;
+    /* Double valued images need to be converted to plain float*/
   case VistaIODoubleRepn:
     format = AMITK_FORMAT_FLOAT;
     convert = TRUE;
     break;
+    /* Binary images are read as ubyte, since vista also stores them like this in memory */
   case VistaIOBitRepn:
     format = AMITK_FORMAT_UBYTE;
     break;
@@ -211,7 +256,7 @@ AmitkDataSet * do_vistaio_import(const gchar * filename,
   format_size = amitk_format_sizes[format];
   ds = amitk_data_set_new_with_data(preferences, modality, format, dim, AMITK_SCALING_TYPE_2D_WITH_INTERCEPT);
   if (ds == NULL) {
-    g_warning(_("Couldn't allocate memory space for the data set structure to hold (X)MedCon data"));
+    g_warning(_("Couldn't allocate memory space for the data set structure to hold Vista data"));
     goto error;
   }
   bytes_per_image = format_size * dim.x * dim.y * dim.z;
