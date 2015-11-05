@@ -12,6 +12,9 @@
 /* Define to compile with DCMTK */
 #undef AMIDE_LIBDCMDATA_SUPPORT
 
+/* Define to compile with libecat */
+#undef AMIDE_LIBECAT_SUPPORT
+
 /* Define to compile with Libfame */
 #undef AMIDE_LIBFAME_SUPPORT
 

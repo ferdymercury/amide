@@ -222,21 +222,22 @@ else
 	echo "compiling without the GNU Scientific Library"
 fi
 
-dnl let people compile without the GNU Scientific Library
+
+dnl Let people compile without having libecat (z_matrix_70)
 AC_ARG_ENABLE(
-	libgsl,
-	[  --enable-libgsl	  Compile with the GNU Scientific Library [default=yes]],
-	enable_libgsl="$enableval",
-	enable_libgsl=yes)
+	libecat, 
+	[  --enable-libecat	  Compile with the libecat/CTI library [default=yes]],
+	enable_libecat="$enableval",
+	enable_libecat=yes)
 
-if (test $enable_libgsl = yes) && (test $FOUND_LIBGSL = yes); then
-	echo "compiling with GNU Scientific Library support"
-	AC_DEFINE(AMIDE_LIBGSL_SUPPORT, 1, Define to compile with the GNU Scientific Library)
+if (test $enable_libecat = yes) && (test $FOUND_LIBECAT = yes); then
+	echo "compiling with libecat/CTI file support"
+	AMIDE_LIBECAT_LIBS="-lecat"
+	AC_SUBST(AMIDE_LIBECAT_LIBS)
+	AC_DEFINE(AMIDE_LIBECAT_SUPPORT, 1, Define to compile with libecat)
 else
-	echo "compiling without the GNU Scientific Library"
+	echo "compiling without libecat/CTI file support"
 fi
-
-
 
 dnl Let people compile without having libvistaio 
 AC_ARG_ENABLE(

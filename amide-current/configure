@@ -688,6 +688,7 @@ LIBFAME_CONFIG
 AMIDE_LIBVOLPACK_LIBS
 VISTAIO_LIBS
 VISTAIO_CFLAGS
+AMIDE_LIBECAT_LIBS
 AMIDE_OS_WIN32_FALSE
 AMIDE_OS_WIN32_TRUE
 AMIDE_CHECK_OBSOLETE_CFLAGS
@@ -899,6 +900,7 @@ enable_amide_debug
 enable_amide_check_obsolete
 enable_native_gtk_osx
 enable_libgsl
+enable_libecat
 enable_vistaio
 enable_libmdc
 enable_libvolpack
@@ -1590,6 +1592,7 @@ Optional Features:
   --enable-amide-check-obsolete  Compile with checks for old GLib/GTK functions default=no
   --enable-native-gtk-osx Compile with native GTK support on Mac OS X default=no
   --enable-libgsl	  Compile with the GNU Scientific Library default=yes
+  --enable-libecat	  Compile with the libecat/CTI library default=yes
   --enable-vistaio,	  Compile with the vistaio library default=yes
   --enable-libmdc	  Compile with the xmedcon/libmdc library default=yes
   --enable-libvolpack	  Compile in libvolpack rendering support default=yes
@@ -18066,24 +18069,25 @@ else
 	echo "compiling without the GNU Scientific Library"
 fi
 
-# Check whether --enable-libgsl was given.
-if test "${enable_libgsl+set}" = set; then :
-  enableval=$enable_libgsl; enable_libgsl="$enableval"
+
+# Check whether --enable-libecat was given.
+if test "${enable_libecat+set}" = set; then :
+  enableval=$enable_libecat; enable_libecat="$enableval"
 else
-  enable_libgsl=yes
+  enable_libecat=yes
 fi
 
 
-if (test $enable_libgsl = yes) && (test $FOUND_LIBGSL = yes); then
-	echo "compiling with GNU Scientific Library support"
+if (test $enable_libecat = yes) && (test $FOUND_LIBECAT = yes); then
+	echo "compiling with libecat/CTI file support"
+	AMIDE_LIBECAT_LIBS="-lecat"
 
-$as_echo "#define AMIDE_LIBGSL_SUPPORT 1" >>confdefs.h
+
+$as_echo "#define AMIDE_LIBECAT_SUPPORT 1" >>confdefs.h
 
 else
-	echo "compiling without the GNU Scientific Library"
+	echo "compiling without libecat/CTI file support"
 fi
-
-
 
 # Check whether --enable-vistaio was given.
 if test "${enable_vistaio+set}" = set; then :
