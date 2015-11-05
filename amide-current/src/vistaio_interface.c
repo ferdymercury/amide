@@ -177,7 +177,7 @@ AmitkDataSet * do_vistaio_import(const gchar * filename,
   is_pixel_unsigned = vistaio_get_pixel_signedness(images[0]);
 
   vistaio_get_3dvector(images[0], "voxel", &voxel);
-  origin_found = vistaio_get_3dvector(images[0], "position", &voxel);
+  origin_found = vistaio_get_3dvector(images[0], "position", &origin);
   if (!origin_found) 
     origin_found = vistaio_get_3dvector(images[0], "origin3d", &origin); 
 
