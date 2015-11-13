@@ -45,7 +45,9 @@ gboolean vistaio_test_vista(gchar *filename)
 
 
 static VistaIOBoolean vistaio_get_pixel_signedness(VistaIOImage image);
-static VistaIOBoolean vistaio_get_3dvector(VistaIOImage image, const gchar* name, AmitkPoint *voxel); 
+static VistaIOBoolean vistaio_get_3dvector(VistaIOImage image, const gchar* name, AmitkPoint *voxel);
+static VistaIOBoolean vistaio_get_rotation(VistaIOImage image, AmitkAxes matrix); 
+
 static AmitkDataSet * do_vistaio_import(const gchar * filename, 
 					AmitkPreferences * preferences,
 					AmitkUpdateFunc update_func,
@@ -111,6 +113,7 @@ AmitkDataSet * do_vistaio_import(const gchar * filename,
   AmitkPoint origin = {0, 0, 0}; 
   AmitkModality modality = AMITK_MODALITY_MRI;
   AmitkDataSet * ds=NULL;
+  AmitkAxes new_axes; 
   
   VistaIOImage *images = NULL;
   VistaIOAttrList attr_list = NULL;
@@ -118,6 +121,7 @@ AmitkDataSet * do_vistaio_import(const gchar * filename,
   VistaIOBoolean is_pixel_unsigned = FALSE;
 
   VistaIOBoolean origin_found = FALSE;
+  VistaIOBoolean rotation_found = FALSE;
   
   int nimages = 0; 
   gboolean images_good = TRUE; 
@@ -181,6 +185,12 @@ AmitkDataSet * do_vistaio_import(const gchar * filename,
   if (!origin_found) 
     origin_found = vistaio_get_3dvector(images[0], "origin3d", &origin); 
 
+  rotation_found = vistaio_get_rotation(images[0], new_axes);
+  
+  
+  
+
+  
   /* If there are more than one images, compare with the proto type */
   images_good = TRUE;
   
@@ -272,7 +282,10 @@ AmitkDataSet * do_vistaio_import(const gchar * filename,
   amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_UNKNOWN);
   amitk_data_set_set_scan_date(ds, "Unknown"); 
   amitk_space_set_offset(AMITK_SPACE(ds), origin);
-
+  
+  if (rotation_found) 
+    amitk_space_set_axes(AMITK_SPACE(ds), new_axes, zero_point);
+  
   ds->scan_start = 0.0;
   
   g_debug("Now copying data: %d bytes per %d image(s)", bytes_per_image, dim.t); 
@@ -345,6 +358,111 @@ static VistaIOBoolean vistaio_get_3dvector(VistaIOImage image, const gchar* attr
     voxel->z = z; 
   }
   return TRUE;
+}
+
+static VistaIOBoolean vistaio_get_rotation(VistaIOImage image, AmitkAxes matrix)
+{
+  int name_length = 0; 
+  char *splitname = NULL; 
+  VistaIOString voxel_string; 
+  if (VistaIOGetAttr (VistaIOImageAttrList(image), "rotation3d", NULL, VistaIOStringRepn, 
+		      &voxel_string) != VistaIOAttrFound) {
+    g_debug("VistaIO: Attribute 'rotation3d' not found in image"); 
+    return FALSE;
+  }
+
+  /* Split the input data */
+  splitname = strchr(voxel_string, '=');
+  if (!splitname) {
+    if (strcmp(voxel_string, "rot-identity")) {
+      matrix[AMITK_AXIS_X].x = 1;
+      matrix[AMITK_AXIS_X].y = 0;
+      matrix[AMITK_AXIS_X].z = 0;
+
+      matrix[AMITK_AXIS_Y].x = 0;
+      matrix[AMITK_AXIS_Y].y = 1;
+      matrix[AMITK_AXIS_Y].z = 0;
+
+      matrix[AMITK_AXIS_Z].x = 0;
+      matrix[AMITK_AXIS_Z].y = 0;
+      matrix[AMITK_AXIS_Z].z = 1;
+      return TRUE; 
+    }else{
+      g_debug("VistaIO: Unexpected 'rotation3d' attribute '%s'",  voxel_string); 
+      return FALSE; 
+    }
+  }
+  
+  name_length = splitname - voxel_string;
+  ++splitname; 
+
+  g_debug("Found 'rotation3d' as '%s' witgh indicator length %d", voxel_string, name_length); 
+  
+  if (!strncmp(voxel_string, "rot-matrix", name_length)) {
+    float xx, xy,xz, yx, yy, yz, zx, zy, zz;
+    if (sscanf(splitname,"%f,%f,%f;%f,%f,%f;%f,%f,%f",
+	       &xx, &xy, &xz, &yx, &yy, &yz, &zx, &zy, &zz) != 9) {
+      g_debug("VistaIO: The string '%s' could not be parsed properly "
+	      "to obtain nine float values for the 'rotation3d' matrix", splitname);
+      return FALSE;
+    }
+    matrix[AMITK_AXIS_X].x = xx;
+    matrix[AMITK_AXIS_X].y = xy;
+    matrix[AMITK_AXIS_X].z = xz;
+    
+    matrix[AMITK_AXIS_Y].x = yx;
+    matrix[AMITK_AXIS_Y].y = yy;
+    matrix[AMITK_AXIS_Y].z = yz;
+    
+    matrix[AMITK_AXIS_Z].x = zx;
+    matrix[AMITK_AXIS_Z].y = zy;
+    matrix[AMITK_AXIS_Z].z = zz;
+    return TRUE;
+    
+  } else if  (!strncmp(voxel_string, "rot-quaternion", name_length)) {
+    float x, y, z, w;
+    double a2, b2, c2, d2, bc, ad, bd, ac, cd, ab; 
+    
+    if (sscanf(splitname,"%f,%f,%f,%f",
+	       &w, &x, &y, &z) != 4) {
+      g_debug("VistaIO: The string '%s' could not be parsed properly "
+	      "to obtain four float values for the 'rotation3d' quaternion", splitname);
+      return FALSE; 
+    }
+    /* Evaluate the matrix from the quaternion */
+
+    a2 = w * w;
+    b2 = x * x;
+    c2 = y * y;
+    d2 = z * z;
+    
+    bc = 2.0 * x * y; 
+    ad = 2.0 * w * z; 
+    bd = 2.0 * x * z; 
+    ac = 2.0 * w * y; 
+    cd = 2.0 * y * z; 
+    ab = 2.0 * w * x; 
+
+    
+    matrix[AMITK_AXIS_X].x = a2 + b2 - c2 - d2;
+    matrix[AMITK_AXIS_X].y = bc - ad;
+    matrix[AMITK_AXIS_X].z = bd + ac;
+    
+    matrix[AMITK_AXIS_Y].x = bc + ad;
+    matrix[AMITK_AXIS_Y].y = a2 - b2 + c2 - d2;
+    matrix[AMITK_AXIS_Y].z = cd - ab;
+    
+    matrix[AMITK_AXIS_Z].x = bd - ac;
+    matrix[AMITK_AXIS_Z].y = cd + ab;
+    matrix[AMITK_AXIS_Z].z = a2 - b2 - c2 + d2;
+    return TRUE;
+    
+  } else {
+    g_debug("VistaIO: Unexpected 'rotation3d' attribute '%s'",  voxel_string);
+    return FALSE; 
+  }
+  
+  
 }
 
 

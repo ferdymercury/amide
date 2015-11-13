@@ -726,6 +726,7 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
         goto error;
         break;
     }
+    assert(buffer); 
 
     if (result.bad()) {
       g_warning(_("error reading in pixel data - DCMTK error: %s - Failed to read file %s"), result.text(), filename);
