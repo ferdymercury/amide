@@ -47,6 +47,7 @@ gboolean vistaio_test_vista(gchar *filename)
 static VistaIOBoolean vistaio_get_pixel_signedness(VistaIOImage image);
 static VistaIOBoolean vistaio_get_3dvector(VistaIOImage image, const gchar* name, AmitkPoint *voxel);
 static VistaIOBoolean vistaio_get_rotation(VistaIOImage image, AmitkAxes matrix); 
+static VistaIOBoolean vistaio_get_voxelsize_from2d(VistaIOImage  image, AmitkPoint *voxel); 
 
 static AmitkDataSet * do_vistaio_import(const gchar * filename, 
 					AmitkPreferences * preferences,
@@ -121,6 +122,7 @@ AmitkDataSet * do_vistaio_import(const gchar * filename,
   VistaIOBoolean is_pixel_unsigned = FALSE;
 
   VistaIOBoolean origin_found = FALSE;
+  VistaIOBoolean voxelsize_found = FALSE;
   VistaIOBoolean rotation_found = FALSE;
   
   int nimages = 0; 
@@ -180,7 +182,15 @@ AmitkDataSet * do_vistaio_import(const gchar * filename,
   in_pixel_repn = VistaIOPixelRepn(images[0]);
   is_pixel_unsigned = vistaio_get_pixel_signedness(images[0]);
 
-  vistaio_get_3dvector(images[0], "voxel", &voxel);
+  voxelsize_found = vistaio_get_3dvector(images[0], "voxel", &voxel);
+
+  // 
+  if (!voxelsize_found) {
+    voxelsize_found = vistaio_get_voxelsize_from2d(images[0], &voxel);
+  }
+  
+
+  
   origin_found = vistaio_get_3dvector(images[0], "position", &origin);
   if (!origin_found) 
     origin_found = vistaio_get_3dvector(images[0], "origin3d", &origin); 
@@ -342,13 +352,15 @@ static VistaIOBoolean vistaio_get_pixel_signedness(VistaIOImage image)
 
 static VistaIOBoolean vistaio_get_3dvector(VistaIOImage image, const gchar* attribute_name, AmitkPoint *voxel)
 {
-  VistaIOString voxel_string; 
+  VistaIOString voxel_string;
+  float x,y,z;
+  
   if (VistaIOGetAttr (VistaIOImageAttrList(image), attribute_name, NULL, VistaIOStringRepn, 
 		      &voxel_string) != VistaIOAttrFound) {
     g_debug("VistaIO: Attribute '%s' not found in image", attribute_name); 
     return FALSE;
   }
-  float x,y,z; 
+
   if (sscanf(voxel_string, "%f %f %f", &x, &y, &z) != 3) {
     g_debug("VistaIO: The string '%s' could not be parsed properly to obtain three float values", voxel_string);
     return FALSE;
@@ -358,6 +370,48 @@ static VistaIOBoolean vistaio_get_3dvector(VistaIOImage image, const gchar* attr
     voxel->z = z; 
   }
   return TRUE;
+}
+
+static VistaIOBoolean vistaio_get_voxelsize_from2d(VistaIOImage  image, AmitkPoint *voxel)
+{
+  VistaIOString pixel_string;
+  float x, y;
+  VistaIOFloat slice_thickness, spacing;
+  VistaIOBoolean thickness_found = FALSE; 
+  VistaIOBoolean spacing_found = FALSE; 
+  
+  if (VistaIOGetAttr (VistaIOImageAttrList(image), "pixel", NULL, VistaIOStringRepn, 
+		      &pixel_string) != VistaIOAttrFound) {
+    g_debug("VistaIO: Attribute 'pixel' not found in image"); 
+    return FALSE;
+  }
+  
+  if (sscanf(pixel_string, "%f %f", &x, &y) != 2) {
+    g_debug("VistaIO: The string '%s' could not be parsed properly to obtain two float values", pixel_string);
+    return FALSE;
+  }else {
+    voxel->x = x;
+    voxel->y = y;
+  }
+
+  thickness_found = VistaIOGetAttr (VistaIOImageAttrList(image), "SliceThickness", NULL, VistaIOFloatRepn, 
+				    &slice_thickness);
+  
+  spacing_found = VistaIOGetAttr (VistaIOImageAttrList(image), "SpacingBetweenSlices", NULL, VistaIOFloatRepn, 
+				  &spacing); 
+  
+  if (spacing_found) {
+    voxel->z = spacing; 
+    if (thickness_found) {
+      if (slice_thickness != spacing)
+	g_debug("Slice thickness %f != slice spacing %f, use spacing", slice_thickness, spacing); 
+    }
+  } else if (thickness_found) {
+    voxel->z = slice_thickness; 
+  } else {
+    return FALSE; 
+  }
+  return TRUE; 
 }
 
 static VistaIOBoolean vistaio_get_rotation(VistaIOImage image, AmitkAxes matrix)
