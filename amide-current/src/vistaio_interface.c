@@ -184,18 +184,23 @@ AmitkDataSet * do_vistaio_import(const gchar * filename,
 
   voxelsize_found = vistaio_get_3dvector(images[0], "voxel", &voxel);
 
-  // 
+  
   if (!voxelsize_found) {
     voxelsize_found = vistaio_get_voxelsize_from2d(images[0], &voxel);
   }
-  
-
   
   origin_found = vistaio_get_3dvector(images[0], "position", &origin);
   if (!origin_found) 
     origin_found = vistaio_get_3dvector(images[0], "origin3d", &origin); 
 
+  /* the origin is read directly from DICOM therefore we emulate what the dcmtk reader is doing */
+  origin.y *= -1.0; /* DICOM specifies y axis in wrong direction */
+  origin.z *= -1.0; /* DICOM specifies z axis in wrong direction */
+
+  
   rotation_found = vistaio_get_rotation(images[0], new_axes);
+  
+  /* get manual input PatientPosition */
   
   
   
@@ -281,20 +286,20 @@ AmitkDataSet * do_vistaio_import(const gchar * filename,
   }
   bytes_per_image = format_size * dim.x * dim.y * dim.z;
 
-  ds->voxel_size = voxel;
-
   /* Just use the file name, we can figure out somethink more sophisticated later*/
   amitk_object_set_name(AMITK_OBJECT(ds),filename);
 
   /* todo: get the orientation from the file, sometimes it is stored there */
-  
+
+  if (rotation_found) 
+    amitk_space_set_axes(AMITK_SPACE(ds), new_axes, zero_point);
   
   amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_UNKNOWN);
   amitk_data_set_set_scan_date(ds, "Unknown"); 
   amitk_space_set_offset(AMITK_SPACE(ds), origin);
+  amitk_data_set_set_voxel_size(ds, voxel);
+
   
-  if (rotation_found) 
-    amitk_space_set_axes(AMITK_SPACE(ds), new_axes, zero_point);
   
   ds->scan_start = 0.0;
   
@@ -461,16 +466,16 @@ static VistaIOBoolean vistaio_get_rotation(VistaIOImage image, AmitkAxes matrix)
       return FALSE;
     }
     matrix[AMITK_AXIS_X].x = xx;
-    matrix[AMITK_AXIS_X].y = xy;
-    matrix[AMITK_AXIS_X].z = xz;
+    matrix[AMITK_AXIS_X].y = -xy;
+    matrix[AMITK_AXIS_X].z = -xz;
     
     matrix[AMITK_AXIS_Y].x = yx;
-    matrix[AMITK_AXIS_Y].y = yy;
-    matrix[AMITK_AXIS_Y].z = yz;
+    matrix[AMITK_AXIS_Y].y = -yy;
+    matrix[AMITK_AXIS_Y].z = -yz;
     
     matrix[AMITK_AXIS_Z].x = zx;
-    matrix[AMITK_AXIS_Z].y = zy;
-    matrix[AMITK_AXIS_Z].z = zz;
+    matrix[AMITK_AXIS_Z].y = -zy;
+    matrix[AMITK_AXIS_Z].z = -zz;
     return TRUE;
     
   } else if  (!strncmp(voxel_string, "rot-quaternion", name_length)) {
@@ -499,16 +504,16 @@ static VistaIOBoolean vistaio_get_rotation(VistaIOImage image, AmitkAxes matrix)
 
     
     matrix[AMITK_AXIS_X].x = a2 + b2 - c2 - d2;
-    matrix[AMITK_AXIS_X].y = bc - ad;
-    matrix[AMITK_AXIS_X].z = bd + ac;
+    matrix[AMITK_AXIS_X].y = -(bc - ad);
+    matrix[AMITK_AXIS_X].z = -(bd + ac);
     
     matrix[AMITK_AXIS_Y].x = bc + ad;
-    matrix[AMITK_AXIS_Y].y = a2 - b2 + c2 - d2;
-    matrix[AMITK_AXIS_Y].z = cd - ab;
+    matrix[AMITK_AXIS_Y].y = -(a2 - b2 + c2 - d2);
+    matrix[AMITK_AXIS_Y].z = -(cd - ab);
     
     matrix[AMITK_AXIS_Z].x = bd - ac;
-    matrix[AMITK_AXIS_Z].y = cd + ab;
-    matrix[AMITK_AXIS_Z].z = a2 - b2 - c2 + d2;
+    matrix[AMITK_AXIS_Z].y = -(cd + ab);
+    matrix[AMITK_AXIS_Z].z = -(a2 - b2 - c2 + d2);
     return TRUE;
     
   } else {
