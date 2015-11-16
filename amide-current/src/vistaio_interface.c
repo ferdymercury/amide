@@ -189,22 +189,18 @@ AmitkDataSet * do_vistaio_import(const gchar * filename,
     voxelsize_found = vistaio_get_voxelsize_from2d(images[0], &voxel);
   }
   
-  origin_found = vistaio_get_3dvector(images[0], "position", &origin);
+  origin_found = vistaio_get_3dvector(images[0], "origin3d", &origin); 
   if (!origin_found) 
-    origin_found = vistaio_get_3dvector(images[0], "origin3d", &origin); 
-
-  /* the origin is read directly from DICOM therefore we emulate what the dcmtk reader is doing */
-  origin.y *= -1.0; /* DICOM specifies y axis in wrong direction */
-  origin.z *= -1.0; /* DICOM specifies z axis in wrong direction */
+    origin_found = vistaio_get_3dvector(images[0], "position", &origin);
 
   
   rotation_found = vistaio_get_rotation(images[0], new_axes);
   
-  /* get manual input PatientPosition */
-  
-  
-  
-
+  g_debug("Prototype image is: %dx%dx%d, repn:%d(%d), origin: (%f %f %f), voxelsize (%f %f %f)",
+	  dim.x, dim.y, dim.z,
+	  in_pixel_repn, is_pixel_unsigned,
+	  origin.x, origin.y, origin.z, 
+	  voxel.x, voxel.y, voxel.z); 
   
   /* If there are more than one images, compare with the proto type */
   images_good = TRUE;
@@ -221,9 +217,9 @@ AmitkDataSet * do_vistaio_import(const gchar * filename,
     images_good &= is_pixel_unsigned == vistaio_get_pixel_signedness(images[i]);
     
     vistaio_get_3dvector(images[i], "voxel", &voxel_i);
-    origin_found_i = vistaio_get_3dvector(images[i], "position", &origin_i);
+    origin_found_i = vistaio_get_3dvector(images[i], "origin3d", &origin_i);
     if (!origin_found_i)
-      origin_found_i = vistaio_get_3dvector(images[i], "origin3d", &origin_i);
+      origin_found_i = vistaio_get_3dvector(images[i], "position", &origin_i);
     
     images_good &= voxel.x == voxel_i.x;
     images_good &= voxel.y == voxel_i.y;
@@ -243,6 +239,11 @@ AmitkDataSet * do_vistaio_import(const gchar * filename,
     dim.t = nimages; 
   }
   dim.g = 1;
+
+	  /* the origin is read directly from DICOM therefore we emulate what the dcmtk reader is doing */
+  origin.y *= -1.0; /* DICOM specifies y axis in wrong direction */
+  origin.z *= -1.0; /* DICOM specifies z axis in wrong direction */
+
 
   /* Now we can create the images */
   /* pick our internal data format */
@@ -289,13 +290,15 @@ AmitkDataSet * do_vistaio_import(const gchar * filename,
   /* Just use the file name, we can figure out somethink more sophisticated later*/
   amitk_object_set_name(AMITK_OBJECT(ds),filename);
 
-  /* todo: get the orientation from the file, sometimes it is stored there */
-
   if (rotation_found) 
     amitk_space_set_axes(AMITK_SPACE(ds), new_axes, zero_point);
-  
+
+  /* This is just informal information */
   amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_UNKNOWN);
   amitk_data_set_set_scan_date(ds, "Unknown"); 
+
+
+
   amitk_space_set_offset(AMITK_SPACE(ds), origin);
   amitk_data_set_set_voxel_size(ds, voxel);
 
