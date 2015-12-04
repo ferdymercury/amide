@@ -469,14 +469,14 @@ static VistaIOBoolean vistaio_get_rotation(VistaIOImage image, AmitkAxes matrix)
       return FALSE;
     }
     matrix[AMITK_AXIS_X].x = xx;
-    matrix[AMITK_AXIS_X].y = -xy;
+    matrix[AMITK_AXIS_X].y = xy;
     matrix[AMITK_AXIS_X].z = -xz;
     
-    matrix[AMITK_AXIS_Y].x = yx;
+    matrix[AMITK_AXIS_Y].x = -yx;
     matrix[AMITK_AXIS_Y].y = -yy;
     matrix[AMITK_AXIS_Y].z = -yz;
     
-    matrix[AMITK_AXIS_Z].x = zx;
+    matrix[AMITK_AXIS_Z].x = -zx;
     matrix[AMITK_AXIS_Z].y = -zy;
     matrix[AMITK_AXIS_Z].z = -zz;
     return TRUE;
