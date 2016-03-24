@@ -29,7 +29,8 @@ AM_CFLAGS = \
 	$(AMIDE_LIBDCMDATA_CFLAGS) \
 	-I/usr/local/include \
 	$(XMEDCON_CFLAGS) \
-	$(FFMPEG_CFLAGS) 
+	$(FFMPEG_CFLAGS) \
+	$(VISTAIO_CFLAGS) 
 
 
 
@@ -49,6 +50,7 @@ amide_LDADD = \
 	$(XMEDCON_LIBS) \
 	$(FFMPEG_LIBS) \
 	$(AMIDE_LIBDCMDATA_LIBS) \
+	$(VISTAIO_LIBS) \
 	$(AMIDE_LIBOPENJP2_LIBS) \
 	$(AMIDE_LDADD_WIN32) 
 
@@ -174,6 +176,8 @@ amide_SOURCES = \
 	ui_study_cb.h \
 	ui_time_dialog.c \
 	ui_time_dialog.h \
+	vistaio_interface.c \
+	vistaio_interface.h \
 	xml.c \
 	xml.h
 

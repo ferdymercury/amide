@@ -71,7 +71,7 @@
 #include "dcmtk_interface.h"
 #include "libecat_interface.h"
 #include "libmdc_interface.h"
-
+#include "vistaio_interface.h" 
 
 //#define SLICE_TIMING
 #undef SLICE_TIMING
@@ -103,6 +103,9 @@ const gchar * amitk_import_menu_names[] = {
 #ifdef AMIDE_LIBECAT_SUPPORT
   N_("_ECAT 6/7 via libecat"),
 #endif
+#ifdef AMIDE_VISTAIO_SUPPORT
+  N_("_Vista image"),
+#endif  
 #ifdef AMIDE_LIBMDC_SUPPORT
   "" /* place holder for AMITK_IMPORT_METHOD_LIBMDC */
 #endif
@@ -118,6 +121,9 @@ const gchar * amitk_import_menu_explanations[] = {
 #ifdef AMIDE_LIBECAT_SUPPORT
   N_("Import a CTI 6.4 or 7.0 file using the libecat library"),
 #endif
+#ifdef AMIDE_VISTAIO_SUPPORT
+  N_("Import images from a vista file"),  
+#endif 
 #ifdef AMIDE_LIBMDC_SUPPORT
   N_("Import via the (X)medcon library (libmdc)"),
 #endif
@@ -1626,25 +1632,30 @@ GList * amitk_data_set_import_file(AmitkImportMethod method,
     if (header_filename != NULL) {
       method = AMITK_IMPORT_METHOD_LIBMDC;
     } else 
-#endif 
+#endif
+#ifdef AMIDE_VISTAIO_SUPPORT
+    if (vistaio_test_vista(filename)) {
+	method = AMITK_IMPORT_METHOD_VISTAIO;
+    } else 
+#endif 	    
 #ifdef AMIDE_LIBDCMDATA_SUPPORT
-      if (dcmtk_test_dicom(filename)) {
-	method = AMITK_IMPORT_METHOD_DCMTK;
-      } else 
+    if (dcmtk_test_dicom(filename)) {
+      method = AMITK_IMPORT_METHOD_DCMTK;
+    } else
 #endif
-	if ((g_ascii_strcasecmp(filename_extension, "dat")==0) ||
-	    (g_ascii_strcasecmp(filename_extension, "raw")==0)) {
+     if ((g_ascii_strcasecmp(filename_extension, "dat")==0) ||
+	 (g_ascii_strcasecmp(filename_extension, "raw")==0)) {
 	  /* .dat and .raw are assumed to be raw data */
-	  method = AMITK_IMPORT_METHOD_RAW;
+       method = AMITK_IMPORT_METHOD_RAW;
 #ifdef AMIDE_LIBECAT_SUPPORT      
-	} else if ((g_ascii_strcasecmp(filename_extension, "img")==0) ||
-		   (g_ascii_strcasecmp(filename_extension, "v")==0) ||
-		   (g_ascii_strcasecmp(filename_extension, "atn")==0) ||
-		   (g_ascii_strcasecmp(filename_extension, "scn")==0)) {
+     } else if ((g_ascii_strcasecmp(filename_extension, "img")==0) ||
+		(g_ascii_strcasecmp(filename_extension, "v")==0) ||
+		(g_ascii_strcasecmp(filename_extension, "atn")==0) ||
+		(g_ascii_strcasecmp(filename_extension, "scn")==0)) {
 	  /* if it appears to be a cti file */
-	  method = AMITK_IMPORT_METHOD_LIBECAT;
+	method = AMITK_IMPORT_METHOD_LIBECAT;
 #endif
-	} else { /* fallback methods */
+     } else { /* fallback methods */
 #ifdef AMIDE_LIBMDC_SUPPORT
 	  /* try passing it to the libmdc library.... */
 	  method = AMITK_IMPORT_METHOD_LIBMDC;
@@ -1665,6 +1676,11 @@ GList * amitk_data_set_import_file(AmitkImportMethod method,
     import_data_sets = dcmtk_import(filename, pstudyname, preferences, update_func, update_data);
     break;
 #endif
+#ifdef AMIDE_VISTAIO_SUPPORT
+  case AMITK_IMPORT_METHOD_VISTAIO:
+    import_ds = vistaio_import(filename, preferences, update_func, update_data);
+    break;
+#endif     
 #ifdef AMIDE_LIBECAT_SUPPORT      
   case AMITK_IMPORT_METHOD_LIBECAT:
     import_ds =libecat_import(filename, preferences, update_func, update_data);

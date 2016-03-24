@@ -686,6 +686,8 @@ LIBFAME_LIBS
 LIBFAME_CFLAGS
 LIBFAME_CONFIG
 AMIDE_LIBVOLPACK_LIBS
+VISTAIO_LIBS
+VISTAIO_CFLAGS
 AMIDE_LIBECAT_LIBS
 AMIDE_OS_WIN32_FALSE
 AMIDE_OS_WIN32_TRUE
@@ -899,6 +901,7 @@ enable_amide_check_obsolete
 enable_native_gtk_osx
 enable_libgsl
 enable_libecat
+enable_vistaio
 enable_libmdc
 enable_libvolpack
 enable_ffmpeg
@@ -936,6 +939,8 @@ PKG_CONFIG_PATH
 PKG_CONFIG_LIBDIR
 FFMPEG_CFLAGS
 FFMPEG_LIBS
+VISTAIO_CFLAGS
+VISTAIO_LIBS
 AMIDE_LIBOPENJP2_CFLAGS
 AMIDE_LIBOPENJP2_LIBS
 AMIDE_GTK_CFLAGS
@@ -1588,6 +1593,7 @@ Optional Features:
   --enable-native-gtk-osx Compile with native GTK support on Mac OS X default=no
   --enable-libgsl	  Compile with the GNU Scientific Library default=yes
   --enable-libecat	  Compile with the libecat/CTI library default=yes
+  --enable-vistaio,	  Compile with the vistaio library default=yes
   --enable-libmdc	  Compile with the xmedcon/libmdc library default=yes
   --enable-libvolpack	  Compile in libvolpack rendering support default=yes
   --enable-ffmpeg   	  Compile in ffmpeg (libavcodec) mpeg encoding support default=yes
@@ -1641,6 +1647,10 @@ Some influential environment variables:
   FFMPEG_CFLAGS
               C compiler flags for FFMPEG, overriding pkg-config
   FFMPEG_LIBS linker flags for FFMPEG, overriding pkg-config
+  VISTAIO_CFLAGS
+              C compiler flags for VISTAIO, overriding pkg-config
+  VISTAIO_LIBS
+              linker flags for VISTAIO, overriding pkg-config
   AMIDE_LIBOPENJP2_CFLAGS
               C compiler flags for AMIDE_LIBOPENJP2, overriding pkg-config
   AMIDE_LIBOPENJP2_LIBS
@@ -17003,44 +17013,6 @@ fi
 # Substitute ALL_LINGUAS so we can use it in po/Makefile
 
 
-# Set DATADIRNAME correctly if it is not set yet
-# (copied from glib-gettext.m4)
-if test -z "$DATADIRNAME"; then
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-extern int _nl_msg_cat_cntr;
-                       return _nl_msg_cat_cntr
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  DATADIRNAME=share
-else
-  case $host in
-    *-*-solaris*)
-                        ac_fn_c_check_func "$LINENO" "bind_textdomain_codeset" "ac_cv_func_bind_textdomain_codeset"
-if test "x$ac_cv_func_bind_textdomain_codeset" = xyes; then :
-  DATADIRNAME=share
-else
-  DATADIRNAME=lib
-fi
-
-    ;;
-    *)
-    DATADIRNAME=lib
-    ;;
-    esac
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-fi
-
-
 
 
 
@@ -18115,6 +18087,100 @@ $as_echo "#define AMIDE_LIBECAT_SUPPORT 1" >>confdefs.h
 
 else
 	echo "compiling without libecat/CTI file support"
+fi
+
+# Check whether --enable-vistaio was given.
+if test "${enable_vistaio+set}" = set; then :
+  enableval=$enable_vistaio; enable_vistaio="$enableval"
+else
+  enable_vistaio=yes
+fi
+
+
+if (test $enable_vistaio = yes); then
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for VISTAIO" >&5
+$as_echo_n "checking for VISTAIO... " >&6; }
+
+if test -n "$VISTAIO_CFLAGS"; then
+    pkg_cv_VISTAIO_CFLAGS="$VISTAIO_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libvistaio >= 1.2.17\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libvistaio >= 1.2.17") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_VISTAIO_CFLAGS=`$PKG_CONFIG --cflags "libvistaio >= 1.2.17" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$VISTAIO_LIBS"; then
+    pkg_cv_VISTAIO_LIBS="$VISTAIO_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libvistaio >= 1.2.17\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libvistaio >= 1.2.17") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_VISTAIO_LIBS=`$PKG_CONFIG --libs "libvistaio >= 1.2.17" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        VISTAIO_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "libvistaio >= 1.2.17" 2>&1`
+        else
+	        VISTAIO_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "libvistaio >= 1.2.17" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$VISTAIO_PKG_ERRORS" >&5
+
+
+        as_fn_error $? "\"Resquested vista support but vistaio was not found\"" "$LINENO" 5;
+
+elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+        as_fn_error $? "\"Resquested vista support but vistaio was not found\"" "$LINENO" 5;
+
+else
+	VISTAIO_CFLAGS=$pkg_cv_VISTAIO_CFLAGS
+	VISTAIO_LIBS=$pkg_cv_VISTAIO_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	FOUND_VISTAIO=yes
+fi;
+        echo "compiling with vistaio support"
+
+
+
+$as_echo "#define AMIDE_VISTAIO_SUPPORT 1" >>confdefs.h
+
+else
+	echo "compiling without vistaio file support"
 fi
 
 

@@ -239,6 +239,25 @@ else
 	echo "compiling without libecat/CTI file support"
 fi
 
+dnl Let people compile without having libvistaio 
+AC_ARG_ENABLE(
+	vistaio, 
+	[  --enable-vistaio,	  Compile with the vistaio library [default=yes]],
+	enable_vistaio="$enableval",
+	enable_vistaio=yes)
+
+if (test $enable_vistaio = yes); then
+        PKG_CHECK_MODULES(VISTAIO, libvistaio >= 1.2.17, FOUND_VISTAIO=yes, [
+        AC_MSG_ERROR("Resquested vista support but vistaio was not found"); 
+                ]);
+        echo "compiling with vistaio support"
+	AC_SUBST(VISTAIO_LIBS)
+        AC_SUBST(VISTAIO_CFLAGS)
+	AC_DEFINE(AMIDE_VISTAIO_SUPPORT, 1, Define to compile with vistaio)
+else
+	echo "compiling without vistaio file support"
+fi
+
 
 
 dnl Let people compile without having libmdc
