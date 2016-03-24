@@ -209,7 +209,7 @@ gdouble calculate_mutual_information(AmitkDataSet * fixed_ds, AmitkDataSet * mov
       //g_print("\t\%i", mutual_information_array[i][j] );  // for point-wise counts
       // g_print("\t\%4.3f", incremental_mi );               // for point-wise probability
       
-      if isinf(incremental_mi) {
+      if (isinf(incremental_mi)) {
         //count it (because lots and lots of zeroes mean bad registration) and go to the next loop
         mi_nan_count++;
         // this is most often a problem when the incemental MI is infinity, due to divide by zero
