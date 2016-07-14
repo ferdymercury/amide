@@ -45,8 +45,7 @@ alignments.
 %configure \
 	   --enable-libecat=no \
 	   --enable-vistaio=no \
-	   --enable-amide-debug=no \
-	   --disable-scrollkeeper
+	   --enable-amide-debug=no
 make
 
 %install

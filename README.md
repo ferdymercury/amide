@@ -17,29 +17,19 @@ Quick Linux instructions
 	cd /tmp/
 	git clone --depth=1 https://github.com/ferdymercury/amide
 	# If Ubuntu 22:
-	sudo apt install libgconf2-dev libmdc2-dev libvolpack1-dev libavcodec-dev gtk-doc-tools intltool libxml2-dev libgsl-dev libdcmtk-dev libgtk-3-dev
+	sudo apt install libgconf2-dev libmdc2-dev libvolpack1-dev libavcodec-dev yelp-tools intltool libxml2-dev libgsl-dev libdcmtk-dev libgtk-3-dev
 	# ElseIf Ubuntu 20:
-	sudo apt install libgconf2-dev libmdc2-dev libvolpack1-dev libavcodec-dev gtk-doc-tools intltool libxml2-dev python-libxml2 libgsl-dev libdcmtk-dev libgtk-3-dev
-	wget http://launchpadlibrarian.net/402991440/gnome-doc-utils_0.20.10-5_all.deb
-	sudo dpkg -i gnome-doc-utils_0.20.10-5_all.deb
+	sudo apt install libgconf2-dev libmdc2-dev libvolpack1-dev libavcodec-dev yelp-tools intltool libxml2-dev python-libxml2 libgsl-dev libdcmtk-dev libgtk-3-dev
 	# ElseIf Ubuntu 18:
-	sudo apt install libgconf2-dev libgnomevfs2-dev gnome-doc-utils libmdc2-dev libvolpack1-dev libavcodec-dev gtk-doc-tools intltool libxml2-dev python-libxml2 libgsl-dev libdcmtk-dev libgtk-3-dev
+	sudo apt install libgconf2-dev libgnomevfs2-dev libmdc2-dev libvolpack1-dev libavcodec-dev yelp-tools intltool libxml2-dev python-libxml2 libgsl-dev libdcmtk-dev libgtk-3-dev
 	# EndIf	
 
 	cd amide
 	intltoolize
 	libtoolize
-	gtkdocize
-	# If Ubuntu 22:
-	touch gnome-doc-utils.make
-	# Else (Ubuntu 18/20 or Fedora32):
-	gnome-doc-prepare
-	# EndIf
 	autoreconf --install
-	# If Ubuntu 22:
-	./configure --prefix /opt/amide --enable-gnome-vfs=no --disable-scrollkeeper --disable-doc 
-	# ElseIf Ubuntu 20:
-	./configure --prefix /opt/amide --enable-gnome-vfs=no --disable-scrollkeeper
+	# If Ubuntu 20 or later:
+	./configure --prefix /opt/amide --enable-gnome-vfs=no
 	# Else (Ubuntu 18 or Fedora32):
 	./configure --prefix /opt/amide
 	# EndIf
@@ -73,9 +63,6 @@ optimizations are used when compiling.
 The current series of AMIDE requires GTK-3, at least version 3.21.5.
 I'm currently developing on a Fedora 25 system, although other
 distributions of Linux with equivalent library support should work.
-
-Scrollkeeper is required for generating the help documentation.  If
-you don't care about that, it's not needed.
 
 3) Additional libraries:
    libxml-2
