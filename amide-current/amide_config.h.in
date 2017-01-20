@@ -27,11 +27,17 @@
 /* Define to compile with (X)MedCon */
 #undef AMIDE_LIBMDC_SUPPORT
 
+/* Define to compile with openjp2 */
+#undef AMIDE_LIBOPENJP2_SUPPORT
+
 /* Define to compile with VolPack */
 #undef AMIDE_LIBVOLPACK_SUPPORT
 
 /* Define to compile with native GTK support on Mac OS X */
 #undef AMIDE_NATIVE_GTK_OSX
+
+/* Define to compile with vistaio */
+#undef AMIDE_VISTAIO_SUPPORT
 
 /* always defined to indicate that i18n is enabled */
 #undef ENABLE_NLS

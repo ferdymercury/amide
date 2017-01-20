@@ -43,10 +43,20 @@
 #undef PACKAGE_STRING
 #undef PACKAGE_TARNAME
 #undef PACKAGE_VERSION
-#define HAVE_CONFIG_H /* the autoconf compiled version of DCMTK has a config header file */
+
+//#define HAVE_CONFIG_H /* the autoconf compiled version of DCMTK has a config header file */
 #include <dcmtk/dcmdata/dcddirif.h>     /* for class DicomDirInterface */
 #include <dcmtk/dcmdata/dctk.h>
+#include <dcmtk/dcmdata/dcrledrg.h>    /* for RLE decoders */
 #include "dcmtk/dcmjpeg/djdecode.h"    /* for dcmjpeg decoders */
+
+#ifdef AMIDE_LIBOPENJP2_SUPPORT
+#include <dcmtk/config/osconfig.h>   /* JPG2000 make sure OS specific configuration is included first */
+#include <dcmtk/dcmdata/dcpxitem.h>
+#include <openjpeg-2.1/opj_config.h>
+#include <openjpeg-2.1/openjpeg.h>
+static void * j2k_to_raw(DcmDataset *pdata, AmitkDataSet const *pds);
+#endif
 
 const gchar * dcmtk_version = OFFIS_DCMTK_VERSION;
 
@@ -89,6 +99,7 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
 
   DcmFileFormat dcm_format;
   DcmMetaInfo * dcm_metainfo;
+  DcmXfer *dcm_syntax=NULL;
   DcmDataset * dcm_dataset;
   OFCondition result;
   Uint16 return_uint16=0;
@@ -102,7 +113,7 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   const char * scan_time=NULL;
   gchar * temp_str;
   gboolean valid;
-
+  gboolean valid_J2K=FALSE;
   AmitkPoint voxel_size = one_point;
   AmitkDataSet * ds=NULL;
   AmitkModality modality;
@@ -127,23 +138,42 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   struct tm time_structure;
 
   /* note - dcmtk always uses POSIX locale - look to setlocale stuff in libmdc_interface.c if this ever comes up*/
-
+  g_debug(__FILE__ ": Processing file %s", filename);
+  
   result = dcm_format.loadFile(filename);
   if (result.bad()) {
-    g_warning("could not read DICOM file %s, dcmtk returned %s",filename, result.text());
+    g_warning(_("could not read DICOM file %s, dcmtk returned %s"),filename, result.text());
     goto error;
   }
 
   dcm_metainfo = dcm_format.getMetaInfo();
-  //  if (dcm_metainfo == NULL) {
-  //    g_warning("could not find metainfo in DICOM file %s\n", filename);
-  //  }
+  if (dcm_metainfo == NULL) {
+     g_warning(_("could not find metainfo in DICOM file %s\n"), filename);
+  }
 
   dcm_dataset = dcm_format.getDataset();
-  //  dcm_dataset = &(dcm_dir.getDataset());
   if (dcm_dataset == NULL) {
     g_warning(_("could not find dataset in DICOM file %s\n"), filename);
     goto error;
+  }
+
+  if (dcm_metainfo == NULL) {
+    dcm_syntax = new DcmXfer(dcm_dataset->getOriginalXfer());
+  } else {
+    /* What TransSyntax is used to encode the image */
+    if (dcm_metainfo->findAndGetString(DCM_TransferSyntaxUID, return_str).good()) {
+      if (return_str != NULL) {
+        g_debug("TransferSyntaxUID %s", return_str);
+        dcm_syntax = new DcmXfer(return_str);
+      }
+    }
+  }
+
+  if (dcm_syntax == NULL) {
+    g_warning(_("could not determine TransferSyntax %s\n"), filename);
+    goto error;
+  } else {
+    g_debug("TransferSyntax is %s (%d)", dcm_syntax->getXferName(), dcm_syntax->getXfer());
   }
 
   modality = AMITK_MODALITY_OTHER;
@@ -187,27 +217,25 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
 					EUC_default,
 					EPC_default,
 					OFFalse);
+  DcmRLEDecoderRegistration::registerCodecs();
 
   /* uncompress the raw data in case this is a JPEG encoded file */
   result = dcm_dataset->chooseRepresentation(EXS_LittleEndianExplicit, NULL);
   if (result.bad()) {
-    valid = FALSE;
 
     /* check if this is JPEG2000, which is not currently freely supported by dcmtk */
-    if (dcm_metainfo != NULL)
-      if (dcm_metainfo->findAndGetString(DCM_TransferSyntaxUID, return_str).good()) 
-	if (return_str != NULL) 
-	  if ((strcmp(return_str, UID_JPEG2000LosslessOnlyTransferSyntax) == 0) ||
-	      (strcmp(return_str, UID_JPEG2000TransferSyntax) == 0) ||
-	      (strcmp(return_str, UID_JPEG2000Part2MulticomponentImageCompressionLosslessOnlyTransferSyntax) == 0) ||
-	      (strcmp(return_str, UID_JPEG2000Part2MulticomponentImageCompressionTransferSyntax) == 0))
-	    valid = TRUE;
+    return_str = dcm_syntax->getXferID();
+    if (return_str != NULL)
+      if ((strcmp(return_str, UID_JPEG2000LosslessOnlyTransferSyntax) == 0) ||
+              (strcmp(return_str, UID_JPEG2000TransferSyntax) == 0) ||
+              (strcmp(return_str, UID_JPEG2000Part2MulticomponentImageCompressionLosslessOnlyTransferSyntax) == 0) ||
+              (strcmp(return_str, UID_JPEG2000Part2MulticomponentImageCompressionTransferSyntax) == 0))
+        valid_J2K = TRUE;
 
-    if (valid)
-      g_warning("could not decompress data in DICOM file %s likely because this is JPEG 2000 compressed data, dcmtk returned %s", filename, result.text());
-    else
-      g_warning("could not decompress data in DICOM file %s, dcmtk returned %s", filename, result.text());
-    goto error;
+    if (!valid_J2K) {
+      g_warning(_("could not decompress data in DICOM file %s, dcmtk returned %s"), filename, result.text());
+      goto error;
+    }
   }
     
   /* get basic data */
@@ -245,7 +273,7 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
 	g_warning("in correct NumberOf Frames (%d) - Failed to load file %s\n", dim.z, filename);
     }
   }
-
+  g_debug("Number of frames: %d (%d x %d px.)", dim.z, dim.x, dim.y);
   dim.t = 1; /* no support for multiple time frame of data in a single file */
 
   dim.g = 1; /* no support for multiple gates in a single file */
@@ -309,7 +337,8 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
     goto error;
   }
 
-  /* malloc data set */
+  /* malloc data set, including raw_data->data=g_try_malloc(amitk_raw_data_num_voxels(rd) * amitk_format_sizes[(rd)->format]) 
+        amitk_raw_data_num_voxels(rd) = ((rd)->dim.x * (rd)->dim.y * (rd)->dim.z * (rd)->dim.g * (rd)->dim.t) */
   ds = amitk_data_set_new_with_data(preferences, modality, format, dim, AMITK_SCALING_TYPE_0D_WITH_INTERCEPT);
   if (ds == NULL) {
     g_warning(_("Couldn't allocate space for the data set structure to hold DCMTK data - Failed to load file %s"), filename);
@@ -326,9 +355,9 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
     amitk_data_set_set_dicom_image_type(ds, return_str); /* function can handle NULL strings */
 
   /* get the voxel size */
-  if (dcm_dataset->findAndGetFloat64(DCM_PixelSpacing, return_float64,0).good()) {
+  if (dcm_dataset->findAndGetFloat64(DCM_PixelSpacing, return_float64, 0, OFTrue).good()) {
     voxel_size.y = return_float64;
-    if (dcm_dataset->findAndGetFloat64(DCM_PixelSpacing, return_float64,1).good())
+    if (dcm_dataset->findAndGetFloat64(DCM_PixelSpacing, return_float64,1, OFTrue).good())
       voxel_size.x = return_float64;
     else {
       voxel_size.x = voxel_size.y;
@@ -339,18 +368,19 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
 
   /* try to figure out the correct z thickness */
   voxel_size.z = -1;
-  if (dcm_dataset->findAndGetFloat64(DCM_SpacingBetweenSlices, return_float64).good()) 
+  if (dcm_dataset->findAndGetFloat64(DCM_SpacingBetweenSlices, return_float64, 0, OFTrue).good()) 
     voxel_size.z = return_float64;
 
   if (voxel_size.z <= 0.0) {
-    if (dcm_dataset->findAndGetFloat64(DCM_SliceThickness, return_float64).good()) {
+    if (dcm_dataset->findAndGetFloat64(DCM_SliceThickness, return_float64, 0, OFTrue).good()) {
       voxel_size.z = return_float64;
     } else {
       amitk_append_str_with_newline(perror_buf, _("Could not find the slice thickness, setting to 1 mm for File %s"), filename);
       voxel_size.z = 1;
     }
   }
-
+  g_debug("Voxel size (mm): %f x %f x %f", voxel_size.x, voxel_size.y, voxel_size.z);
+  
   /* store this number, occasionally used in sorting */
   if (dcm_dataset->findAndGetSint32(DCM_InstanceNumber, return_sint32).good())
     ds->instance_number = return_sint32;
@@ -363,23 +393,25 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   new_axes[AMITK_AXIS_X] = base_axes[AMITK_AXIS_X];
   new_axes[AMITK_AXIS_Y] = base_axes[AMITK_AXIS_Y];
   new_axes[AMITK_AXIS_Z] = base_axes[AMITK_AXIS_Z];
-  if (dcm_dataset->findAndGetFloat64(DCM_ImageOrientationPatient, return_float64, 0).good()) {
+  if (dcm_dataset->findAndGetFloat64(DCM_ImageOrientationPatient, return_float64, 0, OFTrue).good()) {
     new_axes[AMITK_AXIS_X].x = return_float64;
-    if (dcm_dataset->findAndGetFloat64(DCM_ImageOrientationPatient, return_float64, 1).good()) {
+    if (dcm_dataset->findAndGetFloat64(DCM_ImageOrientationPatient, return_float64, 1, OFTrue).good()) {
       new_axes[AMITK_AXIS_X].y = return_float64;
-      if (dcm_dataset->findAndGetFloat64(DCM_ImageOrientationPatient, return_float64, 2).good()) {
+      if (dcm_dataset->findAndGetFloat64(DCM_ImageOrientationPatient, return_float64, 2, OFTrue).good()) {
 	new_axes[AMITK_AXIS_X].z = return_float64;
-	if (dcm_dataset->findAndGetFloat64(DCM_ImageOrientationPatient, return_float64, 3).good()) {
+	if (dcm_dataset->findAndGetFloat64(DCM_ImageOrientationPatient, return_float64, 3, OFTrue).good()) {
 	  new_axes[AMITK_AXIS_Y].x = return_float64;
-	  if (dcm_dataset->findAndGetFloat64(DCM_ImageOrientationPatient, return_float64, 4).good()) {
+	  if (dcm_dataset->findAndGetFloat64(DCM_ImageOrientationPatient, return_float64, 4, OFTrue).good()) {
 	    new_axes[AMITK_AXIS_Y].y = return_float64;
-	    if (dcm_dataset->findAndGetFloat64(DCM_ImageOrientationPatient, return_float64, 5).good()) {
+	    if (dcm_dataset->findAndGetFloat64(DCM_ImageOrientationPatient, return_float64, 5, OFTrue).good()) {
 	      new_axes[AMITK_AXIS_Y].z = return_float64;
 	    }
 	  }
 	}
       }
     }
+  } else {
+    g_warning(_("Couldn't find ImageOrientationPatient in file %s"), filename);    
   }
   new_axes[AMITK_AXIS_X].y *= -1.0;
   new_axes[AMITK_AXIS_X].z *= -1.0;
@@ -392,11 +424,11 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
      in Patient space, not necessarily with respect to the Gantry. At least for GE scanners, 
      the offset is on corner of this voxel */
   found_value=FALSE;
-  if (dcm_dataset->findAndGetFloat64(DCM_ImagePositionPatient, return_float64, 0).good()) {
+  if (dcm_dataset->findAndGetFloat64(DCM_ImagePositionPatient, return_float64, 0, OFTrue).good()) {
     new_offset.x = return_float64;
-    if (dcm_dataset->findAndGetFloat64(DCM_ImagePositionPatient, return_float64, 1).good()) {
+    if (dcm_dataset->findAndGetFloat64(DCM_ImagePositionPatient, return_float64, 1, OFTrue).good()) {
       new_offset.y = return_float64;
-      if (dcm_dataset->findAndGetFloat64(DCM_ImagePositionPatient, return_float64, 2).good()) {
+      if (dcm_dataset->findAndGetFloat64(DCM_ImagePositionPatient, return_float64, 2, OFTrue).good()) {
       	new_offset.z = return_float64;
 
 	/* not doing the half voxel correction... values seem more correct without, at least for GE.
@@ -418,16 +450,20 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
     }
   }
   if (!found_value) { /* see if we can get it otherwise */
-    if (dcm_dataset->findAndGetFloat64(DCM_SliceLocation, return_float64).good()) {
+    if (dcm_dataset->findAndGetFloat64(DCM_SliceLocation, return_float64, 0, OFTrue).good()) {
       /* if no ImagePositionPatient, try using SliceLocation */
       new_offset.x = new_offset.y = 0.0;
       //this looks wrong 2007.11.21 - doing what's done in the DCM_ImagePositionPatient case
       // new_offset.z = -1.0*(return_float64+voxel_size.z*dim.z); /* DICOM specifies z axis in wrong direction */
       new_offset.z = -1.0*return_float64; /* DICOM specifies z axis in wrong direction */
       amitk_space_set_offset(AMITK_SPACE(ds), new_offset);
+      found_value=TRUE;
     }
   }
 
+  if (!found_value) {
+    g_warning(_("Couldn't find ImagePositionPatient nor SliceLocation in file %s"), filename);    
+  }
 
   amitk_data_set_set_voxel_size(ds, voxel_size);
   amitk_data_set_calc_far_corner(ds);
@@ -649,6 +685,7 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_LEFT_DECUBITUS_HEADFIRST);
       else if (g_ascii_strcasecmp(return_str, "FFDL")==0)
   	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_LEFT_DECUBITUS_FEETFIRST);
+      g_debug("Patient position is %s", return_str);
     }
   }
 
@@ -657,53 +694,73 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
 
   /* a "GetSint16Array" function is also provided, but for some reason I get an error
      when using it.  I'll just use GetUint16Array even for signed stuff */
-  switch(format) {
-  case AMITK_FORMAT_SBYTE:
-  case AMITK_FORMAT_UBYTE:
-    {
-      const Uint8 * temp_buffer;
-      result = dcm_dataset->findAndGetUint8Array(DCM_PixelData, temp_buffer);
-      buffer = (void *) temp_buffer;
-      break;
+  if (!valid_J2K) {
+    switch (format) {
+      case AMITK_FORMAT_SBYTE:
+      case AMITK_FORMAT_UBYTE:
+      {
+        const Uint8 * temp_buffer;
+        result = dcm_dataset->findAndGetUint8Array(DCM_PixelData, temp_buffer);
+        buffer = (void *) temp_buffer;
+        break;
+      }
+      case AMITK_FORMAT_SSHORT:
+      case AMITK_FORMAT_USHORT:
+      {
+        const Uint16 * temp_buffer;
+        result = dcm_dataset->findAndGetUint16Array(DCM_PixelData, temp_buffer);
+        buffer = (void *) temp_buffer;
+        break;
+      }
+      case AMITK_FORMAT_SINT:
+      case AMITK_FORMAT_UINT:
+      {
+        const Uint32 * temp_buffer;
+        result = dcm_dataset->findAndGetUint32Array(DCM_PixelData, temp_buffer);
+        //      result = dcm_dataset->findAndGetUint16Array(DCM_PixelData, temp_buffer);
+        buffer = (void *) temp_buffer;
+        break;
+      }
+      default:
+        g_warning("unsupported data format in %s at %d\n", __FILE__, __LINE__);
+        goto error;
+        break;
     }
-  case AMITK_FORMAT_SSHORT:
-  case AMITK_FORMAT_USHORT:
-    {
-      const Uint16 * temp_buffer;
-      result = dcm_dataset->findAndGetUint16Array(DCM_PixelData, temp_buffer);
-      buffer = (void *) temp_buffer;
-      break;
-    }
-  case AMITK_FORMAT_SINT:
-  case AMITK_FORMAT_UINT:
-    {
-      const Uint32 * temp_buffer;
-      result = dcm_dataset->findAndGetUint32Array(DCM_PixelData, temp_buffer);
-      //      result = dcm_dataset->findAndGetUint16Array(DCM_PixelData, temp_buffer);
-      buffer = (void *) temp_buffer;
-      break;
-    }
-  default:
-    g_warning("unsupported data format in %s at %d\n", __FILE__, __LINE__);
-    goto error;
-    break;
-  }
+    assert(buffer); 
 
-  if (result.bad()) {
-    g_warning(_("error reading in pixel data -  DCMTK error: %s - Failed to read file %s"),result.text(), filename);
+    if (result.bad()) {
+      g_warning(_("error reading in pixel data - DCMTK error: %s - Failed to read file %s"), result.text(), filename);
+      goto error;
+    }
+  } 
+  else {
+#ifdef AMIDE_LIBOPENJP2_SUPPORT    
+    buffer = j2k_to_raw(dcm_dataset, ds);
+    if (!buffer) {
+      g_warning(_("error while decompressing JPEG 2000 from DCMTK file %s"), filename);
+      goto error;
+    }
+#else
+    g_warning(_("file %s is JPEG 2000 encoded and supporting libraries have not been compiled in."), filename);
     goto error;
+#endif
   }
-
+  
   i = zero_voxel;
 
   /* store the scaling factor... if there is one */
-  if (dcm_dataset->findAndGetFloat64(DCM_RescaleSlope, return_float64,0).good())
+  if (dcm_dataset->findAndGetFloat64(DCM_RescaleSlope, return_float64, 0, OFTrue).good()) {
     *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling_factor, i) = return_float64;
+    g_debug("RescaleSlope: %f", return_float64);
+  }
 
   /* same for the offset */
-  if (dcm_dataset->findAndGetFloat64(DCM_RescaleIntercept, return_float64).good()) 
+  if (dcm_dataset->findAndGetFloat64(DCM_RescaleIntercept, return_float64, 0, OFTrue).good()) {
     *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling_intercept, i) = return_float64;
+    g_debug("RescaleIntercept: %f", return_float64);
+  }
 
+  // MR: alternative FrameReferenceDateTime
   if (dcm_dataset->findAndGetFloat64(DCM_FrameReferenceTime, return_float64).good()) 
     amitk_data_set_set_scan_start(ds,return_float64/1000.0);
 
@@ -723,7 +780,10 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
       /* note, we've already flipped the coordinate axis, so reading in the data straight is correct */
       ds_pointer = amitk_raw_data_get_pointer(AMITK_DATA_SET_RAW_DATA(ds), i);
       memcpy(ds_pointer, (guchar *) buffer, format_size*ds->raw_data->dim.x*ds->raw_data->dim.y*ds->raw_data->dim.z);
-
+      if (valid_J2K) { /* Free allocated buffer */
+        g_free((gpointer)buffer);
+        buffer=NULL;
+      }
     }
   }
 
@@ -747,7 +807,11 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
 
   /* deregister global decompression codecs */
   DJDecoderRegistration::cleanup();
-
+ if (valid_J2K && buffer) { /* Free allocated buffer */
+   //g_free((gpointer)buffer);
+   //buffer=NULL;
+ }
+ 
   return ds;
 }
 
@@ -2884,4 +2948,290 @@ gboolean dcmtk_export(AmitkDataSet * ds,
   return successful;
 }
 
+#ifdef AMIDE_LIBOPENJP2_SUPPORT
+
+/* Read num_bytes from user_data (from stream) into buffer. Note that user_data may be of any type, 
+ * it is our responsibility to extract the data from it. In our case user_data has been set to comp_buffer
+ * and we expect this function to be called only once with num_bytes == comp_lenght... */
+static OPJ_SIZE_T opj_input_memory_stream_read(void * buffer, OPJ_SIZE_T num_bytes, void * user_data) {
+
+  memcpy(buffer, user_data, num_bytes);
+  return num_bytes;
+}
+
+
+/* decompress comp_buffer (comp_length bytes) into raw_buffer (raw_length) 
+ *   TODO J2K format assumed */
+static gboolean j2k_decompress(guint32 comp_length, const guint8 *comp_buffer, guint32 raw_length, guint8 *raw_buffer) {
+  gboolean return_val = FALSE;
+  /* openjpeg stuff */
+  opj_codec_t * codec=NULL;
+  opj_image_t * image=NULL;
+  opj_stream_t * stream=NULL;
+  opj_dparameters_t param; // Decoder parameters
+  OPJ_UINT32 tile_index; // J2K images may contain several tiles
+  OPJ_UINT32 tile_size;
+  OPJ_INT32 current_tile_x0, current_tile_y0, current_tile_x1, current_tile_y1; // tile coordinates
+  OPJ_UINT32 num_comps; // Number of components in tile (not used))
+  OPJ_BOOL go_on = OPJ_TRUE; // Indicates more tiles to process
+  guint8 *pdata;
+  guint32 tile;
+  
+  stream = opj_stream_create(comp_length, OPJ_TRUE); // Internal buffer can hold the whole stream in one read call
+  if (!stream) {
+    goto error;
+  }
+
+  opj_stream_set_user_data(stream, (void *)comp_buffer, NULL);
+  opj_stream_set_user_data_length(stream, (OPJ_UINT64)comp_length);
+  opj_stream_set_read_function(stream, opj_input_memory_stream_read);
+
+
+  /* Set the default decoding parameters*/
+  opj_set_default_decoder_parameters(&param);
+  /* do not use layer decoding limitations */
+  param.cp_layer = 0;
+  /* do not use resolutions reductions */
+  param.cp_reduce = 0;
+  /* to decode only a part of the image data */
+  /*opj_restrict_decoding(&l_param,0,0,1000,1000);*/
+
+  /* Get a decoder handle */
+  if ((codec = opj_create_decompress(OPJ_CODEC_J2K)) == NULL) {
+    goto error;
+  }
+
+  /* Setup the decoder decoding parameters using user parameters */
+  if (!opj_setup_decoder(codec, &param)) {
+    goto error;
+  }
+  /* Read the main header of the codestream and if necessary the JP2 boxes */
+  if (!opj_read_header(stream, codec, &image)) {
+    goto error;
+  }
+  g_debug("J2K image grid (x0, y0, x1, y1): (%d, %d, %d, %d), components: %d", image->x0, image->y0, image->x1, image->y1, image->numcomps);
+
+  /* We do not yet support color images */
+  if (image->numcomps > 1) {
+    g_warning(_("JPEG 2000 color images not supported"));
+    goto error;
+  }
+
+  /* decode the whole image area by default */
+  pdata = raw_buffer;
+  tile = 0;
+  while (go_on) {
+    if (!opj_read_tile_header(codec, stream,
+            &tile_index,
+            &tile_size,
+            &current_tile_x0,
+            &current_tile_y0,
+            &current_tile_x1,
+            &current_tile_y1,
+            &num_comps,
+            &go_on)) {
+      goto error;
+    }
+    if (go_on) {
+      tile++;
+      if (pdata + tile_size > raw_buffer + raw_length) {
+        g_debug("raw_buffer size exceeded when decoding tile %u", tile);
+        goto error;
+      }
+      if (!opj_decode_tile_data(codec, tile_index, (OPJ_BYTE *)pdata, tile_size, stream)) {
+        goto error;
+      }
+      pdata+= tile_size;
+      /** now should inspect image to know the reduction factor and then how to behave with data */
+    }
+  }
+  g_debug("J2K processed %u tiles", tile);
+  return_val = opj_end_decompress(codec, stream);
+
+  error:
+  /* Free memory */
+  if (image) opj_image_destroy(image);
+  if (codec) opj_destroy_codec(codec);
+  if (stream) opj_stream_destroy(stream);
+
+  return return_val;
+}
+
+/* Extract JPEG 2000 encoding PixelData from the DcmDataset and return the buffer containing
+ * decompressed image(s). Note that MultiFrame DICOM files nor multi-tile JPEG 2000 images
+ * have been tested because of lack of sample data. */
+static void * j2k_to_raw(DcmDataset *dcm_data, AmitkDataSet const *ds) {
+  /* Amitk stuff */
+  AmitkRawData *raw_data;
+  gint format_size;
+  amide_intpoint_t z;
+  guint32 data_size; // overall buffer size for X * Y * Z dimensions
+  guint32 image_size; // for one decompressed image
+  guint8 *data = NULL; // our buffer to hold the z * decompressed images
+  guint8 *pdata;
+  /* DCMTK stuff */
+  DcmElement *element;
+  DcmPixelData *pixel_data;
+  DcmPixelSequence *pixel_sequence; // = NULL;
+  E_TransferSyntax transfer_syntax; // = EXS_Unknown;
+  const DcmRepresentationParameter *representation_parameter; // = NULL;
+  DcmPixelItem *pixel_item; // = NULL;
+  Uint8 *pixel_buffer; // to hold one compressed frame fragment
+  Uint32 pixel_length;
+  Uint32 num_frames; // Number of frames within PixelData
+  Uint32 frame; // current frame
+  Uint32 *frame_offset; // Pointer to an array of frame offset
+  Uint32 offset; // current offset
+  gboolean frame_in_progress;
+  Uint8 *temp_buffer = NULL; // temporary buffer to process current frame
+  Uint32 temp_length = 0; // temporary buffer length, may increase if several fragments (= 0 to avoid -Wmaybe-uninitialized)
+  Uint8 *temp_buffer_tmp;
+  Uint32 old_temp_length;
+  
+  OFCondition result;
+
+  raw_data = ds->raw_data;
+  format_size = amitk_format_sizes[AMITK_RAW_DATA_FORMAT(raw_data)];
+  z = AMITK_DATA_SET_DIM_Z(ds);
+  image_size = format_size * AMITK_RAW_DATA_DIM_X(raw_data) * AMITK_RAW_DATA_DIM_Y(raw_data);
+  data_size = image_size * AMITK_RAW_DATA_DIM_Z(raw_data);
+  data = (guint8 *)g_try_malloc(data_size);
+  if (data == NULL) {
+    g_debug("malloc failed %d", __LINE__);
+    goto error;
+  }
+  
+  result = dcm_data->findAndGetElement(DCM_PixelData, element);
+  if (result.bad()) {
+    goto error;
+  }
+
+  pixel_data = OFstatic_cast(DcmPixelData*, element);
+  
+  // Find the key that is needed to access the right representation of the data within DCMTK
+  pixel_data->getOriginalRepresentationKey(transfer_syntax, representation_parameter);
+
+  // Access original data representation and get result within pixel sequence
+  result = pixel_data->getEncapsulatedRepresentation(transfer_syntax, representation_parameter, pixel_sequence);
+  if (result != EC_Normal) {
+    goto error;
+  }
+
+  // First item is offset table
+  result = pixel_sequence->getItem(pixel_item, 0); 
+  if (result.bad()) {
+    goto error;
+  }
+  pixel_length = pixel_item->getLength();
+  if (pixel_length == 0) { // MonoFrame
+    num_frames = 1;
+  } else {
+    num_frames = pixel_length / 4;
+  }
+  if (num_frames != (Uint32)z) {
+    g_debug("Number of frames expected (%d) do not tally found (%d)", z, num_frames);
+    goto error;
+  }
+  // Get the array of frame offset
+  result = pixel_item->getUint32Array(frame_offset);
+  if (result.bad()) {
+    // Surpisingly this would return bad even if there is an offset table for a single fragment
+    frame_offset = NULL;
+  }
+  /* TODO pass transfer_syntax to j2k_decompress for proper handling (here assumed EXS_JPEG2000) */
+  pdata = data;
+  offset = 0;
+  frame = 0;
+  frame_in_progress = FALSE;
+  for (int frag = 1; ; frag++) {
+    result = pixel_sequence->getItem(pixel_item, frag);
+    if (result.bad()) { // indicates sequence end
+      break;
+    }
+    // Get the length of this pixel item (i.e. fragment)
+    pixel_length = pixel_item->getLength();
+    if (pixel_length == 0) {
+      g_debug("Expecting a not empty fragment");
+      goto error;
+    }
+    // get the compressed data fragment for this pixel item
+    result = pixel_item->getUint8Array(pixel_buffer);
+    if (result != EC_Normal) {
+      goto error;
+    }
+    if (frame_in_progress) {
+      // Has the offset exceeded the current frame ?
+      if (!frame_offset || (frame == num_frames -1) || (offset < frame_offset[frame+1])) {
+        // No or no frame_offset table or last frame
+        // realloc
+        old_temp_length = temp_length;
+        temp_length += pixel_length;
+        temp_buffer_tmp = (Uint8 *)g_try_realloc(temp_buffer, temp_length);
+        if (temp_buffer_tmp == NULL) {
+          g_debug("malloc failed %d", __LINE__);
+          goto error;
+        }
+        temp_buffer = temp_buffer_tmp;
+        // append pixel_buffer
+        memcpy(temp_buffer+old_temp_length, pixel_buffer, pixel_length);
+      } else {
+        // yes or no frame_offset table
+        if (!j2k_decompress(temp_length, temp_buffer, image_size, pdata)) {
+          goto error;
+        }
+        pdata+= image_size;
+        frame++;
+        g_free(temp_buffer);
+        // allocate a new temp buffer
+        temp_length = pixel_length;
+        temp_buffer = (Uint8 *)g_try_malloc(temp_length);
+        if (temp_buffer == NULL) {
+          g_debug("malloc failed %d", __LINE__);
+          goto error;
+        }
+        memcpy(temp_buffer, pixel_buffer, temp_length);
+      }
+    } else { // first frame
+      // malloc temp_buffer
+      temp_length = pixel_length;
+      temp_buffer = (Uint8 *)g_try_malloc(temp_length);
+      if (temp_buffer == NULL) {
+        g_debug("malloc failed %d", __LINE__);
+        goto error;
+      }
+      // copy pixel_buffer
+      memcpy(temp_buffer, pixel_buffer, temp_length);
+      frame_in_progress = TRUE;
+    }
+    // update offset
+    offset+= pixel_length + 8; // must account for Item tag + Item length
+    // sanity check frame < num_frames
+    if (frame >= num_frames) {
+      // We have a problem
+      g_debug("Too many frames: %d ! Expected %d", frame+1, num_frames);
+      goto error;
+    }
+  }
+  if (frame_in_progress) { // should be the case...
+    // decompress
+    if (!j2k_decompress(temp_length, temp_buffer, image_size, pdata)) {
+      goto error;
+    }
+    pdata+= image_size;
+    frame++;
+    g_free(temp_buffer);
+  } else {
+    g_debug("Expecting more fragments to come...");
+    goto error;
+  }
+
+  return data;
+
+error:
+  if (temp_buffer) g_free(temp_buffer);
+  if (data) g_free(data);
+  return NULL;
+}
+
+#endif /* AMIDE_LIBOPENJP2_SUPPORT */
 #endif /* AMIDE_LIBDCMDATA_SUPPORT */

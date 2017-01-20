@@ -32,6 +32,7 @@
 #include "ui_common.h"
 #ifdef AMIDE_LIBGSL_SUPPORT
 #include <gsl/gsl_multifit_nlin.h>
+#include <gsl/gsl_version.h>
 #endif
 
 
@@ -605,6 +606,7 @@ static void fit_gaussian(tb_profile_t * tb_profile) {
   result_t * result;
   gsl_multifit_fdfsolver * solver;
   gsl_matrix *covar;
+  gsl_matrix *J; 
   gsl_multifit_function_fdf fdf;
   gsl_vector * init_p;
   gint iter;
@@ -644,6 +646,8 @@ static void fit_gaussian(tb_profile_t * tb_profile) {
       gsl_vector_set(init_p, j++, result->min_y); /* b - DC val */
 
     /* alloc the solver */
+    g_return_if_fail(result->line->len < num_p); 
+
     solver = gsl_multifit_fdfsolver_alloc (gsl_multifit_fdfsolver_lmder,result->line->len, num_p);
     g_return_if_fail(solver != NULL);
 
@@ -668,8 +672,16 @@ static void fit_gaussian(tb_profile_t * tb_profile) {
     }
     while ((status == GSL_CONTINUE) && (iter < 100));
 
+#if GSL_MAJOR_VERSION > 1     
+    {
+      gsl_matrix *J = gsl_matrix_alloc (result->line->len, num_p);;  
+      gsl_multifit_fdfsolver_jac(solver, J);
+      gsl_multifit_covar (J, 0.0, covar);
+      gsl_matrix_free(J);
+    }
+#else
     gsl_multifit_covar (solver->J, 0.0, covar);
-
+#endif 
     j=0;
     result->s_fit = gsl_vector_get(solver->x, j++);
     result->p_fit = gsl_vector_get(solver->x, j++);

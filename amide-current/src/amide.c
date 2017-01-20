@@ -76,11 +76,14 @@ void amide_log_handler(const gchar *log_domain,
   GtkWidget * label;
 
   if (AMITK_PREFERENCES_WARNINGS_TO_CONSOLE(preferences)) {
-    if (log_level == G_LOG_LEVEL_MESSAGE) 
+    if (log_level & G_LOG_LEVEL_MESSAGE) 
       g_print("AMIDE MESSAGE: %s\n", message);
-    else /* G_LOG_LEVEL_WARNING */
+    else if (log_level & G_LOG_LEVEL_WARNING) /* G_LOG_LEVEL_WARNING */
       g_print("AMIDE WARNING: %s\n", message);
-
+    else if (log_level & G_LOG_LEVEL_INFO) /* G_LOG_LEVEL_WARNING */
+      g_print("AMIDE INFO: %s\n", message);
+    else if (log_level & G_LOG_LEVEL_DEBUG) /* G_LOG_LEVEL_WARNING */
+      g_print("AMIDE DEBUG: %s\n", message);
   } else {
 
     dialog = gtk_message_dialog_new(NULL, GTK_DIALOG_DESTROY_WITH_PARENT,
@@ -221,10 +224,10 @@ int main (int argc, char *argv []) {
   preferences = amitk_preferences_new();
 
   /* specify my own error handler */
-  g_log_set_handler (NULL, G_LOG_LEVEL_WARNING, amide_log_handler, preferences);
+  //g_log_set_handler (NULL, G_LOG_LEVEL_WARNING, amide_log_handler, preferences);
 
   /* specify my message handler */
-  g_log_set_handler (NULL, G_LOG_LEVEL_MESSAGE, amide_log_handler, preferences);
+  g_log_set_handler (NULL, G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_WARNING | G_LOG_LEVEL_INFO | G_LOG_LEVEL_DEBUG, amide_log_handler, preferences);
 
   /* specify the default directory */
   ui_common_set_last_path_used(AMITK_PREFERENCES_DEFAULT_DIRECTORY(preferences));

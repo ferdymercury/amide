@@ -293,7 +293,7 @@ gpointer mpeg_encode_setup(gchar * output_filename, mpeg_encode_t type, gint xsi
   encode->context->time_base= (AVRational){1,FRAMES_PER_SECOND};
   encode->context->gop_size = 10; /* emit one intra frame every ten frames */
   encode->context->max_b_frames=10;
-  encode->context->pix_fmt = PIX_FMT_YUV420P;
+  encode->context->pix_fmt = AV_PIX_FMT_YUV420P;
 
   /* encoding parameters */
   encode->context->sample_aspect_ratio= (AVRational){1,1}; /* our pixels are square */

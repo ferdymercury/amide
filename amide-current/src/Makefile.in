@@ -188,11 +188,13 @@ am_amide_OBJECTS = $(am__objects_1) $(am__objects_2) $(am__objects_3) \
 	ui_preferences_dialog.$(OBJEXT) ui_render.$(OBJEXT) \
 	ui_render_dialog.$(OBJEXT) ui_render_movie.$(OBJEXT) \
 	ui_series.$(OBJEXT) ui_study.$(OBJEXT) ui_study_cb.$(OBJEXT) \
-	ui_time_dialog.$(OBJEXT) xml.$(OBJEXT)
+	ui_time_dialog.$(OBJEXT) vistaio_interface.$(OBJEXT) \
+	xml.$(OBJEXT)
 amide_OBJECTS = $(am_amide_OBJECTS)
 am__DEPENDENCIES_1 =
 @AMIDE_OS_WIN32_TRUE@am__DEPENDENCIES_2 = ../win32/amiderc.o
 amide_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
@@ -296,6 +298,8 @@ AMIDE_GTK_LIBS = @AMIDE_GTK_LIBS@
 AMIDE_LIBDCMDATA_CFLAGS = @AMIDE_LIBDCMDATA_CFLAGS@
 AMIDE_LIBDCMDATA_LIBS = @AMIDE_LIBDCMDATA_LIBS@
 AMIDE_LIBECAT_LIBS = @AMIDE_LIBECAT_LIBS@
+AMIDE_LIBOPENJP2_CFLAGS = @AMIDE_LIBOPENJP2_CFLAGS@
+AMIDE_LIBOPENJP2_LIBS = @AMIDE_LIBOPENJP2_LIBS@
 AMIDE_LIBVOLPACK_LIBS = @AMIDE_LIBVOLPACK_LIBS@
 AMTAR = @AMTAR@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
@@ -415,6 +419,8 @@ SHELL = @SHELL@
 STRIP = @STRIP@
 USE_NLS = @USE_NLS@
 VERSION = @VERSION@
+VISTAIO_CFLAGS = @VISTAIO_CFLAGS@
+VISTAIO_LIBS = @VISTAIO_LIBS@
 XGETTEXT = @XGETTEXT@
 XMEDCON_CFLAGS = @XMEDCON_CFLAGS@
 XMEDCON_CONFIG = @XMEDCON_CONFIG@
@@ -498,7 +504,8 @@ AM_CFLAGS = \
 	$(AMIDE_LIBDCMDATA_CFLAGS) \
 	-I/usr/local/include \
 	$(XMEDCON_CFLAGS) \
-	$(FFMPEG_CFLAGS) 
+	$(FFMPEG_CFLAGS) \
+	$(VISTAIO_CFLAGS) 
 
 AM_CXXFLAGS = $(AM_CFLAGS)
 
@@ -513,6 +520,8 @@ amide_LDADD = \
 	$(XMEDCON_LIBS) \
 	$(FFMPEG_LIBS) \
 	$(AMIDE_LIBDCMDATA_LIBS) \
+	$(VISTAIO_LIBS) \
+	$(AMIDE_LIBOPENJP2_LIBS) \
 	$(AMIDE_LDADD_WIN32) 
 
 amide_LDFLAGS = \
@@ -626,6 +635,8 @@ amide_SOURCES = \
 	ui_study_cb.h \
 	ui_time_dialog.c \
 	ui_time_dialog.h \
+	vistaio_interface.c \
+	vistaio_interface.h \
 	xml.c \
 	xml.h
 
@@ -1027,6 +1038,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_study.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_study_cb.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_time_dialog.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vistaio_interface.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xml.Po@am__quote@
 
 .c.o:
