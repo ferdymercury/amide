@@ -102,6 +102,8 @@ AC_CHECK_LIB(volpack, vpGetErrorString, FOUND_VOLPACK=yes, FOUND_VOLPACK=no, -lm
 AM_PATH_XMEDCON(0.10.0, FOUND_XMEDCON=yes, FOUND_XMEDCON=no)
 AC_CHECK_HEADER([openjpeg-2.1/opj_config.h],[FOUND_OPENJP2=yes],[FOUND_OPENJP2=no])
 
+PKG_CHECK_MODULES(VISTAIO, libvistaio >= 1.2.17, FOUND_VISTAIO=yes, FOUND_VISTAIO=no)
+
 
 dnl switch to C++ for DCMTK library stuff - also, if pthread is on the platform, probably need that
 dnl autoconf doesn't have a nice macro for checking for c++ libraries, therefore the below:
@@ -246,10 +248,7 @@ AC_ARG_ENABLE(
 	enable_vistaio="$enableval",
 	enable_vistaio=yes)
 
-if (test $enable_vistaio = yes); then
-        PKG_CHECK_MODULES(VISTAIO, libvistaio >= 1.2.17, FOUND_VISTAIO=yes, [
-        AC_MSG_ERROR("Resquested vista support but vistaio was not found"); 
-                ]);
+if (test $enable_vistaio = yes) && (test $FOUND_VISTAIO = yes); then
         echo "compiling with vistaio support"
 	AC_SUBST(VISTAIO_LIBS)
         AC_SUBST(VISTAIO_CFLAGS)

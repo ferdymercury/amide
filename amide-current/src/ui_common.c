@@ -1,7 +1,7 @@
 /* ui_common.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2015 Andy Loening
+ * Copyright (C) 2001-2017 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -147,7 +147,7 @@ static void about_cb(GtkAction *action, gpointer * caller) {
   gtk_show_about_dialog(NULL, 
 			"name", PACKAGE,
 			"version", VERSION,
-			"copyright", "Copyright (c) 2000-2015 Andreas Loening",
+			"copyright", "Copyright (c) 2000-2017 Andreas Loening",
 			"license", "GNU General Public License, Version 2",
 			"authors", authors,
 			"comments", comments,

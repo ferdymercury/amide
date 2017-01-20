@@ -1,7 +1,7 @@
 /* libecat_interface.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2015 Andy Loening
+ * Copyright (C) 2000-2017 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */

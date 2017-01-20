@@ -1,7 +1,7 @@
 /* tb_alignment.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2015 Andy Loening
+ * Copyright (C) 2001-2017 Andy Loening
  * except mutual information addition Copyright (C) 2011-2012 Ian Miller
  *
 */

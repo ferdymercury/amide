@@ -1,7 +1,7 @@
 /* tb_export_data_set.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2006-2015 Andy Loening
+ * Copyright (C) 2006-2017 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */

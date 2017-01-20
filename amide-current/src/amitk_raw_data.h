@@ -1,7 +1,7 @@
 /* amitk_raw_data.h
  *
  * Part of amide - Amide's a Medical Image Data Examiner
- * Copyright (C) 2001-2015 Andy Loening
+ * Copyright (C) 2001-2017 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */

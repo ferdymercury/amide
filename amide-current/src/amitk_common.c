@@ -1,7 +1,7 @@
 /* amitk_common.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2004-2015 Andy Loening
+ * Copyright (C) 2004-2017 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */

@@ -1,7 +1,7 @@
 /* vistaio_interface.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2015 Andy Loening
+ * Copyright (C) 2016-2017 Gert Wollny
  *
  * Author: Gert Wollny <gw.fossdev@gmail.com>
  */

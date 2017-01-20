@@ -19,7 +19,7 @@ Requirements
 
 1) Compiler: 
 
-I currently use gcc-4.6.  The later 3.* series (e.g. 3.3) should work
+I currently use gcc-6.3.  The later 3.* series (e.g. 3.3) should work
 as well, along with version 2.95.  Early 3.* Versions of gcc will
 quite likely generate compilation errors (and make AMIDE unstable) if
 optimizations are used when compiling.
@@ -29,7 +29,7 @@ optimizations are used when compiling.
 2) GTK+:
 
 The current series of AMIDE requires GTK+-2, at least version 2.16.
-I'm currently developing on a Fedora Core 15 system, although other
+I'm currently developing on a Fedora Core 24 system, although other
 distributions of Linux with equivalent library support should work.
 
 Scrollkeeper is required for generating the help documentation.  If

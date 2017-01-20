@@ -1,7 +1,7 @@
 /* mpeg_encode.c - interface to the mpeg encoding library
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2015 Andy Loening
+ * Copyright (C) 2001-2017 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -144,6 +144,7 @@ static void convert_rgb_pixbuf_to_yuv(yuv_t * yuv, GdkPixbuf * pixbuf) {
 #include <libavcodec/avcodec.h>
 
 
+
 typedef struct {
   AVCodec *codec;
   AVCodecContext *context;
@@ -169,7 +170,7 @@ static encode_t * encode_free(encode_t * encode) {
   }
 
   if (encode->picture != NULL) {
-    av_free(encode->picture);
+    av_frame_free(&(encode->picture));
     encode->picture=NULL;
   }
 
@@ -234,11 +235,11 @@ gpointer mpeg_encode_setup(gchar * output_filename, mpeg_encode_t type, gint xsi
 
   switch(type) {
   case ENCODE_MPEG4:
-    codec_type = CODEC_ID_MPEG4;
+    codec_type = AV_CODEC_ID_MPEG4;
     break;
   case ENCODE_MPEG1:
   default:
-    codec_type=CODEC_ID_MPEG1VIDEO;
+    codec_type=AV_CODEC_ID_MPEG1VIDEO;
     break;
   }
 
@@ -268,7 +269,12 @@ gpointer mpeg_encode_setup(gchar * output_filename, mpeg_encode_t type, gint xsi
     return NULL;
   }
 
-  encode->picture= avcodec_alloc_frame();
+#if LIBAVCODEC_VERSION_MAJOR >= 55
+  encode->picture= av_frame_alloc();
+#else
+  encode->picture= avcode_alloc_frame();
+#endif
+  
   if (!encode->picture) {
     g_warning("couldn't allocate memory for encode->picture");
     encode_free(encode);
@@ -297,7 +303,7 @@ gpointer mpeg_encode_setup(gchar * output_filename, mpeg_encode_t type, gint xsi
 
   /* encoding parameters */
   encode->context->sample_aspect_ratio= (AVRational){1,1}; /* our pixels are square */
-  encode->context->me_method=5; /* 5 is epzs */
+  /* deprecated option... encode->context->me_method=5; *//* 5 is epzs */
   encode->context->trellis=2; /* turn trellis quantization on */
 
   /* open it */
@@ -354,6 +360,10 @@ gpointer mpeg_encode_setup(gchar * output_filename, mpeg_encode_t type, gint xsi
   encode->picture->linesize[0] = encode->context->width;
   encode->picture->linesize[1] = encode->context->width/2;
   encode->picture->linesize[2] = encode->context->width/2;
+  
+  encode->picture->width = encode->context->width;
+  encode->picture->height = encode->context->height;
+  encode->picture->format = AV_PIX_FMT_YUV420P;
 
   return (gpointer) encode;
 }
@@ -361,15 +371,24 @@ gpointer mpeg_encode_setup(gchar * output_filename, mpeg_encode_t type, gint xsi
 
 gboolean mpeg_encode_frame(gpointer data, GdkPixbuf * pixbuf) {
   encode_t * encode = data;
-  gint out_size;
+  //  gint out_size;
+  AVPacket pkt = {0};
+  int ret, got_packet = 0;
 
   convert_rgb_pixbuf_to_yuv(encode->yuv, pixbuf);
 
   /* encode the image */
-  out_size = avcodec_encode_video(encode->context, encode->output_buffer, encode->output_buffer_size, encode->picture);
-  fwrite(encode->output_buffer, 1, out_size, encode->output_file);
+  //  out_size = avcodec_encode_video(encode->context, encode->output_buffer, encode->output_buffer_size, encode->picture);
+  //  fwrite(encode->output_buffer, 1, out_size, encode->output_file);
+  //  return TRUE;
 
-  return TRUE;
+  ret = avcodec_encode_video2(encode->context, &pkt, encode->picture, &got_packet);
+
+  if (ret >= 0 && got_packet) {
+  fwrite(pkt.data, 1, pkt.size, encode->output_file);
+  av_packet_unref(&pkt);
+}
+  return (ret >= 0) ? TRUE : FALSE;
 };
 
 /* close everything up */
