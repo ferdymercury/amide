@@ -22,6 +22,7 @@ Mac OS X
 
 Win32
 ---------------- 
+* XIF files appar to be limited to 2 GB even on 64bit windows 7 [noticed by Michael Braden]
 * g_win32_get_package_installation_subdirectoy in amide_gnome is
   deprecated, currently commented out. Need to fix starting up help
 * help works in cygwin setup, but not in installed package. Seems to know the
@@ -75,6 +76,7 @@ big things:
                        
 small things:
 -------------
+* XIF directory format doesn't handle characters in study/data set names that are inconsistent with the file system [noticed by Michael Braden]
 * boolean operators between ROI's, would allow subtracting one from another (requested by A. Mehranian)
 * be able to export the color scale (with appropriate numerical values) to an image file (requested by Frezghi Habte)
 * pop-up widget allowing value underneath cursor to be shown for all data sets (not just active). (requested by Axel Moeller)

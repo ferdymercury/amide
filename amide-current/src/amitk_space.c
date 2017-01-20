@@ -648,7 +648,7 @@ AmitkPoint amitk_space_b2s(const AmitkSpace * space, AmitkPoint in_point) {
   return return_point;
 
 }
-/* convert a point from the given coordinate spaace to the base coordinate frame */
+/* convert a point from the given coordinate space to the base coordinate frame */
 AmitkPoint amitk_space_s2b(const AmitkSpace * space, const AmitkPoint in_point) {
 
   AmitkPoint return_point;
