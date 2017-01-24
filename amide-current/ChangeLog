@@ -14,10 +14,12 @@
 	  note, this uses a command avcodec_encode_video2 that's already deprecated
 	* for dynamic data with interframe time gaps, give preference over frame
 	  start times over frame durations for adjustment into continous 4D data set [6]
-	* correction of dicom quantitation, was incorrectly using scaling_intercept
+	* correction of dicom quantitation, was incorrectly using scaling_intercept [7]
           dicom is y = RescaleSlope * x + RescaleIntercept.
           amide is y = scaling_factor * (x + scaling_intercept)
 	  amide now divides RescaleIntercept by RescaleSlope when reading in DICOM
+	* similarly, reading in from the medcon library, most file formats
+	  are y = mx+b, now fixing things as amide is y = m(x+b)
 	[1] Contributed by Ville Skytta
 	[2] Suggested by Marc Rechte
 	[3] Contributed by Gert Wollney

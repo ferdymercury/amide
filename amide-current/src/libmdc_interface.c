@@ -731,6 +731,8 @@ AmitkDataSet * libmdc_import(const gchar * filename,
 	}
 
 	/* store the scaling factor... I think this is the right scaling factor... */
+	/* also needs to adjust, most formats libmdc reads are are y = m*x+b.
+	   amide, however, is y = m * (x+b); */
 	if (salvage)
 	  *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling_factor, i) = 1.0;
 	else {
@@ -738,7 +740,9 @@ AmitkDataSet * libmdc_import(const gchar * filename,
 	    libmdc_fi.image[image_num].quant_scale*
 	    libmdc_fi.image[image_num].calibr_fctr;
 	  *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling_intercept,i) =
-	    libmdc_fi.image[image_num].intercept;
+	    libmdc_fi.image[image_num].intercept/
+	    (libmdc_fi.image[image_num].quant_scale*
+	     libmdc_fi.image[image_num].calibr_fctr);
 	}
 
 	/* sanity check */
@@ -1122,7 +1126,7 @@ gboolean libmdc_export(AmitkDataSet * ds,
 	    AMITK_DATA_SET_SCALE_FACTOR(ds)*
 	    amitk_data_set_get_internal_scaling_factor(ds, i);
 	  plane->intercept = 
-	    amitk_data_set_get_scaling_intercept(ds,i);
+	    plane->quant_scale * amitk_data_set_get_scaling_intercept(ds,i);
 	}
 	plane->calibr_fctr = 1.0;
 	
