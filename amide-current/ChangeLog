@@ -12,11 +12,19 @@
 	* updated copyright notices for 2017
 	* fix for newer ffmpeg encoding [5]
 	  note, this uses a command avcodec_encode_video2 that's already deprecated
+	* for dynamic data with interframe time gaps, give preference over frame
+	  start times over frame durations for adjustment into continous 4D data set [6]
+	* correction of dicom quantitation, was incorrectly using scaling_intercept
+          dicom is y = RescaleSlope * x + RescaleIntercept.
+          amide is y = scaling_factor * (x + scaling_intercept)
+	  amide now divides RescaleIntercept by RescaleSlope when reading in DICOM
 	[1] Contributed by Ville Skytta
 	[2] Suggested by Marc Rechte
 	[3] Contributed by Gert Wollney
 	[4] Contributed by Andreas Cadhalpun 
 	[5] From Reinhard Tartler
+	[6] Noticed by Dan Farber
+	[7] Noticed by Richard Taschereau
 	
 1.0.5 2014.01.25
 	* raw_data_import now shows correct file size if file > 2GB

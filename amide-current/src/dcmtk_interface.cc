@@ -106,6 +106,7 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   Sint32 return_sint32=0;
   Sint16 return_sint16=0;
   Float64 return_float64=0.0;
+  Float64 rescale_slope=1.0;
   Uint16 bits_allocated;
   Uint16 pixel_representation;
   const char * return_str=NULL;
@@ -746,14 +747,16 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   i = zero_voxel;
 
   /* store the scaling factor... if there is one */
-  if (dcm_dataset->findAndGetFloat64(DCM_RescaleSlope, return_float64, 0, OFTrue).good()) {
-    *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling_factor, i) = return_float64;
+  if (dcm_dataset->findAndGetFloat64(DCM_RescaleSlope, rescale_slope, 0, OFTrue).good()) {
+    *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling_factor, i) = rescale_slope;
     //    g_debug("RescaleSlope: %f", return_float64);
   }
 
   /* same for the offset */
+  /* note, dicom is y = RescaleSlope * x + RescaleIntercept.
+     amide is y = scaling_factor * (x + scaling_intercept), hence the division by rescale_slope */
   if (dcm_dataset->findAndGetFloat64(DCM_RescaleIntercept, return_float64, 0, OFTrue).good()) {
-    *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling_intercept, i) = return_float64;
+    *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling_intercept, i) = return_float64/rescale_slope;
     //    g_debug("RescaleIntercept: %f", return_float64);
   }
 
@@ -2834,7 +2837,7 @@ gboolean dcmtk_export(AmitkDataSet * ds,
 
 	insert_double_str(dcm_ds,DCM_RescaleIntercept, 
 			  (resliced || format_changing) ? 0.0 :
-			  amitk_data_set_get_scaling_intercept(ds,i_voxel));
+			  amitk_data_set_get_scaling_factor(ds,i_voxel)*amitk_data_set_get_scaling_intercept(ds,i_voxel));
 	
 	/* and get it an identifier */
 	dcmGenerateUniqueIdentifier(uid, SITE_INSTANCE_UID_ROOT);
