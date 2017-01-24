@@ -1255,8 +1255,12 @@ static AmitkDataSet * import_slices_as_dataset(GList * slices,
       /* check if the curtains match the rug */
       if ((i.z == 0) && (i.t > 0)) {
 	if (!REAL_CLOSE(AMITK_DATA_SET_SCAN_START(slice_ds)-amitk_data_set_get_start_time(ds, i.t-1), 
-			amitk_data_set_get_frame_duration(ds, i.t-1))) 
+			amitk_data_set_get_frame_duration(ds, i.t-1)))  {
 	  screwed_up_timing=TRUE;
+	  amitk_data_set_set_frame_duration(ds,i.t-1,
+					    AMITK_DATA_SET_SCAN_START(slice_ds)-
+					    amitk_data_set_get_start_time(ds, i.t-1));
+	}
       }
     }
 
@@ -1265,7 +1269,7 @@ static AmitkDataSet * import_slices_as_dataset(GList * slices,
   } /* i_file loop */
 
   if (screwed_up_timing) 
-    amitk_append_str_with_newline(perror_buf, _("Detected discontinous frames in data set %s - frame start times will be incorrect"), AMITK_OBJECT_NAME(ds));
+    amitk_append_str_with_newline(perror_buf, _("Detected discontinous frames in data set %s - frame durations have been adjusted to remove interframe time gaps"), AMITK_OBJECT_NAME(ds));
   
   if (screwed_up_thickness)
     amitk_append_str_with_newline(perror_buf, _("Slice thickness (%5.3f mm) not equal to slice spacing (%5.3f mm) in data set %s - will use slice spacing for thickness"), old_thickness, true_thickness, AMITK_OBJECT_NAME(ds));
