@@ -34,8 +34,6 @@
 #include <vistaio.h>
 #include <string.h>
 #include <locale.h>
-#include <assert.h>
-
 
 
 gboolean vistaio_test_vista(gchar *filename)
@@ -94,7 +92,7 @@ struct _IOUpdate {
 static void AmitkIOShowProgress(int pos, int length, void *data) 
 {
   IOUpdate *update; 
-  assert(data);
+  g_assert(data);
   update = (IOUpdate *)data;
   if (update->update_func) {
     update->cont = (*update->update_func)(update->update_data, update->message, ((gdouble) pos)/((gdouble) length));
