@@ -138,8 +138,6 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   struct tm time_structure;
 
   /* note - dcmtk always uses POSIX locale - look to setlocale stuff in libmdc_interface.c if this ever comes up*/
-  g_debug(__FILE__ ": Processing file %s", filename);
-  
   result = dcm_format.loadFile(filename);
   if (result.bad()) {
     g_warning(_("could not read DICOM file %s, dcmtk returned %s"),filename, result.text());
@@ -163,7 +161,7 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
     /* What TransSyntax is used to encode the image */
     if (dcm_metainfo->findAndGetString(DCM_TransferSyntaxUID, return_str).good()) {
       if (return_str != NULL) {
-        g_debug("TransferSyntaxUID %s", return_str);
+	//        g_debug("TransferSyntaxUID %s", return_str);
         dcm_syntax = new DcmXfer(return_str);
       }
     }
@@ -172,9 +170,8 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   if (dcm_syntax == NULL) {
     g_warning(_("could not determine TransferSyntax %s\n"), filename);
     goto error;
-  } else {
-    g_debug("TransferSyntax is %s (%d)", dcm_syntax->getXferName(), dcm_syntax->getXfer());
   }
+  //    g_debug("TransferSyntax is %s (%d)", dcm_syntax->getXferName(), dcm_syntax->getXfer());
 
   modality = AMITK_MODALITY_OTHER;
   if (dcm_dataset->findAndGetString(DCM_Modality, return_str).good()) {
@@ -273,7 +270,7 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
 	g_warning("in correct NumberOf Frames (%d) - Failed to load file %s\n", dim.z, filename);
     }
   }
-  g_debug("Number of frames: %d (%d x %d px.)", dim.z, dim.x, dim.y);
+  //  g_debug("Number of frames: %d (%d x %d px.)", dim.z, dim.x, dim.y);
   dim.t = 1; /* no support for multiple time frame of data in a single file */
 
   dim.g = 1; /* no support for multiple gates in a single file */
@@ -379,7 +376,7 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
       voxel_size.z = 1;
     }
   }
-  g_debug("Voxel size (mm): %f x %f x %f", voxel_size.x, voxel_size.y, voxel_size.z);
+  //  g_debug("Voxel size (mm): %f x %f x %f", voxel_size.x, voxel_size.y, voxel_size.z);
   
   /* store this number, occasionally used in sorting */
   if (dcm_dataset->findAndGetSint32(DCM_InstanceNumber, return_sint32).good())
@@ -685,7 +682,7 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_LEFT_DECUBITUS_HEADFIRST);
       else if (g_ascii_strcasecmp(return_str, "FFDL")==0)
   	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_LEFT_DECUBITUS_FEETFIRST);
-      g_debug("Patient position is %s", return_str);
+      //      g_debug("Patient position is %s", return_str);
     }
   }
 
@@ -722,7 +719,7 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
         break;
       }
       default:
-        g_warning("unsupported data format in %s at %d\n", __FILE__, __LINE__);
+        g_warning(_("unsupported data format in %s at %d\n"), __FILE__, __LINE__);
         goto error;
         break;
     }
@@ -751,13 +748,13 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   /* store the scaling factor... if there is one */
   if (dcm_dataset->findAndGetFloat64(DCM_RescaleSlope, return_float64, 0, OFTrue).good()) {
     *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling_factor, i) = return_float64;
-    g_debug("RescaleSlope: %f", return_float64);
+    //    g_debug("RescaleSlope: %f", return_float64);
   }
 
   /* same for the offset */
   if (dcm_dataset->findAndGetFloat64(DCM_RescaleIntercept, return_float64, 0, OFTrue).good()) {
     *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling_intercept, i) = return_float64;
-    g_debug("RescaleIntercept: %f", return_float64);
+    //    g_debug("RescaleIntercept: %f", return_float64);
   }
 
   // MR: alternative FrameReferenceDateTime
@@ -3009,7 +3006,7 @@ static gboolean j2k_decompress(guint32 comp_length, const guint8 *comp_buffer, g
   if (!opj_read_header(stream, codec, &image)) {
     goto error;
   }
-  g_debug("J2K image grid (x0, y0, x1, y1): (%d, %d, %d, %d), components: %d", image->x0, image->y0, image->x1, image->y1, image->numcomps);
+  //  g_debug("J2K image grid (x0, y0, x1, y1): (%d, %d, %d, %d), components: %d", image->x0, image->y0, image->x1, image->y1, image->numcomps);
 
   /* We do not yet support color images */
   if (image->numcomps > 1) {
@@ -3035,7 +3032,7 @@ static gboolean j2k_decompress(guint32 comp_length, const guint8 *comp_buffer, g
     if (go_on) {
       tile++;
       if (pdata + tile_size > raw_buffer + raw_length) {
-        g_debug("raw_buffer size exceeded when decoding tile %u", tile);
+	g_warning(_("raw_buffer size exceeded when decoding tile %u"), tile);
         goto error;
       }
       if (!opj_decode_tile_data(codec, tile_index, (OPJ_BYTE *)pdata, tile_size, stream)) {
@@ -3045,7 +3042,7 @@ static gboolean j2k_decompress(guint32 comp_length, const guint8 *comp_buffer, g
       /** now should inspect image to know the reduction factor and then how to behave with data */
     }
   }
-  g_debug("J2K processed %u tiles", tile);
+  //  g_debug("J2K processed %u tiles", tile);
   return_val = opj_end_decompress(codec, stream);
 
   error:
@@ -3097,7 +3094,7 @@ static void * j2k_to_raw(DcmDataset *dcm_data, AmitkDataSet const *ds) {
   data_size = image_size * AMITK_RAW_DATA_DIM_Z(raw_data);
   data = (guint8 *)g_try_malloc(data_size);
   if (data == NULL) {
-    g_debug("malloc failed %d", __LINE__);
+    g_warning(_("Couldn't allocate space for the data structure to hold data %d bytes"), data_size);
     goto error;
   }
   
@@ -3129,7 +3126,7 @@ static void * j2k_to_raw(DcmDataset *dcm_data, AmitkDataSet const *ds) {
     num_frames = pixel_length / 4;
   }
   if (num_frames != (Uint32)z) {
-    g_debug("Number of frames expected (%d) do not tally found (%d)", z, num_frames);
+    g_warning(_("Number of frames expected (%d) do not tally found (%d)"), z, num_frames);
     goto error;
   }
   // Get the array of frame offset
@@ -3151,7 +3148,7 @@ static void * j2k_to_raw(DcmDataset *dcm_data, AmitkDataSet const *ds) {
     // Get the length of this pixel item (i.e. fragment)
     pixel_length = pixel_item->getLength();
     if (pixel_length == 0) {
-      g_debug("Expecting a not empty fragment");
+      g_warning(_("Expecting a not empty fragment"));
       goto error;
     }
     // get the compressed data fragment for this pixel item
@@ -3168,7 +3165,7 @@ static void * j2k_to_raw(DcmDataset *dcm_data, AmitkDataSet const *ds) {
         temp_length += pixel_length;
         temp_buffer_tmp = (Uint8 *)g_try_realloc(temp_buffer, temp_length);
         if (temp_buffer_tmp == NULL) {
-          g_debug("malloc failed %d", __LINE__);
+	  g_warning(_("Couldn't allocate space for thetemp_buffer_tmp structure to hold data %d bytes"), temp_length);
           goto error;
         }
         temp_buffer = temp_buffer_tmp;
@@ -3186,7 +3183,7 @@ static void * j2k_to_raw(DcmDataset *dcm_data, AmitkDataSet const *ds) {
         temp_length = pixel_length;
         temp_buffer = (Uint8 *)g_try_malloc(temp_length);
         if (temp_buffer == NULL) {
-          g_debug("malloc failed %d", __LINE__);
+	  g_warning(_("Couldn't allocate space for the temp_buffer to hold data %d bytes"), temp_length);
           goto error;
         }
         memcpy(temp_buffer, pixel_buffer, temp_length);
@@ -3196,7 +3193,7 @@ static void * j2k_to_raw(DcmDataset *dcm_data, AmitkDataSet const *ds) {
       temp_length = pixel_length;
       temp_buffer = (Uint8 *)g_try_malloc(temp_length);
       if (temp_buffer == NULL) {
-        g_debug("malloc failed %d", __LINE__);
+	g_warning(_("Couldn't allocate space for the temp_buffer to hold data %d bytes"), temp_length);
         goto error;
       }
       // copy pixel_buffer
@@ -3208,7 +3205,7 @@ static void * j2k_to_raw(DcmDataset *dcm_data, AmitkDataSet const *ds) {
     // sanity check frame < num_frames
     if (frame >= num_frames) {
       // We have a problem
-      g_debug("Too many frames: %d ! Expected %d", frame+1, num_frames);
+      g_warning(_("Too many frames: %d ! Expected %d"), frame+1, num_frames);
       goto error;
     }
   }
@@ -3221,7 +3218,7 @@ static void * j2k_to_raw(DcmDataset *dcm_data, AmitkDataSet const *ds) {
     frame++;
     g_free(temp_buffer);
   } else {
-    g_debug("Expecting more fragments to come...");
+    g_warning(_("Expecting more fragments to come..."));
     goto error;
   }
 
