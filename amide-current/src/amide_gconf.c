@@ -449,9 +449,7 @@ gboolean amide_gconf_set_string (const gchar * group, const char *key, const gch
   return return_val;
 }
 
-
-
-#elif defined(AMIDE_NATIVE_GTK_OSX)
+#elif defined(AMIDE_NATIVE_GTK_OSX) || !defined(AMIDE_USE_GCONF)
 
 /* --------------------- flatfile version ----------------- */
 

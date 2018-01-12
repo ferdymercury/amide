@@ -36,7 +36,7 @@ at some point in the future */
 #include "amitk_common.h"
 #include "amide_gnome.h"
 
-#if !defined(G_OS_WIN32) && !defined(AMIDE_NATIVE_GTK_OSX)
+#if !defined(G_OS_WIN32) && !defined(AMIDE_NATIVE_GTK_OSX) && defined(AMIDE_USE_GNOME_VFS)
 #include <libgnomevfs/gnome-vfs-utils.h>
 #include <libgnomevfs/gnome-vfs-uri.h>
 //#else
@@ -66,7 +66,7 @@ GQuark amide_gnome_url_error_quark (void) {
 
 
 static gboolean amide_gnome_url_show_with_env (const char  *url,  char       **envp, GError     **error) {
-#if !defined(G_OS_WIN32) && !defined(AMIDE_NATIVE_GTK_OSX)
+#if !defined(G_OS_WIN32) && !defined(AMIDE_NATIVE_GTK_OSX) && defined(AMIDE_USE_GNOME_VFS)
 	GnomeVFSResult result;
 	GnomeVFSURI *vfs_uri;
 
