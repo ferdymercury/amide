@@ -2503,7 +2503,7 @@ msgid ""
 "This causes the movie generation dialog box to pop up. This dialog box is "
 "further described below: <xref linkend=\"rendering-movie-dialog\"/>."
 msgstr ""
-"Este causa el desplige de la ventana de generación de video. Este diálogo se "
+"Este causa el despliegue de la ventana de generación de video. Este diálogo se "
 "describe en mayor detalle abajo: <xref linkend=\"rendering-movie-dialog\"/>."
 
 #: ../C/amide.xml.translate:1802(title)
