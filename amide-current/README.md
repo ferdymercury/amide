@@ -11,6 +11,23 @@ sets.  For more information on AMIDE, check out the AMIDE web page at:
 AMIDE is licensed under the terms of the GNU GPL included in the file
 COPYING.
 
+Quick Ubuntu 18 instructions
+----------------------------
+sudo apt install libgnomecanvas2-dev libgconf2-dev libgnomevfs2-dev gnome-doc-utils libmdc2-dev libvolpack1-dev libavcodec-dev gtk-doc-tools
+cd amide-current
+./configure --prefix /opt/amide
+make -j8
+sudo mkdir -p /opt/amide
+sudo chown $USER /opt/amide/
+make install
+
+OR global install:
+
+./configure --prefix /opt/amide
+make -j8
+make install
+
+
 
 
 Requirements
