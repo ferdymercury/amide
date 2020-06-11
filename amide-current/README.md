@@ -26,6 +26,14 @@ Or system-wide install:
 	make -j8
 	sudo make install
 
+Quick Fedora 32 instructions
+----------------------------
+
+	autoreconf -i
+	configure LDFLAGS="-Wl,--allow-multiple-definition"
+	make
+	make install
+
 
 Requirements
 ------------
