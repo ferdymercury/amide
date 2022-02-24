@@ -30,14 +30,14 @@ Quick Ubuntu 18/20 instructions
 	./configure --prefix /opt/amide
 	#EndIf
 	
-	make -j8
+	make
 	sudo mkdir -p /opt/amide
 	sudo chown $USER /opt/amide/
 	make install
 
 For system-wide install, do not use a prefix when running ./configure, and then just:
 
-	make -j8
+	make
 	sudo make install
 
 Quick Fedora 32 instructions
