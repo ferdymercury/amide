@@ -14,19 +14,21 @@ Quick Ubuntu 18/20 instructions
 -------------------------------
 	cd /tmp/
 	git clone https://github.com/ferdymercury/amide
-        # Ubuntu 20:
+	# Ubuntu 20:
 	sudo apt install libgnomecanvas2-dev libgconf2-dev libmdc2-dev libvolpack1-dev libavcodec-dev gtk-doc-tools intltool libxml2-dev python-libxml2 libgsl-dev libdcmtk-dev
 	wget http://launchpadlibrarian.net/402991440/gnome-doc-utils_0.20.10-5_all.deb
 	sudo dpkg -i gnome-doc-utils_0.20.10-5_all.deb
 	# Ubuntu 18:
 	sudo apt install libgnomecanvas2-dev libgconf2-dev libgnomevfs2-dev gnome-doc-utils libmdc2-dev libvolpack1-dev libavcodec-dev gtk-doc-tools intltool libxml2-dev python-libxml2 libgsl-dev libdcmtk-dev
-	
-	cd amide-current
+	#EndIf	
+
+	cd amide/amide-current
 	autoreconf --install
 	#Ubuntu 20
 	./configure --prefix /opt/amide --enable-gnome-vfs=no --disable-scrollkeeper
 	#Ubuntu 18
 	./configure --prefix /opt/amide
+	#EndIf
 	
 	make -j8
 	sudo mkdir -p /opt/amide
