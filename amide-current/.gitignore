@@ -11,6 +11,7 @@ config.status
 doc/reference/version.xml
 etc/amide-1.0.6-1.info
 etc/amide-1.0.6-1.iss
+etc/amide.spec
 libtool
 macosx/amide.plist
 po/POTFILES
