@@ -281,7 +281,7 @@ fi
 dnl Let people compile without rendering/libvolpack
 AC_ARG_ENABLE(
 	libvolpack, 
-	[  --enable-libvolpack	  Compile in libvolpack rendering support [default=yes]], 
+	[  --enable-libvolpack	  Compile with libvolpack rendering support [default=yes]], 
 	enable_libvolpack="$enableval", 
 	enable_libvolpack=yes)
 
@@ -298,7 +298,7 @@ fi
 dnl Let people compile without mpeg movie generation/ffmpeg
 AC_ARG_ENABLE(
 	ffmpeg,
-	[  --enable-ffmpeg   	  Compile in ffmpeg (libavcodec) mpeg encoding support [default=yes]], 
+	[  --enable-ffmpeg   	  Compile with ffmpeg (libavcodec) mpeg encoding support [default=yes]], 
 	enable_ffmpeg="$enableval", 
 	enable_ffmpeg=yes)
 
@@ -315,7 +315,7 @@ else
 	dnl AC_CHECK_LIB(libfame, fame_init, FOUND_LIBFAME=yes, FOUND_LIBFAME=no)
 	AC_ARG_ENABLE(
 		libfame,
-			[  --enable-libfame   	  Compile in libfame mpeg encoding support if not using ffmpeg [default=no]], 
+			[  --enable-libfame   	  Compile with libfame mpeg encoding support if not using ffmpeg [default=no]], 
 			enable_libfame="$enableval", 		 
 			enable_libfame=no)	
 
@@ -330,7 +330,7 @@ fi
 dnl Let people compile without the DCMTK library
 AC_ARG_ENABLE(
 	libdcmdata,
-	[  --enable-libdcmdata	  Compile in DCMTK support for DICOM files [default=yes]], 
+	[  --enable-libdcmdata	  Compile with DCMTK support for DICOM files [default=yes]], 
 	enable_libdcmdata="$enableval", 
 	enable_libdcmdata=yes)
 
@@ -346,7 +346,7 @@ fi
 dnl Let people compile without jpeg2000 library
 AC_ARG_ENABLE(
 	libopenjp2, 
-	[  --enable-libopenjp2	Compile in jpeg2000 support [default=yes]], 
+	[  --enable-libopenjp2	Compile with jpeg2000 support [default=yes]], 
 	enable_libopenjp2="$enableval", 
 	enable_libopenjp2=yes)
 
@@ -381,7 +381,7 @@ PKG_CHECK_MODULES(AMIDE_GTK,[
 if (test $native_win32 = no) && (test $enable_native_gtk_osx = no); then
    AC_ARG_ENABLE(
 	gconf, 
-	[  --enable-gconf  Compile in gconf support [default=yes]], 
+	[  --enable-gconf  Compile with gconf support [default=yes]], 
 	enable_gconf="$enableval", 
 	enable_gconf=yes)
 
@@ -402,7 +402,7 @@ fi
 ## gnome-vfs is only used by amide_gnome.c and only on unix
 if (test $native_win32 = no) && (test $enable_native_gtk_osx = no); then
    AC_ARG_ENABLE(gnome-vfs, 
-	[  --enable-gnome-vfs  Compile in gnome-vfs support [default=yes]], 
+	[  --enable-gnome-vfs  Compile with gnome-vfs support [default=yes]], 
 	enable_gnome_vfs="$enableval", 
 	enable_gnome_vfs=yes)
     if test "x$enable_gnome_vfs" = "xyes"; then 
