@@ -257,6 +257,9 @@ AmitkDataSet * libmdc_import(const gchar * filename,
   else
     MDC_FALLBACK_FRMT = MDC_FRMT_NONE;
 
+  /* mdc needs to be initialised to set the system endiannes */
+  MdcInit();
+
   /* open the file */
   import_filename = g_strdup(filename); /* this gets around the facts that filename is type const */
   if ((error = MdcOpenFile(&libmdc_fi, import_filename)) != MDC_OK) {
@@ -270,6 +273,9 @@ AmitkDataSet * libmdc_import(const gchar * filename,
     g_warning(_("Can't read file %s with libmdc/(X)MedCon"),filename);
     goto error;
   }
+  
+  /* end mdc */
+  MdcFinish();
 
   /* validate various strings to utf8 */
   if (!g_utf8_validate(libmdc_fi.patient_name, -1, &bad_char)) {
@@ -916,6 +922,9 @@ gboolean libmdc_export(AmitkDataSet * ds,
     goto cleanup;
   }
 
+  /* mdc needs to be initialised to set the system endiannes */
+  MdcInit();
+
   /* initialize the fi info structure */
   MdcInitFI(&fi, "");
   fi_init=TRUE;
@@ -1203,6 +1212,9 @@ gboolean libmdc_export(AmitkDataSet * ds,
 
   if (fi_init)
     MdcCleanUpFI(&fi); /* clean up FILEINFO struct */
+
+  /* end mdc */
+  MdcFinish();
 
   if (output_volume != NULL)
     output_volume = amitk_object_unref(output_volume);
