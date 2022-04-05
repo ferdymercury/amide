@@ -55,7 +55,7 @@ static gchar * threshold_names[] = {
   "global"
 };
 
-#define LEGACY_COLOR_TABLE_NUM 22
+#define LEGACY_COLOR_TABLE_NUM 24
 gchar * color_table_legacy_names[] = {
   "black/white linear", 
   "white/black linear", 
@@ -78,7 +78,9 @@ gchar * color_table_legacy_names[] = {
   "NIH + white", 
   "inv. NIH + white", 
   "NIH",
-  "inverse NIH"
+  "inverse NIH",
+  "viridis",
+  "inverse viridis"
 };
 
 #define NUM_THRESHOLDS 4
