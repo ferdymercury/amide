@@ -100,7 +100,7 @@ AM_PATH_GSL(1.1.1, FOUND_LIBGSL=yes, FOUND_LIBGSL=no)
 AC_CHECK_LIB(ecat, matrix_open, FOUND_LIBECAT=yes, FOUND_LIBECAT=no, -L/sw/lib)
 AC_CHECK_LIB(volpack, vpGetErrorString, FOUND_VOLPACK=yes, FOUND_VOLPACK=no, -lm -L/sw/lib -L/usr/local/lib)
 AM_PATH_XMEDCON(0.10.0, FOUND_XMEDCON=yes, FOUND_XMEDCON=no)
-AC_CHECK_HEADER([openjpeg-2.1/opj_config.h],[FOUND_OPENJP2=yes],[FOUND_OPENJP2=no])
+AC_CHECK_HEADER([openjpeg-2.4/opj_config.h],[FOUND_OPENJP2=yes],[FOUND_OPENJP2=no])
 
 PKG_CHECK_MODULES(VISTAIO, libvistaio >= 1.2.17, FOUND_VISTAIO=yes, FOUND_VISTAIO=no)
 

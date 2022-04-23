@@ -53,8 +53,8 @@
 #ifdef AMIDE_LIBOPENJP2_SUPPORT
 #include <dcmtk/config/osconfig.h>   /* JPG2000 make sure OS specific configuration is included first */
 #include <dcmtk/dcmdata/dcpxitem.h>
-#include <openjpeg-2.1/opj_config.h>
-#include <openjpeg-2.1/openjpeg.h>
+#include <openjpeg-2.4/opj_config.h>
+#include <openjpeg-2.4/openjpeg.h>
 static void * j2k_to_raw(DcmDataset *pdata, AmitkDataSet const *pds);
 #endif
 
