@@ -51,7 +51,7 @@ typedef struct {        /*   contents of a voxel */
 
 
 /* dummy variable used in some macros below */
-rendering_voxel_t * dummy_voxel;  
+extern rendering_voxel_t * dummy_voxel;  
 
 
 /* ----------- defines ------------- */

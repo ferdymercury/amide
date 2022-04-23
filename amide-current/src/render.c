@@ -53,6 +53,7 @@ gchar * pixel_type_names[] = {
   N_("Grayscale")
 };
 
+rendering_voxel_t * dummy_voxel;
 
 rendering_t * rendering_unref(rendering_t * rendering) {
   
