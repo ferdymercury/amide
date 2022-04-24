@@ -28,7 +28,7 @@ Quick Linux instructions
 	intltoolize
 	libtoolize
 	gnome-doc-prepare
-        # If not Ubuntu 22
+	# If not Ubuntu 22
 	gtkdocize 
 	# EndIf
 	autoreconf --install
