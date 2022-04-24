@@ -27,7 +27,7 @@ Quick Ubuntu 18/20/22 instructions
 	cd amide/amide-current
 	autoreconf --install
 	#Ubuntu 22
-	./configure --prefix /opt/amide --enable-gnome-vfs=no --disable-scrollkeeper --enable-gtk-doc=no --disable-doc LDFLAGS="-Wl,--allow-multiple-definition" 
+	./configure --prefix /opt/amide --enable-gnome-vfs=no --disable-scrollkeeper --enable-gtk-doc=no --disable-doc 
 	#Ubuntu 20
 	./configure --prefix /opt/amide --enable-gnome-vfs=no --disable-scrollkeeper
 	#Ubuntu 18
@@ -48,7 +48,7 @@ Quick Fedora 32 instructions
 ----------------------------
 
 	autoreconf -i
-	configure LDFLAGS="-Wl,--allow-multiple-definition"
+	configure
 	make
 	make install
 
