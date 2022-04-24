@@ -74,3 +74,5 @@ install-sh
 ltmain.sh
 gtk-doc.make
 gnome-doc-utils.make
+compile
+missing
