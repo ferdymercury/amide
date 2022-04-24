@@ -14,33 +14,33 @@ Quick Linux instructions
 ------------------------
 	cd /tmp/
 	git clone https://github.com/ferdymercury/amide
-	# Ubuntu 22:
+	# If Ubuntu 22:
 	sudo apt install libgnomecanvas2-dev libgconf2-dev libmdc2-dev libvolpack1-dev libavcodec-dev intltool libxml2-dev libgsl-dev libdcmtk-dev
-	# Ubuntu 20:
+	# ElseIf Ubuntu 20:
 	sudo apt install libgnomecanvas2-dev libgconf2-dev libmdc2-dev libvolpack1-dev libavcodec-dev gtk-doc-tools intltool libxml2-dev python-libxml2 libgsl-dev libdcmtk-dev
 	wget http://launchpadlibrarian.net/402991440/gnome-doc-utils_0.20.10-5_all.deb
 	sudo dpkg -i gnome-doc-utils_0.20.10-5_all.deb
-	# Ubuntu 18:
+	# ElseIf Ubuntu 18:
 	sudo apt install libgnomecanvas2-dev libgconf2-dev libgnomevfs2-dev gnome-doc-utils libmdc2-dev libvolpack1-dev libavcodec-dev gtk-doc-tools intltool libxml2-dev python-libxml2 libgsl-dev libdcmtk-dev
-	#EndIf	
+	# EndIf	
 
 	cd amide/amide-current
 	intltoolize
 	libtoolize
-	# If Ubuntu 22
+	# If Ubuntu 22:
 	touch gtk-doc.make gnome-doc-utils.make
-	# Else
+	# Else (Ubuntu 18 or Fedora32):
 	gnome-doc-prepare
 	gtkdocize 
 	# EndIf
 	autoreconf --install
-	# Ubuntu 22
+	# If Ubuntu 22:
 	./configure --prefix /opt/amide --enable-gnome-vfs=no --disable-scrollkeeper --enable-gtk-doc=no --disable-doc 
-	# Ubuntu 20
+	# ElseIf Ubuntu 20:
 	./configure --prefix /opt/amide --enable-gnome-vfs=no --disable-scrollkeeper
-	# Ubuntu 18 or Fedora32
+	# Else (Ubuntu 18 or Fedora32):
 	./configure --prefix /opt/amide
-	#EndIf
+	# EndIf
 	
 	make
 	sudo mkdir -p /opt/amide
