@@ -27,8 +27,8 @@ Quick Linux instructions
 	cd amide/amide-current
 	intltoolize
 	libtoolize
-	gnome-doc-prepare
 	# If not Ubuntu 22
+	gnome-doc-prepare
 	gtkdocize 
 	# EndIf
 	autoreconf --install
