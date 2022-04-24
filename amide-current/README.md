@@ -182,5 +182,6 @@ Building gtk-doc files
 The majority of the source code for AMIDE is structured as a library
 extension of GTK, called AMITK. Documentation for this library can be
 built using gtk-doc as follows:
-      ./configure --enable-libdcmdata=no --enable-gtk-doc=yes
-      make
+
+	./configure --enable-libdcmdata=no --enable-gtk-doc=yes
+	make
