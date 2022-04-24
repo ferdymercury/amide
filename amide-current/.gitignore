@@ -4,6 +4,7 @@ autom4te.cache/
 config.log
 po/Makefile
 po/Makefile.in
+po/Makefile.in.in
 Makefile
 aclocal.m4
 amide_config.h
@@ -56,3 +57,11 @@ src/amitk_roi_F*.*
 src/amitk_roi_I*.*
 src/amitk_type_builtins.*
 src/stamp-amitk_type_builtins.*
+intltool-*
+m4/intltool.m4
+m4/libtool.m4
+m4/ltoptions.m4
+m4/ltsugar.m4
+m4/ltversion.m4
+m4/lt~obsolete.m4
+

@@ -25,6 +25,8 @@ Quick Linux instructions
 	#EndIf	
 
 	cd amide/amide-current
+	intltoolize
+	libtoolize
 	autoreconf --install
 	#Ubuntu 22
 	./configure --prefix /opt/amide --enable-gnome-vfs=no --disable-scrollkeeper --enable-gtk-doc=no --disable-doc 
