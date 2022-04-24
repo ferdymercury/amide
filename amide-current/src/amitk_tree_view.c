@@ -44,6 +44,7 @@ enum {
   AMITK_DND_URI_LIST,
 };
 
+#if WORKING_ON_IT
 static const GtkTargetEntry drag_types[] = {
   { AMITK_TREE_VIEW_DND_OBJECT_TYPE, 0, AMITK_TREE_VIEW_DND_OBJECT }
 };
@@ -52,6 +53,7 @@ static const GtkTargetEntry drop_types[] = {
   { AMITK_TREE_VIEW_DND_OBJECT_TYPE, 0, AMITK_TREE_VIEW_DND_OBJECT },
   { AMITK_DND_URI_LIST_TYPE,   0, AMITK_DND_URI_LIST }
 };
+#endif
 
 
 enum {
