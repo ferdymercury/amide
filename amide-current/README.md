@@ -161,7 +161,8 @@ and Linux RPM binaries are available at:
 Building
 --------
 
-See the file INSTALL for info on compiling and installing.  If you
+See Quick instructions for Linux above. After running autoreconf, you can also
+inspect the file INSTALL for info on compiling and installing.  If you
 don't feel like reading that, try:
 
 	./configure
