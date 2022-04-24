@@ -30,13 +30,11 @@
 AmitkRawData * amitk_raw_data_`'m4_Variable_Type`'_0D_SCALING_init(amitk_format_`'m4_Variable_Type`'_t init_value) {
 
   AmitkRawData * temp_amitk_raw_data;
-  AmitkVoxel i;
 
   temp_amitk_raw_data = amitk_raw_data_new_with_data(AMITK_FORMAT_`'m4_Variable_Type`', one_voxel);
   g_return_val_if_fail(temp_amitk_raw_data != NULL, NULL);
-  i = zero_voxel;
 
-  (*AMITK_RAW_DATA_`'m4_Variable_Type`'_0D_SCALING_POINTER(temp_amitk_raw_data, i)) = init_value;
+  (*AMITK_RAW_DATA_`'m4_Variable_Type`'_0D_SCALING_POINTER(temp_amitk_raw_data, zero_voxel)) = init_value;
 
   return temp_amitk_raw_data;
 }
