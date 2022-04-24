@@ -315,15 +315,24 @@ gboolean amitk_is_xif_flat_file(const gchar * filename, guint64 * plocation_le, 
     return FALSE;
 
   /* check magic string */
-  fread(magic, sizeof(gchar), 64, study_file);
-  if (strncmp(magic, AMITK_FLAT_FILE_MAGIC_STRING, strlen(AMITK_FLAT_FILE_MAGIC_STRING)) != 0) {
+  size_t nRead;
+  nRead = fread(magic, sizeof(gchar), 64, study_file);
+  if (strncmp(magic, AMITK_FLAT_FILE_MAGIC_STRING, strlen(AMITK_FLAT_FILE_MAGIC_STRING)) != 0 || nRead != 64) {
     fclose(study_file);
     return FALSE;
   }
 
   /* get area of file to read for initial XML data */
-  fread(&location_le, sizeof(guint64), 1, study_file);
-  fread(&size_le, sizeof(guint64), 1, study_file);
+  nRead = fread(&location_le, sizeof(guint64), 1, study_file);
+  if (nRead != 1) {
+    fclose(study_file);
+    return FALSE;
+  }
+  nRead = fread(&size_le, sizeof(guint64), 1, study_file);
+  if (nRead != 1) {
+    fclose(study_file);
+    return FALSE;
+  }
   if (plocation_le != NULL)  *plocation_le = location_le;
   if (psize_le != NULL) *psize_le = size_le;
 
