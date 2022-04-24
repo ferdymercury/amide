@@ -27,7 +27,9 @@ Quick Linux instructions
 	cd amide/amide-current
 	intltoolize
 	libtoolize
-	# If not Ubuntu 22
+	# If Ubuntu 22
+	touch gtk-doc.make gnome-doc-utils.make
+	# Else
 	gnome-doc-prepare
 	gtkdocize 
 	# EndIf

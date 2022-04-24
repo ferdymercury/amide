@@ -7,13 +7,13 @@ DOC_MODULE=amitk
 DOC_MAIN_SGML_FILE=$(DOC_MODULE)-docs.sgml
 
 # Extra options to supply to gtkdoc-scan
-#SCAN_OPTIONS=--deprecated-guards="GTK_ENABLE_BROKEN|GTK_DISABLE_DEPRECATED" 
+#SCAN_OPTIONS=--deprecated-guards="GTK_ENABLE_BROKEN|GTK_DISABLE_DEPRECATED"
 
 # The directory containing the source code. Relative to $(srcdir)
 DOC_SOURCE_DIR=../../src
 
 # Extra options to pass to gtkdoc-scangobj
-# SCANGOBJ_OPTIONS=--type-init-func="gtk_type_init(0)" 
+# SCANGOBJ_OPTIONS=--type-init-func="gtk_type_init(0)"
 SCANGOBJ_OPTIONS=
 
 # Extra options to supply to gtkdoc-mkdb
@@ -74,12 +74,12 @@ ALL_OBJ_FILES= \
 	 $(shell ls ${top_srcdir}/src/*.o)
 
 IGNORE_OBJ_FILES= \
-	${top_srcdir}/src/amide.o 
+	${top_srcdir}/src/amide.o
 
 OBJ_FILES= $(filter-out $(IGNORE_OBJ_FILES),$(ALL_OBJ_FILES))
 
 # Images to copy into HTML directory
-HTML_IMAGES = 
+HTML_IMAGES =
 
 # Extra SGML files that are included by $(DOC_MAIN_SGML_FILE)
 content_files = \
@@ -123,11 +123,12 @@ INCLUDES = \
 	-I$(top_srcdir) 				\
 	-I$(top_builddir) 				\
 	-DAMIDE_LIBECAT_SUPPORT                         \
-	-DAMIDE_LIBMDC_SUPPORT                          
+	-DAMIDE_LIBMDC_SUPPORT
 
 # Extra options to supply to gtkdoc-fixref
 # FIXXREF_OPTIONS=--extra-dir=../gdk-pixbuf/html
 
+EXTRA_DIST=
 include $(top_srcdir)/gtk-doc.make
 
 # Other files to distribute
