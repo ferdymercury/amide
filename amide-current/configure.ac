@@ -100,7 +100,8 @@ AM_PATH_GSL(1.1.1, FOUND_LIBGSL=yes, FOUND_LIBGSL=no)
 AC_CHECK_LIB(ecat, matrix_open, FOUND_LIBECAT=yes, FOUND_LIBECAT=no, -L/sw/lib)
 AC_CHECK_LIB(volpack, vpGetErrorString, FOUND_VOLPACK=yes, FOUND_VOLPACK=no, -lm -L/sw/lib -L/usr/local/lib)
 AM_PATH_XMEDCON(0.10.0, FOUND_XMEDCON=yes, FOUND_XMEDCON=no)
-AC_CHECK_HEADER([openjpeg-2.1/opj_config.h],[FOUND_OPENJP2=yes],[FOUND_OPENJP2=no])
+
+PKG_CHECK_MODULES(LIBOPENJP2, libopenjp2 >= 2.1.0, FOUND_OPENJP2=yes, FOUND_OPENJP2=no)
 
 PKG_CHECK_MODULES(VISTAIO, libvistaio >= 1.2.17, FOUND_VISTAIO=yes, FOUND_VISTAIO=no)
 
@@ -352,9 +353,8 @@ AC_ARG_ENABLE(
 
 if (test $enable_libopenjp2 = yes) && (test $FOUND_OPENJP2 = yes); then
 	echo "compiling with JPEG 2000 support "
-	AMIDE_LIBOPENJP2_LIBS="-lopenjp2"
-	dnl AC_SUBST(AMIDE_LIBOPENJP2_LIBS)
-        PKG_CHECK_MODULES(AMIDE_LIBOPENJP2, [libopenjp2 >= 2.1.0])
+	AC_SUBST(LIBOPENJP2_CFLAGS)
+	AC_SUBST(LIBOPENJP2_LIBS)
 	AC_DEFINE(AMIDE_LIBOPENJP2_SUPPORT, 1, Define to compile with openjp2)
 else
 	echo "compiling without JPEG 2000 support"

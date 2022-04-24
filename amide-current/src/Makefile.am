@@ -30,7 +30,8 @@ AM_CFLAGS = \
 	-I/usr/local/include \
 	$(XMEDCON_CFLAGS) \
 	$(FFMPEG_CFLAGS) \
-	$(VISTAIO_CFLAGS) 
+	$(VISTAIO_CFLAGS) \
+	$(LIBOPENJP2_CFLAGS)
 
 
 
@@ -51,7 +52,7 @@ amide_LDADD = \
 	$(FFMPEG_LIBS) \
 	$(AMIDE_LIBDCMDATA_LIBS) \
 	$(VISTAIO_LIBS) \
-	$(AMIDE_LIBOPENJP2_LIBS) \
+	$(LIBOPENJP2_LIBS) \
 	$(AMIDE_LDADD_WIN32) 
 
 ## 2007.10.28, gcc 3.4.4 the below may no longer be an issue, as 
