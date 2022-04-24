@@ -606,7 +606,6 @@ static void fit_gaussian(tb_profile_t * tb_profile) {
   result_t * result;
   gsl_multifit_fdfsolver * solver;
   gsl_matrix *covar;
-  gsl_matrix *J; 
   gsl_multifit_function_fdf fdf;
   gsl_vector * init_p;
   gint iter;
