@@ -27,12 +27,15 @@ Quick Linux instructions
 	cd amide/amide-current
 	intltoolize
 	libtoolize
+        # If not Ubuntu 22
+	gtkdocize 
+	# EndIf
 	autoreconf --install
-	#Ubuntu 22
+	# Ubuntu 22
 	./configure --prefix /opt/amide --enable-gnome-vfs=no --disable-scrollkeeper --enable-gtk-doc=no --disable-doc 
-	#Ubuntu 20
+	# Ubuntu 20
 	./configure --prefix /opt/amide --enable-gnome-vfs=no --disable-scrollkeeper
-	#Ubuntu 18 or Fedora32
+	# Ubuntu 18 or Fedora32
 	./configure --prefix /opt/amide
 	#EndIf
 	
