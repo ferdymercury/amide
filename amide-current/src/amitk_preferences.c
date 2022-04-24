@@ -101,21 +101,21 @@ static void preferences_class_init (AmitkPreferencesClass * class) {
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET (AmitkPreferencesClass, data_set_preferences_changed),
 		  NULL, NULL,
-		  amitk_marshal_NONE__NONE, G_TYPE_NONE, 0);
+          amitk_marshal_VOID__VOID, G_TYPE_NONE, 0);
   preferences_signals[STUDY_PREFERENCES_CHANGED] =
     g_signal_new ("study_preferences_changed",
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET (AmitkPreferencesClass, study_preferences_changed),
 		  NULL, NULL,
-		  amitk_marshal_NONE__NONE, G_TYPE_NONE, 0);
+          amitk_marshal_VOID__VOID, G_TYPE_NONE, 0);
   preferences_signals[MISC_PREFERENCES_CHANGED] =
     g_signal_new ("misc_preferences_changed",
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET (AmitkPreferencesClass, misc_preferences_changed),
 		  NULL, NULL,
-		  amitk_marshal_NONE__NONE, G_TYPE_NONE, 0);
+          amitk_marshal_VOID__VOID, G_TYPE_NONE, 0);
 }
 
 static void preferences_init (AmitkPreferences * preferences) {

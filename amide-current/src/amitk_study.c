@@ -132,105 +132,105 @@ static void study_class_init (AmitkStudyClass * class) {
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET(AmitkStudyClass, filename_changed),
-		  NULL, NULL, amitk_marshal_NONE__NONE,
+          NULL, NULL, amitk_marshal_VOID__VOID,
 		  G_TYPE_NONE,0);
   study_signals[THICKNESS_CHANGED] =
     g_signal_new ("thickness_changed",
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET(AmitkStudyClass, thickness_changed),
-		  NULL, NULL, amitk_marshal_NONE__NONE,
+          NULL, NULL, amitk_marshal_VOID__VOID,
 		  G_TYPE_NONE,0);
   study_signals[TIME_CHANGED] =
     g_signal_new ("time_changed",
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET(AmitkStudyClass, time_changed),
-		  NULL, NULL, amitk_marshal_NONE__NONE,
+          NULL, NULL, amitk_marshal_VOID__VOID,
 		  G_TYPE_NONE,0);
   study_signals[CANVAS_VISIBLE_CHANGED] =
     g_signal_new ("canvas_visible_changed",
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET(AmitkStudyClass, canvas_visible_changed),
-		  NULL, NULL, amitk_marshal_NONE__NONE,
+          NULL, NULL, amitk_marshal_VOID__VOID,
 		  G_TYPE_NONE,0);
   study_signals[VIEW_MODE_CHANGED] =
     g_signal_new ("view_mode_changed",
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET(AmitkStudyClass, view_mode_changed),
-		  NULL, NULL, amitk_marshal_NONE__NONE,
+          NULL, NULL, amitk_marshal_VOID__VOID,
 		  G_TYPE_NONE,0);
   study_signals[CANVAS_TARGET_CHANGED] =
     g_signal_new ("canvas_target_changed",
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET(AmitkStudyClass, canvas_target_changed),
-		  NULL, NULL, amitk_marshal_NONE__NONE,
+          NULL, NULL, amitk_marshal_VOID__VOID,
 		  G_TYPE_NONE,0);
   study_signals[VOXEL_DIM_OR_ZOOM_CHANGED] =
     g_signal_new ("voxel_dim_or_zoom_changed",
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET(AmitkStudyClass, voxel_dim_or_zoom_changed),
-		  NULL, NULL, amitk_marshal_NONE__NONE,
+          NULL, NULL, amitk_marshal_VOID__VOID,
 		  G_TYPE_NONE,0);
   study_signals[FOV_CHANGED] =
     g_signal_new ("fov_changed",
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET(AmitkStudyClass, fov_changed),
-		  NULL, NULL, amitk_marshal_NONE__NONE,
+          NULL, NULL, amitk_marshal_VOID__VOID,
 		  G_TYPE_NONE,0);
   study_signals[FUSE_TYPE_CHANGED] =
     g_signal_new ("fuse_type_changed",
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET(AmitkStudyClass, fuse_type_changed),
-		  NULL, NULL, amitk_marshal_NONE__NONE,
+          NULL, NULL, amitk_marshal_VOID__VOID,
 		  G_TYPE_NONE,0);
   study_signals[VIEW_CENTER_CHANGED] =
     g_signal_new ("view_center_changed",
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET(AmitkStudyClass, view_center_changed),
-		  NULL, NULL, amitk_marshal_NONE__NONE,
+          NULL, NULL, amitk_marshal_VOID__VOID,
 		  G_TYPE_NONE,0);
   study_signals[CANVAS_ROI_PREFERENCE_CHANGED] =
     g_signal_new ("canvas_roi_preference_changed",
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET(AmitkStudyClass, canvas_roi_preference_changed),
-		  NULL, NULL, amitk_marshal_NONE__NONE,
+          NULL, NULL, amitk_marshal_VOID__VOID,
 		  G_TYPE_NONE,0);
   study_signals[CANVAS_GENERAL_PREFERENCE_CHANGED] =
     g_signal_new ("canvas_general_preference_changed",
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET(AmitkStudyClass, canvas_general_preference_changed),
-		  NULL, NULL, amitk_marshal_NONE__NONE,
+          NULL, NULL, amitk_marshal_VOID__VOID,
 		  G_TYPE_NONE,0);
   study_signals[CANVAS_TARGET_PREFERENCE_CHANGED] =
     g_signal_new ("canvas_target_preference_changed",
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET(AmitkStudyClass, canvas_target_preference_changed),
-		  NULL, NULL, amitk_marshal_NONE__NONE,
+          NULL, NULL, amitk_marshal_VOID__VOID,
 		  G_TYPE_NONE,0);
   study_signals[CANVAS_LAYOUT_PREFERENCE_CHANGED] =
     g_signal_new ("canvas_layout_preference_changed",
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET(AmitkStudyClass, canvas_layout_preference_changed),
-		  NULL, NULL, amitk_marshal_NONE__NONE,
+          NULL, NULL, amitk_marshal_VOID__VOID,
 		  G_TYPE_NONE,0);
   study_signals[PANEL_LAYOUT_PREFERENCE_CHANGED] =
     g_signal_new ("panel_layout_preference_changed",
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET(AmitkStudyClass, panel_layout_preference_changed),
-		  NULL, NULL, amitk_marshal_NONE__NONE,
+          NULL, NULL, amitk_marshal_VOID__VOID,
 		  G_TYPE_NONE,0);
 }
 

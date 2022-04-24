@@ -144,14 +144,14 @@ static void roi_class_init (AmitkRoiClass * class) {
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET(AmitkRoiClass, roi_changed),
-		  NULL, NULL, amitk_marshal_NONE__NONE,
+          NULL, NULL, amitk_marshal_VOID__VOID,
 		  G_TYPE_NONE,0);
   roi_signals[ROI_TYPE_CHANGED] =
     g_signal_new ("roi_type_changed",
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET(AmitkRoiClass, roi_type_changed),
-		  NULL, NULL, amitk_marshal_NONE__NONE,
+          NULL, NULL, amitk_marshal_VOID__VOID,
 		  G_TYPE_NONE,0);
 
 }

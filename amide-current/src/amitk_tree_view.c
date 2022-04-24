@@ -221,7 +221,7 @@ static void tree_view_class_init (AmitkTreeViewClass *klass)
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET (AmitkTreeViewClass, help_event),
 		  NULL, NULL,
-		  amitk_marshal_NONE__ENUM, 
+          amitk_marshal_VOID__ENUM,
 		  G_TYPE_NONE, 1,
 		  AMITK_TYPE_HELP_INFO);
   tree_view_signals[ACTIVATE_OBJECT] =
@@ -230,7 +230,7 @@ static void tree_view_class_init (AmitkTreeViewClass *klass)
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET (AmitkTreeViewClass, activate_object),
 		  NULL, NULL,
-		  amitk_marshal_NONE__OBJECT,
+          amitk_marshal_VOID__OBJECT,
 		  G_TYPE_NONE, 1,
 		  AMITK_TYPE_OBJECT);
   tree_view_signals[POPUP_OBJECT] =
@@ -239,7 +239,7 @@ static void tree_view_class_init (AmitkTreeViewClass *klass)
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET (AmitkTreeViewClass, popup_object),
 		  NULL, NULL,
-		  amitk_marshal_NONE__OBJECT,
+          amitk_marshal_VOID__OBJECT,
 		  G_TYPE_NONE, 1,
 		  AMITK_TYPE_OBJECT);
   tree_view_signals[ADD_OBJECT] =
@@ -248,7 +248,7 @@ static void tree_view_class_init (AmitkTreeViewClass *klass)
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET (AmitkTreeViewClass, add_object),
 		  NULL, NULL,
-		  amitk_marshal_NONE__OBJECT_ENUM_ENUM, 
+          amitk_marshal_VOID__OBJECT_ENUM_ENUM,
 		  G_TYPE_NONE,3,
 		  AMITK_TYPE_OBJECT,
 		  AMITK_TYPE_OBJECT_TYPE,
@@ -259,7 +259,7 @@ static void tree_view_class_init (AmitkTreeViewClass *klass)
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET (AmitkTreeViewClass, delete_object),
 		  NULL, NULL,
-		  amitk_marshal_NONE__OBJECT, 
+          amitk_marshal_VOID__OBJECT,
 		  G_TYPE_NONE,1,
 		  AMITK_TYPE_OBJECT);
 

@@ -98,7 +98,7 @@ static void fiducial_mark_class_init (AmitkFiducialMarkClass * class) {
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET(AmitkFiducialMarkClass, fiducial_mark_changed),
-		  NULL, NULL, amitk_marshal_NONE__NONE,
+          NULL, NULL, amitk_marshal_VOID__VOID,
 		  G_TYPE_NONE,0);
 
 }

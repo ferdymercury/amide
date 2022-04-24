@@ -313,35 +313,35 @@ static void data_set_class_init (AmitkDataSetClass * class) {
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET (AmitkDataSetClass, thresholding_changed),
 		  NULL, NULL,
-		  amitk_marshal_NONE__NONE, G_TYPE_NONE, 0);
+          amitk_marshal_VOID__VOID, G_TYPE_NONE, 0);
   data_set_signals[THRESHOLD_STYLE_CHANGED] =
     g_signal_new ("threshold_style_changed",
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET (AmitkDataSetClass, threshold_style_changed),
 		  NULL, NULL,
-		  amitk_marshal_NONE__NONE, G_TYPE_NONE, 0);
+          amitk_marshal_VOID__VOID, G_TYPE_NONE, 0);
   data_set_signals[THRESHOLDS_CHANGED] =
     g_signal_new ("thresholds_changed",
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET (AmitkDataSetClass, thresholds_changed),
 		  NULL, NULL,
-		  amitk_marshal_NONE__NONE, G_TYPE_NONE, 0);
+          amitk_marshal_VOID__VOID, G_TYPE_NONE, 0);
   data_set_signals[WINDOWS_CHANGED] =
     g_signal_new ("windows_changed",
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET (AmitkDataSetClass, windows_changed),
 		  NULL, NULL,
-		  amitk_marshal_NONE__NONE, G_TYPE_NONE, 0);
+          amitk_marshal_VOID__VOID, G_TYPE_NONE, 0);
   data_set_signals[COLOR_TABLE_CHANGED] =
     g_signal_new ("color_table_changed",
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET (AmitkDataSetClass, color_table_changed),
 		  NULL, NULL,
-		  amitk_marshal_NONE__ENUM, G_TYPE_NONE, 1,
+          amitk_marshal_VOID__ENUM, G_TYPE_NONE, 1,
 		  AMITK_TYPE_VIEW_MODE);
   data_set_signals[COLOR_TABLE_INDEPENDENT_CHANGED] =
     g_signal_new ("color_table_independent_changed",
@@ -349,7 +349,7 @@ static void data_set_class_init (AmitkDataSetClass * class) {
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET (AmitkDataSetClass, color_table_independent_changed),
 		  NULL, NULL,
-		  amitk_marshal_NONE__ENUM, G_TYPE_NONE, 1,
+          amitk_marshal_VOID__ENUM, G_TYPE_NONE, 1,
 		  AMITK_TYPE_VIEW_MODE);
   data_set_signals[INTERPOLATION_CHANGED] =
     g_signal_new ("interpolation_changed",
@@ -357,84 +357,84 @@ static void data_set_class_init (AmitkDataSetClass * class) {
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET (AmitkDataSetClass, interpolation_changed),
 		  NULL, NULL,
-		  amitk_marshal_NONE__NONE, G_TYPE_NONE, 0);
+          amitk_marshal_VOID__VOID, G_TYPE_NONE, 0);
   data_set_signals[RENDERING_CHANGED] =
     g_signal_new ("rendering_changed",
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET (AmitkDataSetClass, rendering_changed),
 		  NULL, NULL,
-		  amitk_marshal_NONE__NONE, G_TYPE_NONE, 0);
+          amitk_marshal_VOID__VOID, G_TYPE_NONE, 0);
   data_set_signals[SUBJECT_ORIENTATION_CHANGED] =
     g_signal_new ("subject_orientation_changed",
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET (AmitkDataSetClass, subject_orientation_changed),
 		  NULL, NULL,
-		  amitk_marshal_NONE__NONE, G_TYPE_NONE, 0);
+          amitk_marshal_VOID__VOID, G_TYPE_NONE, 0);
   data_set_signals[SUBJECT_SEX_CHANGED] =
     g_signal_new ("subject_sex_changed",
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET (AmitkDataSetClass, subject_sex_changed),
 		  NULL, NULL,
-		  amitk_marshal_NONE__NONE, G_TYPE_NONE, 0);
+          amitk_marshal_VOID__VOID, G_TYPE_NONE, 0);
   data_set_signals[CONVERSION_CHANGED] =
     g_signal_new ("conversion_changed",
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET (AmitkDataSetClass, conversion_changed),
 		  NULL, NULL,
-		  amitk_marshal_NONE__NONE, G_TYPE_NONE, 0);
+          amitk_marshal_VOID__VOID, G_TYPE_NONE, 0);
   data_set_signals[SCALE_FACTOR_CHANGED] = 
     g_signal_new ("scale_factor_changed",
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET (AmitkDataSetClass, scale_factor_changed),
 		  NULL, NULL,
-		  amitk_marshal_NONE__NONE, G_TYPE_NONE, 0);
+          amitk_marshal_VOID__VOID, G_TYPE_NONE, 0);
   data_set_signals[MODALITY_CHANGED] = 
     g_signal_new ("modality_changed",
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET (AmitkDataSetClass, modality_changed),
 		  NULL, NULL,
-		  amitk_marshal_NONE__NONE, G_TYPE_NONE, 0);
+          amitk_marshal_VOID__VOID, G_TYPE_NONE, 0);
   data_set_signals[TIME_CHANGED] = 
     g_signal_new ("time_changed",
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET (AmitkDataSetClass, time_changed),
 		  NULL, NULL,
-		  amitk_marshal_NONE__NONE, G_TYPE_NONE, 0);
+          amitk_marshal_VOID__VOID, G_TYPE_NONE, 0);
   data_set_signals[VOXEL_SIZE_CHANGED] = 
     g_signal_new ("voxel_size_changed",
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET (AmitkDataSetClass, voxel_size_changed),
 		  NULL, NULL,
-		  amitk_marshal_NONE__NONE, G_TYPE_NONE, 0);
+          amitk_marshal_VOID__VOID, G_TYPE_NONE, 0);
   data_set_signals[DATA_SET_CHANGED] = 
     g_signal_new ("data_set_changed",
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET (AmitkDataSetClass, data_set_changed),
 		  NULL, NULL,
-		  amitk_marshal_NONE__NONE, G_TYPE_NONE, 0);
+          amitk_marshal_VOID__VOID, G_TYPE_NONE, 0);
   data_set_signals[INVALIDATE_SLICE_CACHE] = 
     g_signal_new ("invalidate_slice_cache",
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET (AmitkDataSetClass, invalidate_slice_cache),
 		  NULL, NULL,
-		  amitk_marshal_NONE__NONE, G_TYPE_NONE, 0);
+          amitk_marshal_VOID__VOID, G_TYPE_NONE, 0);
   data_set_signals[VIEW_GATES_CHANGED] = 
     g_signal_new ("view_gates_changed",
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET (AmitkDataSetClass, view_gates_changed),
 		  NULL, NULL,
-		  amitk_marshal_NONE__NONE, G_TYPE_NONE, 0);
+          amitk_marshal_VOID__VOID, G_TYPE_NONE, 0);
 }
 
 

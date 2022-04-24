@@ -114,7 +114,7 @@ static void list_view_class_init (AmitkListViewClass *klass)
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET (AmitkListViewClass, select_object),
 		  NULL, NULL,
-		  amitk_marshal_NONE__OBJECT,
+          amitk_marshal_VOID__OBJECT,
 		  G_TYPE_NONE, 1,
 		  AMITK_TYPE_OBJECT);
 }

@@ -112,7 +112,7 @@ static void space_class_init (AmitkSpaceClass * class) {
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET(AmitkSpaceClass, space_shift),
-		  NULL, NULL, amitk_marshal_NONE__BOXED,
+          NULL, NULL, amitk_marshal_VOID__BOXED,
 		  G_TYPE_NONE,1,
 		  AMITK_TYPE_POINT);
   space_signals[SPACE_ROTATE] =
@@ -120,7 +120,7 @@ static void space_class_init (AmitkSpaceClass * class) {
   		  G_TYPE_FROM_CLASS(class),
   		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET(AmitkSpaceClass, space_rotate),
-		  NULL, NULL, amitk_marshal_NONE__BOXED_DOUBLE_BOXED,
+          NULL, NULL, amitk_marshal_VOID__BOXED_DOUBLE_BOXED,
 		  G_TYPE_NONE,3,
 		  AMITK_TYPE_POINT,
 		  AMITK_TYPE_REAL,
@@ -130,7 +130,7 @@ static void space_class_init (AmitkSpaceClass * class) {
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET(AmitkSpaceClass, space_invert),
-		  NULL, NULL, amitk_marshal_NONE__ENUM_BOXED,
+          NULL, NULL, amitk_marshal_VOID__ENUM_BOXED,
 		  G_TYPE_NONE,2,
 		  AMITK_TYPE_AXIS,
 		  AMITK_TYPE_POINT);
@@ -139,7 +139,7 @@ static void space_class_init (AmitkSpaceClass * class) {
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET(AmitkSpaceClass, space_transform),
-		  NULL, NULL, amitk_marshal_NONE__OBJECT,
+          NULL, NULL, amitk_marshal_VOID__OBJECT,
 		  G_TYPE_NONE,1,
 		  AMITK_TYPE_SPACE);
   space_signals[SPACE_TRANSFORM_AXES] =
@@ -147,7 +147,7 @@ static void space_class_init (AmitkSpaceClass * class) {
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET(AmitkSpaceClass, space_transform_axes),
-		  NULL, NULL, amitk_marshal_NONE__BOXED_BOXED,
+          NULL, NULL, amitk_marshal_VOID__BOXED_BOXED,
 		  G_TYPE_NONE,2,
 		  AMITK_TYPE_AXES,
 		  AMITK_TYPE_POINT);
@@ -156,7 +156,7 @@ static void space_class_init (AmitkSpaceClass * class) {
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET(AmitkSpaceClass, space_scale),
-		  NULL, NULL, amitk_marshal_NONE__BOXED_BOXED,
+          NULL, NULL, amitk_marshal_VOID__BOXED_BOXED,
 		  G_TYPE_NONE,2,
 		  AMITK_TYPE_POINT,
 		  AMITK_TYPE_POINT);
@@ -165,7 +165,7 @@ static void space_class_init (AmitkSpaceClass * class) {
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET(AmitkSpaceClass, space_changed),
-		  NULL, NULL, amitk_marshal_NONE__NONE,
+          NULL, NULL, amitk_marshal_VOID__VOID,
 		  G_TYPE_NONE,0);
 }
 

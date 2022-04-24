@@ -115,7 +115,7 @@ static void volume_class_init (AmitkVolumeClass * class) {
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET(AmitkVolumeClass, volume_corner_changed),
-		  NULL, NULL, amitk_marshal_NONE__BOXED,
+          NULL, NULL, amitk_marshal_VOID__BOXED,
 		  G_TYPE_NONE,1,
 		  AMITK_TYPE_POINT);
   volume_signals[VOLUME_GET_CENTER] = 
@@ -123,7 +123,7 @@ static void volume_class_init (AmitkVolumeClass * class) {
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET(AmitkVolumeClass, volume_get_center),
-		  NULL, NULL, amitk_marshal_NONE__POINTER,
+          NULL, NULL, amitk_marshal_VOID__POINTER,
 		  G_TYPE_NONE, 1,
 		  G_TYPE_POINTER);
   volume_signals[VOLUME_CHANGED] =
@@ -131,7 +131,7 @@ static void volume_class_init (AmitkVolumeClass * class) {
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET(AmitkVolumeClass, volume_changed),
-		  NULL, NULL, amitk_marshal_NONE__NONE,
+          NULL, NULL, amitk_marshal_VOID__VOID,
 		  G_TYPE_NONE,0);
 
 

@@ -148,42 +148,42 @@ static void object_class_init (AmitkObjectClass * class) {
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET(AmitkObjectClass, object_name_changed),
-		  NULL, NULL, amitk_marshal_NONE__NONE,
+          NULL, NULL, amitk_marshal_VOID__VOID,
 		  G_TYPE_NONE,0);
   object_signals[OBJECT_SELECTION_CHANGED] =
     g_signal_new ("object_selection_changed",
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET(AmitkObjectClass, object_selection_changed),
-		  NULL, NULL, amitk_marshal_NONE__NONE,
+          NULL, NULL, amitk_marshal_VOID__VOID,
 		  G_TYPE_NONE, 0);
   object_signals[OBJECT_CHILD_SELECTION_CHANGED] =
     g_signal_new ("object_child_selection_changed",
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET(AmitkObjectClass, object_child_selection_changed),
-		  NULL, NULL, amitk_marshal_NONE__NONE,
+          NULL, NULL, amitk_marshal_VOID__VOID,
 		  G_TYPE_NONE, 0);
   object_signals[OBJECT_COPY] =
     g_signal_new ("object_copy",
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET(AmitkObjectClass, object_copy),
-		  NULL, NULL, amitk_marshal_OBJECT__NONE,
+          NULL, NULL, amitk_marshal_OBJECT__VOID,
 		  AMITK_TYPE_OBJECT,0);
   object_signals[OBJECT_COPY_IN_PLACE] =
     g_signal_new ("object_copy_in_place",
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET(AmitkObjectClass, object_copy_in_place),
-		  NULL, NULL, amitk_marshal_NONE__OBJECT,
+          NULL, NULL, amitk_marshal_VOID__OBJECT,
 		  G_TYPE_NONE, 1, AMITK_TYPE_OBJECT);
   object_signals[OBJECT_WRITE_XML] =
     g_signal_new ("object_write_xml",
   		  G_TYPE_FROM_CLASS(class),
   		  G_SIGNAL_RUN_LAST,
   		  G_STRUCT_OFFSET(AmitkObjectClass, object_write_xml),
-  		  NULL, NULL, amitk_marshal_NONE__POINTER_POINTER,
+          NULL, NULL, amitk_marshal_VOID__POINTER_POINTER,
 		  G_TYPE_NONE, 2,
 		  G_TYPE_POINTER, G_TYPE_POINTER);
   object_signals[OBJECT_READ_XML] =
@@ -200,7 +200,7 @@ static void object_class_init (AmitkObjectClass * class) {
   		  G_TYPE_FROM_CLASS(class),
   		  G_SIGNAL_RUN_FIRST,
   		  G_STRUCT_OFFSET(AmitkObjectClass, object_add_child),
-  		  NULL, NULL, amitk_marshal_NONE__OBJECT,
+          NULL, NULL, amitk_marshal_VOID__OBJECT,
 		  G_TYPE_NONE, 1,
 		  AMITK_TYPE_OBJECT);
   object_signals[OBJECT_REMOVE_CHILD] =
@@ -208,7 +208,7 @@ static void object_class_init (AmitkObjectClass * class) {
   		  G_TYPE_FROM_CLASS(class),
   		  G_SIGNAL_RUN_FIRST,
   		  G_STRUCT_OFFSET(AmitkObjectClass, object_remove_child),
-  		  NULL, NULL, amitk_marshal_NONE__OBJECT,
+          NULL, NULL, amitk_marshal_VOID__OBJECT,
 		  G_TYPE_NONE, 1,
 		  AMITK_TYPE_OBJECT);
 }
