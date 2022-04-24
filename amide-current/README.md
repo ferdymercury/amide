@@ -10,8 +10,8 @@ sets.  For more information on AMIDE, check out the AMIDE web page at:
 AMIDE is licensed under the terms of the GNU GPL included in the file
 COPYING.
 
-Quick Ubuntu 18/20/22 instructions
--------------------------------
+Quick Linux instructions
+------------------------
 	cd /tmp/
 	git clone https://github.com/ferdymercury/amide
 	# Ubuntu 22:
@@ -30,7 +30,7 @@ Quick Ubuntu 18/20/22 instructions
 	./configure --prefix /opt/amide --enable-gnome-vfs=no --disable-scrollkeeper --enable-gtk-doc=no --disable-doc 
 	#Ubuntu 20
 	./configure --prefix /opt/amide --enable-gnome-vfs=no --disable-scrollkeeper
-	#Ubuntu 18
+	#Ubuntu 18 or Fedora32
 	./configure --prefix /opt/amide
 	#EndIf
 	
@@ -43,14 +43,6 @@ For system-wide install, do not use a prefix when running ./configure, and then 
 
 	make
 	sudo make install
-
-Quick Fedora 32 instructions
-----------------------------
-
-	autoreconf -i
-	configure
-	make
-	make install
 
 
 Requirements
