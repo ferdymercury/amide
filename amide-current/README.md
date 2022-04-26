@@ -29,7 +29,7 @@ Quick Linux instructions
 	libtoolize
 	# If Ubuntu 22:
 	touch gtk-doc.make gnome-doc-utils.make
-	# Else (Ubuntu 18 or Fedora32):
+	# Else (Ubuntu 18/20 or Fedora32):
 	gnome-doc-prepare
 	gtkdocize 
 	# EndIf
