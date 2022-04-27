@@ -15,7 +15,7 @@ Quick Linux instructions
 	cd /tmp/
 	git clone https://github.com/ferdymercury/amide
 	# If Ubuntu 22:
-	sudo apt install libgnomecanvas2-dev libgconf2-dev libmdc2-dev libvolpack1-dev libavcodec-dev intltool libxml2-dev libgsl-dev libdcmtk-dev
+	sudo apt install libgnomecanvas2-dev libgconf2-dev libmdc2-dev libvolpack1-dev libavcodec-dev gtk-doc-tools intltool libxml2-dev libgsl-dev libdcmtk-dev
 	# ElseIf Ubuntu 20:
 	sudo apt install libgnomecanvas2-dev libgconf2-dev libmdc2-dev libvolpack1-dev libavcodec-dev gtk-doc-tools intltool libxml2-dev python-libxml2 libgsl-dev libdcmtk-dev
 	wget http://launchpadlibrarian.net/402991440/gnome-doc-utils_0.20.10-5_all.deb
@@ -27,15 +27,15 @@ Quick Linux instructions
 	cd amide/amide-current
 	intltoolize
 	libtoolize
+	gtkdocize
 	# If Ubuntu 22:
-	touch gtk-doc.make gnome-doc-utils.make
+	touch gnome-doc-utils.make
 	# Else (Ubuntu 18/20 or Fedora32):
 	gnome-doc-prepare
-	gtkdocize 
 	# EndIf
 	autoreconf --install
 	# If Ubuntu 22:
-	./configure --prefix /opt/amide --enable-gnome-vfs=no --disable-scrollkeeper --enable-gtk-doc=no --disable-doc 
+	./configure --prefix /opt/amide --enable-gnome-vfs=no --disable-scrollkeeper --disable-doc 
 	# ElseIf Ubuntu 20:
 	./configure --prefix /opt/amide --enable-gnome-vfs=no --disable-scrollkeeper
 	# Else (Ubuntu 18 or Fedora32):
