@@ -14,25 +14,33 @@ Quick Linux instructions
 ------------------------
 	cd /tmp/
 	git clone https://github.com/ferdymercury/amide
-	# Ubuntu 22:
+	# If Ubuntu 22:
 	sudo apt install libgnomecanvas2-dev libgconf2-dev libmdc2-dev libvolpack1-dev libavcodec-dev gtk-doc-tools intltool libxml2-dev libgsl-dev libdcmtk-dev
-	# Ubuntu 20:
+	# ElseIf Ubuntu 20:
 	sudo apt install libgnomecanvas2-dev libgconf2-dev libmdc2-dev libvolpack1-dev libavcodec-dev gtk-doc-tools intltool libxml2-dev python-libxml2 libgsl-dev libdcmtk-dev
 	wget http://launchpadlibrarian.net/402991440/gnome-doc-utils_0.20.10-5_all.deb
 	sudo dpkg -i gnome-doc-utils_0.20.10-5_all.deb
-	# Ubuntu 18:
+	# ElseIf Ubuntu 18:
 	sudo apt install libgnomecanvas2-dev libgconf2-dev libgnomevfs2-dev gnome-doc-utils libmdc2-dev libvolpack1-dev libavcodec-dev gtk-doc-tools intltool libxml2-dev python-libxml2 libgsl-dev libdcmtk-dev
-	#EndIf	
+	# EndIf	
 
 	cd amide/amide-current
+	intltoolize
+	libtoolize
+	gtkdocize
+	# If Ubuntu 22:
+	touch gnome-doc-utils.make
+	# Else (Ubuntu 18/20 or Fedora32):
+	gnome-doc-prepare
+	# EndIf
 	autoreconf --install
-	#Ubuntu 22
+	# If Ubuntu 22:
 	./configure --prefix /opt/amide --enable-gnome-vfs=no --disable-scrollkeeper --disable-doc 
-	#Ubuntu 20
+	# ElseIf Ubuntu 20:
 	./configure --prefix /opt/amide --enable-gnome-vfs=no --disable-scrollkeeper
-	#Ubuntu 18 or Fedora32
+	# Else (Ubuntu 18 or Fedora32):
 	./configure --prefix /opt/amide
-	#EndIf
+	# EndIf
 	
 	make
 	sudo mkdir -p /opt/amide
@@ -153,7 +161,8 @@ and Linux RPM binaries are available at:
 Building
 --------
 
-See the file INSTALL for info on compiling and installing.  If you
+See Quick instructions for Linux above. After running autoreconf, you can also
+inspect the file INSTALL for info on compiling and installing.  If you
 don't feel like reading that, try:
 
 	./configure
@@ -174,5 +183,6 @@ Building gtk-doc files
 The majority of the source code for AMIDE is structured as a library
 extension of GTK, called AMITK. Documentation for this library can be
 built using gtk-doc as follows:
-      ./configure --enable-libdcmdata=no --enable-gtk-doc=yes
-      make
+
+	./configure --enable-libdcmdata=no --enable-gtk-doc=yes
+	make

@@ -12,7 +12,7 @@ AMIDE_LDFLAGS_WIN32 =
 
 endif
 
-INCLUDES = \
+AM_CPPFLAGS = \
 	-DAMIDE_PREFIX=\""$(prefix)"\"		\
 	-DAMIDE_SYSCONFDIR=\""$(sysconfdir)"\"	\
 	-DAMIDE_DATADIR=\""$(datadir)"\"	\
