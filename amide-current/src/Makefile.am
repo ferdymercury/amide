@@ -3,12 +3,12 @@ if AMIDE_OS_WIN32
 AMIDE_LDADD_WIN32 = -lwsock32 ../win32/amiderc.o
 AMIDE_LDFLAGS_WIN32 = -mwindows
 #INCLUDES = \
-#	-DGNOMELOCALEDIR=\""$(prefix)/$(DATADIRNAME)/locale"\" 
+#	-DGNOMELOCALEDIR=\""$(prefix)/$(DATADIRNAME)/locale"\"
 
 else
 
-AMIDE_LDADD_WIN32 = 
-AMIDE_LDFLAGS_WIN32 = 
+AMIDE_LDADD_WIN32 =
+AMIDE_LDFLAGS_WIN32 =
 
 endif
 
@@ -16,7 +16,7 @@ AM_CPPFLAGS = \
 	-DAMIDE_PREFIX=\""$(prefix)"\"		\
 	-DAMIDE_SYSCONFDIR=\""$(sysconfdir)"\"	\
 	-DAMIDE_DATADIR=\""$(datadir)"\"	\
-	-DAMIDE_LIBDIR=\""$(libdir)"\"			
+	-DAMIDE_LIBDIR=\""$(libdir)"\"
 ##	-DGNOMELOCALEDIR=\""$(prefix)/$(DATADIRNAME)/locale"\"  \
 
 AM_CFLAGS = \
@@ -53,15 +53,15 @@ amide_LDADD = \
 	$(AMIDE_LIBDCMDATA_LIBS) \
 	$(VISTAIO_LIBS) \
 	$(LIBOPENJP2_LIBS) \
-	$(AMIDE_LDADD_WIN32) 
+	$(AMIDE_LDADD_WIN32)
 
-## 2007.10.28, gcc 3.4.4 the below may no longer be an issue, as 
+## 2007.10.28, gcc 3.4.4 the below may no longer be an issue, as
 ## xmedcon can now be glib2/gtk2 based. But haven't tested
 ##
 ## 2005.01.08, gcc 3.3.3
 ## note, for some reason, if XMEDCON_LIBS is before AMIDE_GTK_LIBS,
 ## an executable is made that dumps core on startup....
-## this is probably because xmedcon is linked with glib 1.2... while 
+## this is probably because xmedcon is linked with glib 1.2... while
 ## amide needs glib 2.*, and something is clashing in name space
 
 
@@ -207,7 +207,7 @@ AMITK_H_SOURCES = \
 	amitk_tree_view.h \
 	amitk_type.h \
 	amitk_volume.h \
-	amitk_window_edit.h 
+	amitk_window_edit.h
 
 AMITK_ROI_VARIABLE_C = \
 	amitk_roi_ELLIPSOID.c \
@@ -235,7 +235,7 @@ AMITK_RAW_DATA_VARIABLE_C = \
 	amitk_raw_data_UINT.c \
 	amitk_raw_data_SINT.c \
 	amitk_raw_data_FLOAT.c \
-	amitk_raw_data_DOUBLE.c 
+	amitk_raw_data_DOUBLE.c
 
 AMITK_RAW_DATA_VARIABLE_H = \
 	amitk_raw_data_UBYTE.h \
@@ -245,7 +245,7 @@ AMITK_RAW_DATA_VARIABLE_H = \
 	amitk_raw_data_UINT.h \
 	amitk_raw_data_SINT.h \
 	amitk_raw_data_FLOAT.h \
-	amitk_raw_data_DOUBLE.h 
+	amitk_raw_data_DOUBLE.h
 
 AMITK_DATA_SET_VARIABLE_C = \
 	amitk_data_set_UBYTE_0D_SCALING.c \
@@ -295,7 +295,7 @@ AMITK_DATA_SET_VARIABLE_C = \
 	amitk_data_set_FLOAT_2D_SCALING_INTERCEPT.c \
 	amitk_data_set_DOUBLE_0D_SCALING_INTERCEPT.c \
 	amitk_data_set_DOUBLE_1D_SCALING_INTERCEPT.c \
-	amitk_data_set_DOUBLE_2D_SCALING_INTERCEPT.c 
+	amitk_data_set_DOUBLE_2D_SCALING_INTERCEPT.c
 
 AMITK_DATA_SET_VARIABLE_H = \
 	amitk_data_set_UBYTE_0D_SCALING.h \
@@ -321,19 +321,19 @@ AMITK_DATA_SET_VARIABLE_H = \
 	amitk_data_set_FLOAT_2D_SCALING.h \
 	amitk_data_set_DOUBLE_0D_SCALING.h \
 	amitk_data_set_DOUBLE_1D_SCALING.h \
-	amitk_data_set_DOUBLE_2D_SCALING.h 
+	amitk_data_set_DOUBLE_2D_SCALING.h
 
 VARIABLE_INPUT = \
 	variable_type.m4
 
-AMITK_ROI_VARIABLE_C_SRC = amitk_roi_variable_type.c 
+AMITK_ROI_VARIABLE_C_SRC = amitk_roi_variable_type.c
 AMITK_ROI_VARIABLE_H_SRC = amitk_roi_variable_type.h
 
 AMITK_RAW_DATA_VARIABLE_C_SRC = amitk_raw_data_variable_type.c
 AMITK_RAW_DATA_VARIABLE_H_SRC = amitk_raw_data_variable_type.h
 
-AMITK_DATA_SET_VARIABLE_C_SRC = amitk_data_set_variable_type.c 
-AMITK_DATA_SET_VARIABLE_H_SRC = amitk_data_set_variable_type.h 
+AMITK_DATA_SET_VARIABLE_C_SRC = amitk_data_set_variable_type.c
+AMITK_DATA_SET_VARIABLE_H_SRC = amitk_data_set_variable_type.h
 
 
 $(AMITK_ROI_VARIABLE_H): $(VARIABLE_INPUT) $(AMITK_ROI_VARIABLE_H_SRC)
@@ -399,7 +399,7 @@ $(AMITK_DATA_SET_VARIABLE_H): $(VARIABLE_INPUT) $(AMITK_DATA_SET_VARIABLE_H_SRC)
 
 MARSHAL_SOURCES = \
 	amitk_marshal.c	\
-	amitk_marshal.h 
+	amitk_marshal.h
 
 amitk_marshal.h: amitk_marshal.list $(GLIB_GENMARSHAL)
 	$(GLIB_GENMARSHAL) $< --header --prefix=amitk_marshal > $@
@@ -408,7 +408,7 @@ amitk_marshal.c: amitk_marshal.list $(GLIB_GENMARSHAL) amitk_marshal.h
 
 TYPE_BUILTINS_SOURCES = \
 	amitk_type_builtins.h \
-	amitk_type_builtins.c 
+	amitk_type_builtins.c
 
 TEMP_FILES = \
 	xgen-atbh \
@@ -461,7 +461,15 @@ CLEANFILES = \
 	$(MARSHAL_SOURCES) \
 	$(TYPE_BUILTINS_SOURCES) \
 	$(TEMP_FILES) \
-	$(STAMP_FILES) 
+	$(STAMP_FILES)
 
-DISTCLEANFILES = *~ 
+DISTCLEANFILES = *~
 
+EXTRA_DIST = amitk_marshal.list \
+variable_type.m4 \
+amitk_data_set_variable_type.h \
+amitk_raw_data_variable_type.h \
+amitk_raw_data_variable_type.c \
+amitk_data_set_variable_type.c \
+amitk_roi_variable_type.c \
+amitk_roi_variable_type.h

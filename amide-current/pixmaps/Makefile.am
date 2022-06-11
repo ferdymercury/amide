@@ -6,7 +6,7 @@ pixmap_DATA = \
 	amide_logo.png \
 	amide_file_logo.png
 
-EXTRA_DIST  = $(pixmap_DATA) 
+EXTRA_DIST  = $(pixmap_DATA)
 
 
 pixbuf_csource=$(GDK_PIXBUF_CSOURCE)
@@ -61,7 +61,7 @@ BUILT_SOURCES = \
 ##	window_bone_icon.h \
 ##	window_soft_tissue_icon.h \
 
-
+EXTRA_DIST += $(BUILT_SOURCES)
 
 
 .png.h:
