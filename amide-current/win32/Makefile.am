@@ -5,6 +5,7 @@ BUILT_SOURCES = \
         amide_file.ico \
         amiderc.o
 
+noinst_HEADERS = resource.h
 
 amide.ico: amide_logo16x16.png amide_logo32x32.png amide_logo64x64.png amide_logo128x128.png
 	png2ico.exe amide.ico amide_logo16x16.png amide_logo32x32.png amide_logo64x64.png amide_logo128x128.png
@@ -16,7 +17,7 @@ amiderc.o: amiderc.rc amide.ico amide_file.ico
 	windres -i amiderc.rc -o amiderc.o
 endif
 
-
+EXTRA_DIST = amiderc.rc amide_logo16x16.png amide_logo32x32.png amide_logo64x64.png amide_logo128x128.png amide_file_logo16x16.png amide_file_logo32x32.png amide_file_logo64x64.png amide_file_logo128x128.png
 CLEANFILES = amiderc.o amide.ico amide_file.ico
 DISTCLEANFILES = *~
 
