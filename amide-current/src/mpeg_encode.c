@@ -213,10 +213,12 @@ gboolean avcodec_initialized=FALSE;
 static void mpeg_encoding_init(void) {
   if (!avcodec_initialized) {
     /* must be called before using avcodec lib */
+    #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 137, 100)
     avcodec_register_all();
     
     /* register all the codecs */
     avcodec_register_all();
+    #endif
 
     avcodec_initialized=TRUE;
   }
