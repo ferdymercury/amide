@@ -401,7 +401,7 @@ gboolean mpeg_encode_frame(gpointer data, GdkPixbuf * pixbuf) {
     AVPacket* pkt = av_packet_alloc();
     if (pkt != NULL) {
       while (avcodec_receive_packet(encode->context, pkt) == 0) {
-	fwrite(pkt->data, 1, pkt->size, encode->output_file);      
+        fwrite(pkt->data, 1, pkt->size, encode->output_file);      
         av_packet_unref(pkt);
       }
     }
