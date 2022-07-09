@@ -213,10 +213,12 @@ gboolean avcodec_initialized=FALSE;
 static void mpeg_encoding_init(void) {
   if (!avcodec_initialized) {
     /* must be called before using avcodec lib */
+    #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 137, 100)
     avcodec_register_all();
     
     /* register all the codecs */
     avcodec_register_all();
+    #endif
 
     avcodec_initialized=TRUE;
   }
@@ -372,8 +374,6 @@ gpointer mpeg_encode_setup(gchar * output_filename, mpeg_encode_t type, gint xsi
 gboolean mpeg_encode_frame(gpointer data, GdkPixbuf * pixbuf) {
   encode_t * encode = data;
   //  gint out_size;
-  AVPacket pkt = {0};
-  int ret, got_packet = 0;
 
   convert_rgb_pixbuf_to_yuv(encode->yuv, pixbuf);
 
@@ -381,14 +381,37 @@ gboolean mpeg_encode_frame(gpointer data, GdkPixbuf * pixbuf) {
   //  out_size = avcodec_encode_video(encode->context, encode->output_buffer, encode->output_buffer_size, encode->picture);
   //  fwrite(encode->output_buffer, 1, out_size, encode->output_file);
   //  return TRUE;
-
+  #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(57, 37, 100)
+  AVPacket pkt = {0};
+  int ret, got_packet = 0;
   ret = avcodec_encode_video2(encode->context, &pkt, encode->picture, &got_packet);
 
   if (ret >= 0 && got_packet) {
-  fwrite(pkt.data, 1, pkt.size, encode->output_file);
-  av_packet_unref(&pkt);
-}
+    fwrite(pkt.data, 1, pkt.size, encode->output_file);
+    av_packet_unref(&pkt);
+  }
   return (ret >= 0) ? TRUE : FALSE;
+  #else
+  int result = avcodec_send_frame(encode->context, encode->picture);
+  if (result == AVERROR_EOF)
+    return TRUE;
+  else if (result < 0)
+    return FALSE;
+  else { 
+    AVPacket* pkt = av_packet_alloc();
+    if (pkt != NULL) {
+      while (avcodec_receive_packet(encode->context, pkt) == 0) {
+        fwrite(pkt->data, 1, pkt->size, encode->output_file);
+        av_packet_unref(pkt);
+      }
+      av_packet_free(&pkt);
+      return TRUE;
+    }
+    else {
+      return FALSE;
+    }
+  }
+  #endif
 };
 
 /* close everything up */
