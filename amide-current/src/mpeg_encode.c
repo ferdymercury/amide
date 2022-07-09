@@ -404,8 +404,8 @@ gboolean mpeg_encode_frame(gpointer data, GdkPixbuf * pixbuf) {
         fwrite(pkt->data, 1, pkt->size, encode->output_file);
         av_packet_unref(pkt);
       }
+      av_packet_free(&pkt);
     }
-    av_packet_free(&pkt);
     return TRUE;
   }
   #endif
