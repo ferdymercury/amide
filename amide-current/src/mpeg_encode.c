@@ -405,8 +405,11 @@ gboolean mpeg_encode_frame(gpointer data, GdkPixbuf * pixbuf) {
         av_packet_unref(pkt);
       }
       av_packet_free(&pkt);
+      return TRUE;
     }
-    return TRUE;
+    else {
+      return FALSE;
+    }
   }
   #endif
 };
