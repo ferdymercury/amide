@@ -2,7 +2,7 @@ gdnl ===========================================================================
 dnl              Configure script for AMIDE
 dnl ===============================================================================
 AC_PREREQ(2.59)
-AC_INIT([amide],[1.0.6],[amide-users@lists.sourceforge.net])
+AC_INIT([amide],[1.0.6-x1],[amide-users@lists.sourceforge.net])
 
 AC_CONFIG_SRCDIR(src/amide.c)
 AC_CONFIG_HEADERS(amide_config.h)
@@ -506,8 +506,8 @@ doc/reference/Makefile
 doc/reference/version.xml
 help/Makefile
 etc/Makefile
-etc/amide-$VERSION-1.info:etc/amide.info.in
-etc/amide-$VERSION-1.iss:etc/amide.iss.in
+etc/amide-$VERSION.info:etc/amide.info.in
+etc/amide-$VERSION.iss:etc/amide.iss.in
 etc/amide.spec
 man/Makefile
 po/Makefile.in])

@@ -147,7 +147,7 @@ static void about_cb(GtkAction *action, gpointer * caller) {
   gtk_show_about_dialog(NULL, 
 			"name", PACKAGE,
 			"version", VERSION,
-			"copyright", "Copyright (c) 2000-2017 Andreas Loening",
+			"copyright", "Copyright (c) 2000-2023 Andreas Loening",
 			"license", "GNU General Public License, Version 2",
 			"authors", authors,
 			"comments", comments,
