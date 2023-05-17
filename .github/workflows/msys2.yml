@@ -1,0 +1,44 @@
+name: MSYS2
+on: [push, pull_request]
+
+jobs:
+  msys2-ucrt64:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Setup MSYS
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            automake
+            git
+            gnome-doc-utils
+            intltool
+            mingw-w64-x86_64-autotools
+            mingw-w64-x86_64-dcmtk
+            mingw-w64-x86_64-ffmpeg
+            mingw-w64-x86_64-gsl
+            mingw-w64-x86_64-gtk-doc
+            mingw-w64-x86_64-gtk2
+            mingw-w64-x86_64-gtk3
+            mingw-w64-x86_64-libgnomecanvas
+            mingw-w64-x86_64-png2ico
+            mingw-w64-x86_64-toolchain
+            openssh
+            vim
+            unzip        
+      - name: CI-Build
+        run: |
+          ./build/windows/build_amide.sh
+          ./build/windows/package_amide.sh
+      - name: Archive package folder
+        uses: actions/upload-artifact@v3
+        with:
+          name: src-folder
+          path: package/**
