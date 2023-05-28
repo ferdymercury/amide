@@ -442,6 +442,18 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
 	new_offset.y = -1.0*new_offset.y; /* DICOM specifies y axis in wrong direction */
 	new_offset.z = -1.0*new_offset.z; /* DICOM specifies z axis in wrong direction */
 
+  /* Offset correction by half voxel (DCM_ImagePositionPatient is the location of the 
+     first voxel's center) */
+  new_offset.x -= 0.5 * (voxel_size.x * new_axes[AMITK_AXIS_X].x +
+                         voxel_size.y * new_axes[AMITK_AXIS_Y].x +
+                         voxel_size.z * new_axes[AMITK_AXIS_Z].x);
+  new_offset.y -= 0.5 * (voxel_size.x * new_axes[AMITK_AXIS_X].y +
+                         voxel_size.y * new_axes[AMITK_AXIS_Y].y +
+                         voxel_size.z * new_axes[AMITK_AXIS_Z].y);
+  new_offset.z -= 0.5 * (voxel_size.x * new_axes[AMITK_AXIS_X].z +
+                         voxel_size.y * new_axes[AMITK_AXIS_Y].z +
+                         voxel_size.z * new_axes[AMITK_AXIS_Z].z);   
+
 	amitk_space_set_offset(AMITK_SPACE(ds), new_offset);
 	found_value=TRUE;
       }
