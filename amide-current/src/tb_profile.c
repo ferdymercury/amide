@@ -645,7 +645,7 @@ static void fit_gaussian(tb_profile_t * tb_profile) {
       gsl_vector_set(init_p, j++, result->min_y); /* b - DC val */
 
     /* alloc the solver */
-    g_return_if_fail(result->line->len < num_p); 
+    g_return_if_fail(result->line->len >= num_p); /* need at least as many data points as parameters*/
 
     solver = gsl_multifit_fdfsolver_alloc (gsl_multifit_fdfsolver_lmder,result->line->len, num_p);
     g_return_if_fail(solver != NULL);
