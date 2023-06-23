@@ -10,6 +10,8 @@ sets.  For more information on AMIDE, check out the AMIDE web page at:
 AMIDE is licensed under the terms of the GNU GPL included in the file
 COPYING.
 
+Instruction manuals can be found [here.](https://amide.sourceforge.net/documentation.html)
+
 Quick Linux instructions
 ------------------------
 	cd /tmp/
