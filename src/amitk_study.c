@@ -489,7 +489,7 @@ static gchar * study_read_xml(AmitkObject * object, xmlNodePtr nodes,
 
   /* sanity check */
   if (AMITK_STUDY_ZOOM(study) < EPSILON) {
-    amitk_append_str_with_newline(&error_buf,_("inappropriate zoom (%5.3f) for study, reseting to 1.0"),
+    amitk_append_str_with_newline(&error_buf,_("inappropriate zoom (%5.3f) for study, resetting to 1.0"),
 				  AMITK_STUDY_ZOOM(study));
     amitk_study_set_zoom(study, 1.0);
   }

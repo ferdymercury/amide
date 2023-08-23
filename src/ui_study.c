@@ -426,7 +426,7 @@ static const GtkActionEntry normal_items[] = {
   { "FilterWizard",NULL,N_("_Filter Active Data Set"),NULL,N_("allows you to filter the active data set"),G_CALLBACK(ui_study_cb_filter_selected)},
   { "LineProfile",NULL,N_("Generate Line _Profile"),NULL,N_("allows generating a line profile between two fiducial marks"),G_CALLBACK(ui_study_cb_profile_selected)},
   { "MathWizard",NULL,N_("Perform _Math on Data Set(s)"),NULL,N_("perform simple math operations on a data set or between data sets"),G_CALLBACK(ui_study_cb_data_set_math_selected)},
-  { "RoiStats",NULL,N_("Calculate _ROI Statistics"),NULL,N_("caculate ROI statistics"),G_CALLBACK(ui_study_cb_roi_statistics)},
+  { "RoiStats",NULL,N_("Calculate _ROI Statistics"),NULL,N_("calculate ROI statistics"),G_CALLBACK(ui_study_cb_roi_statistics)},
 
   /* Flythrough Submenu */
 #if (AMIDE_FFMPEG_SUPPORT || AMIDE_LIBFAME_SUPPORT)
