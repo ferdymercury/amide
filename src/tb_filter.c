@@ -67,7 +67,7 @@ static const char * median_linear_filter_text =
 N_("Median filters work relatively well at preserving edges while\n"
    "removing speckle noise.\n"
    "\n"
-   "This filter is the 1D median filter, so the neighboorhood used for\n"
+   "This filter is the 1D median filter, so the neighborhood used for\n"
    "determining the median will be of the given kernel size, and the\n"
    "data set will be filtered 3x (once for each direction).");
 

@@ -1284,7 +1284,7 @@ static AmitkDataSet * import_slices_as_dataset(GList * slices,
   } /* i_file loop */
 
   if (screwed_up_timing) 
-    amitk_append_str_with_newline(perror_buf, _("Detected discontinous frames in data set %s - frame durations have been adjusted to remove interframe time gaps"), AMITK_OBJECT_NAME(ds));
+    amitk_append_str_with_newline(perror_buf, _("Detected discontinuous frames in data set %s - frame durations have been adjusted to remove interframe time gaps"), AMITK_OBJECT_NAME(ds));
   
   if (screwed_up_thickness)
     amitk_append_str_with_newline(perror_buf, _("Slice thickness (%5.3f mm) not equal to slice spacing (%5.3f mm) in data set %s - will use slice spacing for thickness"), old_thickness, true_thickness, AMITK_OBJECT_NAME(ds));

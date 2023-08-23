@@ -1233,7 +1233,7 @@ void fads_pls(AmitkDataSet * data_set,
       if (status == GSL_ENOPROG)
 	g_print("--- previous iteration was not making progress towards a solution ---\n");
       else if (status == GSL_ERUNAWAY)
-	g_print("--- previous iteration ran away, reseting to last good value  ---\n");
+	g_print("--- previous iteration ran away, resetting to last good value  ---\n");
 #endif
       if (status == GSL_ERUNAWAY) {
 	/* need to recompute ec's */
@@ -2242,7 +2242,7 @@ void fads_two_comp(AmitkDataSet * data_set,
       if (status == GSL_ENOPROG)
 	g_print("--- previous iteration was not making progress towards a solution ---\n");
       else if (status == GSL_ERUNAWAY)
-	g_print("--- previous iteration ran away, reseting to last good value  ---\n");
+	g_print("--- previous iteration ran away, resetting to last good value  ---\n");
 #endif
       if (status == GSL_ERUNAWAY) {
 	/* need to recompute ec's */

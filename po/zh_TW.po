@@ -1437,7 +1437,7 @@ msgstr ""
 
 #: ../src/amitk_study.c:469
 #, c-format
-msgid "inappropriate zoom (%5.3f) for study, reseting to 1.0"
+msgid "inappropriate zoom (%5.3f) for study, resetting to 1.0"
 msgstr "不適當的縮放 (%5.3f) 用於檢驗，重置為 1.0"
 
 #: ../src/amitk_study.c:907 ../src/amitk_study.c:1008
@@ -1724,7 +1724,7 @@ msgstr "無法配置記憶體空間給影格持續時間資訊"
 
 #: ../src/dcmtk_interface.cc:1028
 #, c-format
-msgid "Detected discontinous frames in data set %s - frame start times will be incorrect"
+msgid "Detected discontinuous frames in data set %s - frame start times will be incorrect"
 msgstr "在資料集 %s 中偵測到不連續的影格 - 影格起始時間將不正確"
 
 #: ../src/dcmtk_interface.cc:1031
@@ -3040,7 +3040,7 @@ msgstr ""
 msgid ""
 "Median filters work relatively well at preserving edges while\n"
 "removing speckle noise.\n\n"
-"This filter is the 1D median filter, so the neighboorhood used for\n"
+"This filter is the 1D median filter, so the neighborhood used for\n"
 "determining the median will be of the given kernel size, and the\n"
 "data set will be filtered 3x (once for each direction)."
 msgstr ""
@@ -4516,7 +4516,7 @@ msgid "Calculate _ROI Statistics"
 msgstr "計算 _ROI 統計資訊"
 
 #: ../src/ui_study.c:387
-msgid "caculate ROI statistics"
+msgid "calculate ROI statistics"
 msgstr "計算 ROI 統計資訊"
 
 #: ../src/ui_study.c:391
