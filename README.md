@@ -26,7 +26,7 @@ Quick Linux instructions
 	sudo apt install libgnomecanvas2-dev libgconf2-dev libgnomevfs2-dev gnome-doc-utils libmdc2-dev libvolpack1-dev libavcodec-dev gtk-doc-tools intltool libxml2-dev python-libxml2 libgsl-dev libdcmtk-dev
 	# EndIf	
 
-	cd amide/amide-current
+	cd amide
 	intltoolize
 	libtoolize
 	gtkdocize
