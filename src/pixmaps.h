@@ -28,3 +28,6 @@
 extern const gchar * windowing_icons[];
 
 void pixmaps_initialize_icons();
+
+#define AMIDE_ICON_GRESOURCE_PREFIX "/com/github/Amide/icons/"
+

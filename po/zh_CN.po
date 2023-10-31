@@ -2438,7 +2438,7 @@ msgid "2 compartment model"
 msgstr ""
 
 #: ../src/fads.c:53
-msgid "Priniciple Component Analysis based on singular value decomposition."
+msgid "Principle Component Analysis based on singular value decomposition."
 msgstr ""
 
 #: ../src/fads.c:56
