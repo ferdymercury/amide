@@ -49,6 +49,7 @@
 #include <dcmtk/dcmdata/dctk.h>
 #include <dcmtk/dcmdata/dcrledrg.h>    /* for RLE decoders */
 #include "dcmtk/dcmjpeg/djdecode.h"    /* for dcmjpeg decoders */
+#include "dcmtk/ofstd/ofcond.h"        /* for EC_Normal return value*/
 
 #ifdef AMIDE_LIBOPENJP2_SUPPORT
 #include <dcmtk/config/osconfig.h>   /* JPG2000 make sure OS specific configuration is included first */

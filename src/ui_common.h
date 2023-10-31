@@ -27,6 +27,7 @@
 #include <gtk/gtk.h>
 #include <libgnomecanvas/libgnomecanvas.h>
 #include "amitk_point.h"
+#include "pixmaps.h"
 
 #define HELP_MENU_UI_DESCRIPTION  "<menu action='HelpMenu'> <menuitem action='HelpContents'/> <separator/> <menuitem action='HelpAbout'/> </menu>"
 

@@ -24,8 +24,8 @@
 */
 
 
-#ifndef __AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'__
-#define __AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'__
+#ifndef __AMITK_DATA_SET_@VARIABLE_TYPE@_@SCALE_DIM@__
+#define __AMITK_DATA_SET_@VARIABLE_TYPE@_@SCALE_DIM@__
 
 /* header files that are always needed with this file */
 #include "amitk_data_set.h"
@@ -34,68 +34,68 @@
 /* defines */
 
 /* translates to the contents of the voxel specified by voxelpoint i */
-#define AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENT(data_set,i) \
- (*(AMITK_RAW_DATA_DOUBLE_`'m4_Scale_Dim`'_POINTER((data_set)->current_scaling_factor, (i))) * \
-  ((amide_data_t) (*(AMITK_RAW_DATA_`'m4_Variable_Type`'_POINTER((data_set)->raw_data,(i))))))
+#define AMITK_DATA_SET_@VARIABLE_TYPE@_@SCALE_DIM@_SCALING_CONTENT(data_set,i) \
+ (*(AMITK_RAW_DATA_DOUBLE_@SCALE_DIM@_SCALING_POINTER((data_set)->current_scaling_factor, (i))) * \
+  ((amide_data_t) (*(AMITK_RAW_DATA_@VARIABLE_TYPE@_POINTER((data_set)->raw_data,(i))))))
 
-#define AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_INTERCEPT_CONTENT(data_set,i) \
-    (*(AMITK_RAW_DATA_DOUBLE_`'m4_Scale_Dim`'_POINTER((data_set)->current_scaling_factor, (i))) * \
-     ((amide_data_t) (*(AMITK_RAW_DATA_`'m4_Variable_Type`'_POINTER((data_set)->raw_data,(i)))) + \
-      (*(AMITK_RAW_DATA_DOUBLE_`'m4_Scale_Dim`'_POINTER((data_set)->internal_scaling_intercept, (i))))))
+#define AMITK_DATA_SET_@VARIABLE_TYPE@_@SCALE_DIM@_SCALING_INTERCEPT_CONTENT(data_set,i) \
+    (*(AMITK_RAW_DATA_DOUBLE_@SCALE_DIM@_SCALING_POINTER((data_set)->current_scaling_factor, (i))) * \
+     ((amide_data_t) (*(AMITK_RAW_DATA_@VARIABLE_TYPE@_POINTER((data_set)->raw_data,(i)))) + \
+      (*(AMITK_RAW_DATA_DOUBLE_@SCALE_DIM@_SCALING_POINTER((data_set)->internal_scaling_intercept, (i))))))
 
-#define AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_INTERNAL_CONTENT(data_set,i) \
- (*(AMITK_RAW_DATA_DOUBLE_`'m4_Scale_Dim`'_POINTER((data_set)->internal_scaling_factor, (i))) * \
-  ((amide_data_t) (*(AMITK_RAW_DATA_`'m4_Variable_Type`'_POINTER((data_set)->raw_data,(i))))))
+#define AMITK_DATA_SET_@VARIABLE_TYPE@_@SCALE_DIM@_SCALING_INTERNAL_CONTENT(data_set,i) \
+ (*(AMITK_RAW_DATA_DOUBLE_@SCALE_DIM@_SCALING_POINTER((data_set)->internal_scaling_factor, (i))) * \
+  ((amide_data_t) (*(AMITK_RAW_DATA_@VARIABLE_TYPE@_POINTER((data_set)->raw_data,(i))))))
 
-#define AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_INTERCEPT_INTERNAL_CONTENT(data_set,i) \
-    (*(AMITK_RAW_DATA_DOUBLE_`'m4_Scale_Dim`'_POINTER((data_set)->internal_scaling_factor, (i))) * \
-     ((amide_data_t) (*(AMITK_RAW_DATA_`'m4_Variable_Type`'_POINTER((data_set)->raw_data,(i)))) + \
-      (*(AMITK_RAW_DATA_DOUBLE_`'m4_Scale_Dim`'_POINTER((data_set)->internal_scaling_intercept, (i))))))
+#define AMITK_DATA_SET_@VARIABLE_TYPE@_@SCALE_DIM@_SCALING_INTERCEPT_INTERNAL_CONTENT(data_set,i) \
+    (*(AMITK_RAW_DATA_DOUBLE_@SCALE_DIM@_SCALING_POINTER((data_set)->internal_scaling_factor, (i))) * \
+     ((amide_data_t) (*(AMITK_RAW_DATA_@VARIABLE_TYPE@_POINTER((data_set)->raw_data,(i)))) + \
+      (*(AMITK_RAW_DATA_DOUBLE_@SCALE_DIM@_SCALING_POINTER((data_set)->internal_scaling_intercept, (i))))))
 
-#define AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_SET_CONTENT(data_set,i,value) \
- (AMITK_RAW_DATA_`'m4_Variable_Type`'_SET_CONTENT((data_set)->raw_data, (i)) = value/ \
-  (*(AMITK_RAW_DATA_DOUBLE_`'m4_Scale_Dim`'_POINTER((data_set)->current_scaling_factor, (i)))))
+#define AMITK_DATA_SET_@VARIABLE_TYPE@_@SCALE_DIM@_SCALING_SET_CONTENT(data_set,i,value) \
+ (AMITK_RAW_DATA_@VARIABLE_TYPE@_SET_CONTENT((data_set)->raw_data, (i)) = value/ \
+  (*(AMITK_RAW_DATA_DOUBLE_@SCALE_DIM@_SCALING_POINTER((data_set)->current_scaling_factor, (i)))))
 
-#define AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_INTERCEPT_SET_CONTENT(data_set,i,value) \
-    (AMITK_RAW_DATA_`'m4_Variable_Type`'_SET_CONTENT((data_set)->raw_data, (i)) = value/ \
-     (*(AMITK_RAW_DATA_DOUBLE_`'m4_Scale_Dim`'_POINTER((data_set)->current_scaling_factor, (i)))) \
-     - (*(AMITK_RAW_DATA_DOUBLE_`'m4_Scale_Dim`'_POINTER((data_set)->internal_scaling_intercept, (i)))))
+#define AMITK_DATA_SET_@VARIABLE_TYPE@_@SCALE_DIM@_INTERCEPT_SET_CONTENT(data_set,i,value) \
+    (AMITK_RAW_DATA_@VARIABLE_TYPE@_SET_CONTENT((data_set)->raw_data, (i)) = value/ \
+     (*(AMITK_RAW_DATA_DOUBLE_@SCALE_DIM@_SCALING_POINTER((data_set)->current_scaling_factor, (i)))) \
+     - (*(AMITK_RAW_DATA_DOUBLE_@SCALE_DIM@_SCALING_POINTER((data_set)->internal_scaling_intercept, (i)))))
 
-#define AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_SET_INTERNAL_CONTENT(data_set,i,value) \
- (AMITK_RAW_DATA_`'m4_Variable_Type`'_SET_CONTENT((data_set)->raw_data, (i)) = value/ \
-  (*(AMITK_RAW_DATA_DOUBLE_`'m4_Scale_Dim`'_POINTER((data_set)->internal_scaling_factor, (i)))))
+#define AMITK_DATA_SET_@VARIABLE_TYPE@_@SCALE_DIM@_SCALING_SET_INTERNAL_CONTENT(data_set,i,value) \
+ (AMITK_RAW_DATA_@VARIABLE_TYPE@_SET_CONTENT((data_set)->raw_data, (i)) = value/ \
+  (*(AMITK_RAW_DATA_DOUBLE_@SCALE_DIM@_SCALING_POINTER((data_set)->internal_scaling_factor, (i)))))
 
-#define AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_INTERCEPT_SET_INTERNAL_CONTENT(data_set,i,value) \
-    (AMITK_RAW_DATA_`'m4_Variable_Type`'_SET_CONTENT((data_set)->raw_data, (i)) = value/ \
-     (*(AMITK_RAW_DATA_DOUBLE_`'m4_Scale_Dim`'_POINTER((data_set)->internal_scaling_factor, (i)))) \
-     - (*(AMITK_RAW_DATA_DOUBLE_`'m4_Scale_Dim`'_POINTER((data_set)->internal_scaling_intercept, (i)))))
+#define AMITK_DATA_SET_@VARIABLE_TYPE@_@SCALE_DIM@_INTERCEPT_SET_INTERNAL_CONTENT(data_set,i,value) \
+    (AMITK_RAW_DATA_@VARIABLE_TYPE@_SET_CONTENT((data_set)->raw_data, (i)) = value/ \
+     (*(AMITK_RAW_DATA_DOUBLE_@SCALE_DIM@_SCALING_POINTER((data_set)->internal_scaling_factor, (i)))) \
+     - (*(AMITK_RAW_DATA_DOUBLE_@SCALE_DIM@_SCALING_POINTER((data_set)->internal_scaling_intercept, (i)))))
 
 /* function declarations */
-void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_slice_min_max(AmitkDataSet * data_set,
+void amitk_data_set_@VARIABLE_TYPE@_@SCALE_DIM@_SCALING_calc_slice_min_max(AmitkDataSet * data_set,
 									     const amide_intpoint_t frame,
 									     const amide_intpoint_t gate,
 									     const amide_intpoint_t z,
 									     amitk_format_DOUBLE_t * pmin,
 									     amitk_format_DOUBLE_t * pmax);
-void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_INTERCEPT_calc_slice_min_max(AmitkDataSet * data_set,
+void amitk_data_set_@VARIABLE_TYPE@_@SCALE_DIM@_SCALING_INTERCEPT_calc_slice_min_max(AmitkDataSet * data_set,
 										       const amide_intpoint_t frame,
 										       const amide_intpoint_t gate,
 										       const amide_intpoint_t z,
 										       amitk_format_DOUBLE_t * pmin,
 										       amitk_format_DOUBLE_t * pmax);
-void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_distribution(AmitkDataSet * data_set,
+void amitk_data_set_@VARIABLE_TYPE@_@SCALE_DIM@_SCALING_calc_distribution(AmitkDataSet * data_set,
 									     AmitkUpdateFunc update_func,
 									    gpointer update_data);
-void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_INTERCEPT_calc_distribution(AmitkDataSet * data_set,
+void amitk_data_set_@VARIABLE_TYPE@_@SCALE_DIM@_SCALING_INTERCEPT_calc_distribution(AmitkDataSet * data_set,
 										      AmitkUpdateFunc update_func,
 										      gpointer update_data);
-AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(AmitkDataSet * data_set,
+AmitkDataSet * amitk_data_set_@VARIABLE_TYPE@_@SCALE_DIM@_SCALING_get_slice(AmitkDataSet * data_set,
 									      const amide_time_t start_time,
 									      const amide_time_t duration,
 									      const amide_intpoint_t gate,
 									      const AmitkCanvasPoint pixel_size,
 									      const AmitkVolume * slice_volume);
-AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_INTERCEPT_get_slice(AmitkDataSet * data_set,
+AmitkDataSet * amitk_data_set_@VARIABLE_TYPE@_@SCALE_DIM@_SCALING_INTERCEPT_get_slice(AmitkDataSet * data_set,
 											const amide_time_t start_time,
 											const amide_time_t duration,
 											const amide_intpoint_t gate,
@@ -104,7 +104,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_INTERCEPT_ge
 
 
 
-#endif /* __AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'__ */
+#endif /* __AMITK_DATA_SET_@VARIABLE_TYPE@_@SCALE_DIM@__ */
 
 
 

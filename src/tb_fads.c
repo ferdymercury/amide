@@ -187,7 +187,7 @@ static void set_text(tb_fads_t * tb_fads) {
       gtk_text_buffer_get_end_iter(tb_fads->explanation_buffer, &iter);
       gtk_text_buffer_insert(tb_fads->explanation_buffer, &iter, "\n", -1);
 
-      pixbuf = gdk_pixbuf_new_from_inline(-1,fads_type_icon[tb_fads->fads_type] , FALSE, NULL);
+      pixbuf = gdk_pixbuf_new_from_resource(fads_type_icon[tb_fads->fads_type], NULL);
       gtk_text_buffer_get_end_iter(tb_fads->explanation_buffer, &iter);
       gtk_text_buffer_insert_pixbuf(tb_fads->explanation_buffer, &iter, pixbuf);
       g_object_unref(pixbuf);

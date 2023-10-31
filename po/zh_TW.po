@@ -1839,7 +1839,7 @@ msgid "2 compartment model"
 msgstr "二室模型"
 
 #: ../src/fads.c:53
-msgid "Priniciple Component Analysis based on singular value decomposition."
+msgid "Principle Component Analysis based on singular value decomposition."
 msgstr "基於單值分解的主成分分析。"
 
 #: ../src/fads.c:56

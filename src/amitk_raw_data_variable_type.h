@@ -24,65 +24,65 @@
 */
 
 
-#ifndef __AMITK_RAW_DATA_`'m4_Variable_Type`'__
-#define __AMITK_RAW_DATA_`'m4_Variable_Type`'__
+#ifndef __AMITK_RAW_DATA_@VARIABLE_TYPE@__
+#define __AMITK_RAW_DATA_@VARIABLE_TYPE@__
 
 /* header files that are always needed with this file */
 #include "amitk_raw_data.h"
 
 /* defines */
-#define AMITK_RAW_DATA_`'m4_Variable_Type`'_0D_SCALING_POINTER(amitk_raw_data,i) \
-  (((amitk_format_`'m4_Variable_Type`'_t *) (amitk_raw_data)->data))
-#define AMITK_RAW_DATA_`'m4_Variable_Type`'_1D_SCALING_POINTER(amitk_raw_data,i) \
-  (((amitk_format_`'m4_Variable_Type`'_t *) (amitk_raw_data)->data)+(i).t)
-#define AMITK_RAW_DATA_`'m4_Variable_Type`'_2D_SCALING_POINTER(amitk_raw_data,i) \
-  (((amitk_format_`'m4_Variable_Type`'_t *) (amitk_raw_data)->data)+ \
+#define AMITK_RAW_DATA_@VARIABLE_TYPE@_0D_SCALING_POINTER(amitk_raw_data,i) \
+  (((amitk_format_@VARIABLE_TYPE@_t *) (amitk_raw_data)->data))
+#define AMITK_RAW_DATA_@VARIABLE_TYPE@_1D_SCALING_POINTER(amitk_raw_data,i) \
+  (((amitk_format_@VARIABLE_TYPE@_t *) (amitk_raw_data)->data)+(i).t)
+#define AMITK_RAW_DATA_@VARIABLE_TYPE@_2D_SCALING_POINTER(amitk_raw_data,i) \
+  (((amitk_format_@VARIABLE_TYPE@_t *) (amitk_raw_data)->data)+ \
    (((((i).t) * ((amitk_raw_data)->dim.g) + \
       (i).g) * ((amitk_raw_data)->dim.z)) + \
     (i).z))
 
-#define AMITK_RAW_DATA_`'m4_Variable_Type`'_POINTER(amitk_raw_data,i) \
-  (((amitk_format_`'m4_Variable_Type`'_t *) (amitk_raw_data)->data)+ \
+#define AMITK_RAW_DATA_@VARIABLE_TYPE@_POINTER(amitk_raw_data,i) \
+  (((amitk_format_@VARIABLE_TYPE@_t *) (amitk_raw_data)->data)+ \
    ((((((((((i).t) * ((amitk_raw_data)->dim.g)) + \
 	  (i).g) * ((amitk_raw_data)->dim.z)) + \
 	(i).z) * ((amitk_raw_data)->dim.y)) + \
       (i).y) * ((amitk_raw_data)->dim.x)) + \
     (i).x))
 
-#define AMITK_RAW_DATA_`'m4_Variable_Type`'_3D_POINTER(amitk_raw_data,iz,iy,ix) \
-  (((amitk_format_`'m4_Variable_Type`'_t *) (amitk_raw_data)->data)+ \
+#define AMITK_RAW_DATA_@VARIABLE_TYPE@_3D_POINTER(amitk_raw_data,iz,iy,ix) \
+  (((amitk_format_@VARIABLE_TYPE@_t *) (amitk_raw_data)->data)+ \
    ((((((iz)) * ((amitk_raw_data)->dim.y)) + \
       (iy)) * ((amitk_raw_data)->dim.x)) + \
     (ix)))
-#define AMITK_RAW_DATA_`'m4_Variable_Type`'_2D_POINTER(amitk_raw_data,iy,ix) \
-  (((amitk_format_`'m4_Variable_Type`'_t *) (amitk_raw_data)->data)+ \
+#define AMITK_RAW_DATA_@VARIABLE_TYPE@_2D_POINTER(amitk_raw_data,iy,ix) \
+  (((amitk_format_@VARIABLE_TYPE@_t *) (amitk_raw_data)->data)+ \
    ((((iy)) * ((amitk_raw_data)->dim.x)) + \
     (ix)))
 
-#define AMITK_RAW_DATA_`'m4_Variable_Type`'_SET_CONTENT(amitk_raw_data,i) \
-  (*(AMITK_RAW_DATA_`'m4_Variable_Type`'_POINTER((amitk_raw_data),(i))))
+#define AMITK_RAW_DATA_@VARIABLE_TYPE@_SET_CONTENT(amitk_raw_data,i) \
+  (*(AMITK_RAW_DATA_@VARIABLE_TYPE@_POINTER((amitk_raw_data),(i))))
 
-#define AMITK_RAW_DATA_`'m4_Variable_Type`'_CONTENT(amitk_raw_data,i) \
-  (*(AMITK_RAW_DATA_`'m4_Variable_Type`'_POINTER((amitk_raw_data),(i))))
+#define AMITK_RAW_DATA_@VARIABLE_TYPE@_CONTENT(amitk_raw_data,i) \
+  (*(AMITK_RAW_DATA_@VARIABLE_TYPE@_POINTER((amitk_raw_data),(i)) ))
 
-#define AMITK_RAW_DATA_`'m4_Variable_Type`'_2D_SET_CONTENT(amitk_raw_data,iy,ix) \
-  (*(AMITK_RAW_DATA_`'m4_Variable_Type`'_2D_POINTER((amitk_raw_data),(iy),(ix))))
+#define AMITK_RAW_DATA_@VARIABLE_TYPE@_2D_SET_CONTENT(amitk_raw_data,iy,ix) \
+  (*(AMITK_RAW_DATA_@VARIABLE_TYPE@_2D_POINTER((amitk_raw_data),(iy),(ix))))
 
-#define AMITK_RAW_DATA_`'m4_Variable_Type`'_2D_CONTENT(amitk_raw_data,iy,ix) \
-  (*(AMITK_RAW_DATA_`'m4_Variable_Type`'_2D_POINTER((amitk_raw_data),(iy),(ix))))
+#define AMITK_RAW_DATA_@VARIABLE_TYPE@_2D_CONTENT(amitk_raw_data,iy,ix) \
+  (*(AMITK_RAW_DATA_@VARIABLE_TYPE@_2D_POINTER((amitk_raw_data),(iy),(ix))))
 
-#define AMITK_RAW_DATA_`'m4_Variable_Type`'_3D_SET_CONTENT(amitk_raw_data,iz,iy,ix) \
-  (*(AMITK_RAW_DATA_`'m4_Variable_Type`'_3D_POINTER((amitk_raw_data), (iz),(iy), (ix))))
+#define AMITK_RAW_DATA_@VARIABLE_TYPE@_3D_SET_CONTENT(amitk_raw_data,iz,iy,ix) \
+  (*(AMITK_RAW_DATA_@VARIABLE_TYPE@_3D_POINTER((amitk_raw_data), (iz),(iy), (ix))))
 
-#define AMITK_RAW_DATA_`'m4_Variable_Type`'_3D_CONTENT(amitk_raw_data,iz,iy,ix) \
-  (*(AMITK_RAW_DATA_`'m4_Variable_Type`'_3D_POINTER((amitk_raw_data),(iz),(iy),(ix))))
+#define AMITK_RAW_DATA_@VARIABLE_TYPE@_3D_CONTENT(amitk_raw_data,iz,iy,ix) \
+  (*(AMITK_RAW_DATA_@VARIABLE_TYPE@_3D_POINTER((amitk_raw_data),(iz),(iy),(ix))))
 
 /* function declarations */
-AmitkRawData * amitk_raw_data_`'m4_Variable_Type`'_0D_SCALING_init(amitk_format_`'m4_Variable_Type`'_t init_value);
-void amitk_raw_data_`'m4_Variable_Type`'_initialize_data(AmitkRawData * amitk_raw_data, 
-							 amitk_format_`'m4_Variable_Type`'_t init_value);
+AmitkRawData * amitk_raw_data_@VARIABLE_TYPE@_0D_SCALING_init(amitk_format_@VARIABLE_TYPE@_t init_value);
+void amitk_raw_data_@VARIABLE_TYPE@_initialize_data(AmitkRawData * amitk_raw_data, 
+							 amitk_format_@VARIABLE_TYPE@_t init_value);
 
-#endif /* __AMITK_RAW_DATA_`'m4_Variable_Type`'__ */
+#endif /* __AMITK_RAW_DATA_@VARIABLE_TYPE@__ */
 
 
 

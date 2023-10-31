@@ -1,2 +1,0 @@
-To check the validness of these doc's, run:
-	xmllint --valid --noent --noout amide.xml

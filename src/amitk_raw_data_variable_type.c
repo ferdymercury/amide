@@ -25,22 +25,22 @@
 
 #include "amide_config.h"
 #include <glib.h>
-#include "amitk_raw_data_`'m4_Variable_Type`'.h"
+#include "amitk_raw_data_@VARIABLE_TYPE@.h"
 
-AmitkRawData * amitk_raw_data_`'m4_Variable_Type`'_0D_SCALING_init(amitk_format_`'m4_Variable_Type`'_t init_value) {
+AmitkRawData * amitk_raw_data_@VARIABLE_TYPE@_0D_SCALING_init(amitk_format_@VARIABLE_TYPE@_t init_value) {
 
   AmitkRawData * temp_amitk_raw_data;
 
-  temp_amitk_raw_data = amitk_raw_data_new_with_data(AMITK_FORMAT_`'m4_Variable_Type`', one_voxel);
+  temp_amitk_raw_data = amitk_raw_data_new_with_data(AMITK_FORMAT_@VARIABLE_TYPE@, one_voxel);
   g_return_val_if_fail(temp_amitk_raw_data != NULL, NULL);
 
-  (*AMITK_RAW_DATA_`'m4_Variable_Type`'_0D_SCALING_POINTER(temp_amitk_raw_data, zero_voxel)) = init_value;
+  (*AMITK_RAW_DATA_@VARIABLE_TYPE@_0D_SCALING_POINTER(temp_amitk_raw_data, zero_voxel)) = init_value;
 
   return temp_amitk_raw_data;
 }
 
-void amitk_raw_data_`'m4_Variable_Type`'_initialize_data(AmitkRawData * amitk_raw_data, 
-						   amitk_format_`'m4_Variable_Type`'_t init_value) {
+void amitk_raw_data_@VARIABLE_TYPE@_initialize_data(AmitkRawData * amitk_raw_data, 
+						   amitk_format_@VARIABLE_TYPE@_t init_value) {
 
   AmitkVoxel i;
 
@@ -49,7 +49,7 @@ void amitk_raw_data_`'m4_Variable_Type`'_initialize_data(AmitkRawData * amitk_ra
       for (i.z = 0; i.z < amitk_raw_data->dim.z; i.z++) 
 	for (i.y = 0; i.y < amitk_raw_data->dim.y; i.y++) 
 	  for (i.x = 0; i.x < amitk_raw_data->dim.x; i.x++) 
-	    AMITK_RAW_DATA_`'m4_Variable_Type`'_SET_CONTENT(amitk_raw_data,i)=init_value;
+	    AMITK_RAW_DATA_@VARIABLE_TYPE@_SET_CONTENT(amitk_raw_data,i)=init_value;
 
   return;
 }

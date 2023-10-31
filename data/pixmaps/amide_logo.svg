@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512">
+    <defs>
+        <linearGradient id="b">
+            <stop offset="0"/>
+        </linearGradient>
+        <linearGradient id="a">
+            <stop offset="0" stop-color="#232ddb"/>
+            <stop offset="1" stop-color="#672482"/>
+        </linearGradient>
+        <linearGradient xlink:href="#a" id="c" x1="1.139" x2=".123" y1="-274.597" y2=".294"
+                        gradientUnits="userSpaceOnUse"/>
+        <linearGradient xlink:href="#b" id="d" x1="-142.888" x2="142.888" y1="-135.238" y2="-135.238"
+                        gradientUnits="userSpaceOnUse"/>
+        <filter id="e" width="1.048" height="1.052" x="-.016" y="-.017" color-interpolation-filters="sRGB">
+            <feFlood flood-color="#000" flood-opacity=".498" result="flood"/>
+            <feGaussianBlur in="SourceGraphic" result="blur" stdDeviation="1.65"/>
+            <feOffset dx="4.406" dy="4.721" in="blur" result="offset"/>
+            <feComposite in="flood" in2="offset" operator="in" result="comp1"/>
+            <feComposite in="SourceGraphic" in2="comp1" result="comp2"/>
+        </filter>
+    </defs>
+    <path fill="url(#c)" stroke="url(#d)" stroke-width="1.4"
+          d="M50.814-270.475h108.008c12.077 0 19.596 4.329 23.014 14.81l66.08 208.953h19.825c10.254 0 14.356 3.873 14.356 23.242C282.097-4.102 277.995 0 267.74 0h-96.615c-10.253 0-14.355-4.102-14.355-23.47 0-19.369 4.102-23.242 14.355-23.242h19.597l-10.254-33.04H97.526l-10.254 33.04h16.862c10.254 0 14.356 3.873 14.356 23.242C118.49-4.102 114.388 0 104.134 0H12.077C1.823 0-2.28-4.102-2.28-23.47c0-19.369 4.102-23.242 14.356-23.242h19.14l57.65-177.051H50.814c-10.254 0-14.356-4.102-14.356-23.47 0-19.369 4.102-23.242 14.356-23.242zm116.667 144.01-27.344-97.298h-1.367l-28.028 97.298z"
+          aria-label="A" filter="url(#e)"
+          style="line-height:.7;-inkscape-font-specification:'Courier Prime';text-align:center;white-space:pre;mix-blend-mode:normal"
+          transform="matrix(1.5355 0 0 1.50011 37.788 455.33)"/>
+</svg>
