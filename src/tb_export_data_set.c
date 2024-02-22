@@ -37,7 +37,7 @@
 #include "dcmtk_interface.h"
 #endif
 
-#define GCONF_AMIDE_EXPORT "EXPORT"
+#define GCONF_AMIDE_EXPORT "export"
 
 typedef struct tb_export_t {
   AmitkStudy * study;
@@ -142,26 +142,26 @@ static void read_preferences(gboolean * resliced,
 			     AmitkPoint * voxel_size) {
 
   if (resliced != NULL)
-    *resliced = amide_gconf_get_bool(GCONF_AMIDE_EXPORT,"ResliceDataSet");
+    *resliced = amide_gconf_get_bool(GCONF_AMIDE_EXPORT,"reslice-data-set");
   if (all_visible != NULL)
-    *all_visible = amide_gconf_get_bool(GCONF_AMIDE_EXPORT,"AllVisibleDataSets");
+    *all_visible = amide_gconf_get_bool(GCONF_AMIDE_EXPORT,"all-visible-data-sets");
   if (inclusive_bounding_box != NULL)
-    *inclusive_bounding_box = amide_gconf_get_bool(GCONF_AMIDE_EXPORT,"InclusiveBoundingBox");
+    *inclusive_bounding_box = amide_gconf_get_bool(GCONF_AMIDE_EXPORT,"inclusive-bounding-box");
   if (method != NULL)
-    *method = amide_gconf_get_int(GCONF_AMIDE_EXPORT,"Method");
+    *method = amide_gconf_get_int(GCONF_AMIDE_EXPORT,"method");
   if (submethod != NULL)
-    *submethod = amide_gconf_get_int(GCONF_AMIDE_EXPORT,"Submethod");
+    *submethod = amide_gconf_get_int(GCONF_AMIDE_EXPORT,"submethod");
 
   if (voxel_size != NULL) {
-    (*voxel_size).z = amide_gconf_get_float(GCONF_AMIDE_EXPORT,"VoxelSizeZ");
+    (*voxel_size).z = amide_gconf_get_float(GCONF_AMIDE_EXPORT,"voxel-size-z");
     if (EQUAL_ZERO((*voxel_size).z))
       (*voxel_size).z =  1.0;
     
-    (*voxel_size).y = amide_gconf_get_float(GCONF_AMIDE_EXPORT,"VoxelSizeY");
+    (*voxel_size).y = amide_gconf_get_float(GCONF_AMIDE_EXPORT,"voxel-size-y");
     if (EQUAL_ZERO((*voxel_size).y)) 
       (*voxel_size).y =  1.0;
     
-    (*voxel_size).x = amide_gconf_get_float(GCONF_AMIDE_EXPORT,"VoxelSizeX");
+    (*voxel_size).x = amide_gconf_get_float(GCONF_AMIDE_EXPORT,"voxel-size-x");
     if (EQUAL_ZERO((*voxel_size).x)) 
       (*voxel_size).x =  1.0;
   }
@@ -303,14 +303,14 @@ static void response_cb (GtkDialog * main_dialog, gint response_id, gpointer dat
 
 
 static void write_voxel_size(AmitkPoint voxel_size) {
-  amide_gconf_set_float(GCONF_AMIDE_EXPORT,"VoxelSizeZ", voxel_size.z);
-  amide_gconf_set_float(GCONF_AMIDE_EXPORT,"VoxelSizeY", voxel_size.y);
-  amide_gconf_set_float(GCONF_AMIDE_EXPORT,"VoxelSizeX", voxel_size.x);
+  amide_gconf_set_float(GCONF_AMIDE_EXPORT,"voxel-size-z", voxel_size.z);
+  amide_gconf_set_float(GCONF_AMIDE_EXPORT,"voxel-size-y", voxel_size.y);
+  amide_gconf_set_float(GCONF_AMIDE_EXPORT,"voxel-size-x", voxel_size.x);
   return;
 }
 
 static void write_inclusive_bounding_box(gboolean inclusive) {
-  amide_gconf_set_bool(GCONF_AMIDE_EXPORT,"InclusiveBoundingBox", inclusive);
+  amide_gconf_set_bool(GCONF_AMIDE_EXPORT,"inclusive-bounding-box", inclusive);
   return;
 }
 
@@ -410,8 +410,8 @@ static void reslice_radio_buttons_cb(GtkWidget * widget, gpointer data) {
   resliced = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "resliced"));
   all_visible = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "all_visible"));
 
-  amide_gconf_set_bool(GCONF_AMIDE_EXPORT,"ResliceDataSet", resliced);
-  amide_gconf_set_bool(GCONF_AMIDE_EXPORT,"AllVisibleDataSets", all_visible);
+  amide_gconf_set_bool(GCONF_AMIDE_EXPORT,"reslice-data-set", resliced);
+  amide_gconf_set_bool(GCONF_AMIDE_EXPORT,"all-visible-data-sets", all_visible);
 
   /* recalculate voxel sizes */
   recommend_voxel_size(tb_export);
@@ -451,7 +451,7 @@ static void change_export_cb(GtkWidget * widget, gpointer data) {
   gint submethod=0;
   gint counter;
   gint combo_method;
-  AmitkImportMethod i_export_method;
+  AmitkExportMethod i_export_method;
 #ifdef AMIDE_LIBMDC_SUPPORT
   libmdc_export_t i_libmdc_export;
 #endif
@@ -482,8 +482,8 @@ static void change_export_cb(GtkWidget * widget, gpointer data) {
       }  
   }
 
-  amide_gconf_set_int(GCONF_AMIDE_EXPORT,"Method", method);
-  amide_gconf_set_int(GCONF_AMIDE_EXPORT,"Submethod", submethod);
+  amide_gconf_set_int(GCONF_AMIDE_EXPORT,"method", method);
+  amide_gconf_set_int(GCONF_AMIDE_EXPORT,"submethod", submethod);
 
   return;
 }

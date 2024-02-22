@@ -35,7 +35,7 @@
 #include "ui_common.h"
 
 
-#define GCONF_AMIDE_ANALYSIS "ANALYSIS"
+#define GCONF_AMIDE_ANALYSIS "analysis"
 
 #define ROI_STATISTICS_WIDTH 950
 
@@ -706,13 +706,13 @@ static void read_preferences(gboolean * all_data_sets,
 			     gdouble * threshold_percentage,
 			     gdouble * threshold_value) {
 
-  *all_data_sets = amide_gconf_get_bool(GCONF_AMIDE_ANALYSIS,"CalculateAllDataSets");
-  *all_rois = amide_gconf_get_bool(GCONF_AMIDE_ANALYSIS,"CalculateAllRois");
-  *calculation_type = amide_gconf_get_int(GCONF_AMIDE_ANALYSIS,"CalculationType");
-  *accurate = amide_gconf_get_bool(GCONF_AMIDE_ANALYSIS,"Accurate");
-  *subfraction = amide_gconf_get_float(GCONF_AMIDE_ANALYSIS,"SubFraction");
-  *threshold_percentage = amide_gconf_get_float(GCONF_AMIDE_ANALYSIS,"ThresholdPercentage");
-  *threshold_value = amide_gconf_get_float(GCONF_AMIDE_ANALYSIS,"ThresholdValue");
+  *all_data_sets = amide_gconf_get_bool(GCONF_AMIDE_ANALYSIS,"calculate-all-data-sets");
+  *all_rois = amide_gconf_get_bool(GCONF_AMIDE_ANALYSIS,"calculate-all-rois");
+  *calculation_type = amide_gconf_get_int(GCONF_AMIDE_ANALYSIS,"calculation-type");
+  *accurate = amide_gconf_get_bool(GCONF_AMIDE_ANALYSIS,"accurate");
+  *subfraction = amide_gconf_get_float(GCONF_AMIDE_ANALYSIS,"sub-fraction");
+  *threshold_percentage = amide_gconf_get_float(GCONF_AMIDE_ANALYSIS,"threshold-percentage");
+  *threshold_value = amide_gconf_get_float(GCONF_AMIDE_ANALYSIS,"threshold-value");
 
   return;
 }
@@ -877,8 +877,8 @@ static void radio_buttons_cb(GtkWidget * widget, gpointer data) {
   all_data_sets = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "all_data_sets"));
   all_rois = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "all_rois"));
 
-  amide_gconf_set_bool(GCONF_AMIDE_ANALYSIS,"CalculateAllDataSets",all_data_sets);
-  amide_gconf_set_bool(GCONF_AMIDE_ANALYSIS,"CalculateAllRois",all_rois);
+  amide_gconf_set_bool(GCONF_AMIDE_ANALYSIS,"calculate-all-data-sets",all_data_sets);
+  amide_gconf_set_bool(GCONF_AMIDE_ANALYSIS,"calculate-all-rois",all_rois);
 
   return;
 }
@@ -896,11 +896,11 @@ static void calculation_type_cb(GtkWidget * widget, gpointer data) {
   gtk_widget_set_sensitive(spin_buttons[1], calculation_type == VOXELS_NEAR_MAX);
   gtk_widget_set_sensitive(spin_buttons[2], calculation_type == VOXELS_GREATER_THAN_VALUE);
 
-  amide_gconf_set_int(GCONF_AMIDE_ANALYSIS,"CalculationType", calculation_type);
+  amide_gconf_set_int(GCONF_AMIDE_ANALYSIS,"calculation-type", calculation_type);
 }
 
 static void accurate_cb(GtkWidget * widget, gpointer data) {
-  amide_gconf_set_bool(GCONF_AMIDE_ANALYSIS,"Accurate", 
+  amide_gconf_set_bool(GCONF_AMIDE_ANALYSIS,"accurate",
 		       gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
   return;
 }
@@ -911,7 +911,7 @@ static void subfraction_precentage_cb(GtkWidget * widget, gpointer data) {
 
   subfraction = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget))/100.0;
 
-  amide_gconf_set_float(GCONF_AMIDE_ANALYSIS,"SubFraction", subfraction);
+  amide_gconf_set_float(GCONF_AMIDE_ANALYSIS,"sub-fraction", subfraction);
 
   return;
 }
@@ -922,7 +922,7 @@ static void threshold_percentage_cb(GtkWidget * widget, gpointer data) {
 
   threshold_percentage = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
 
-  amide_gconf_set_float(GCONF_AMIDE_ANALYSIS,"ThresholdPercentage", threshold_percentage);
+  amide_gconf_set_float(GCONF_AMIDE_ANALYSIS,"threshold-percentage", threshold_percentage);
 
   return;
 }
@@ -934,7 +934,7 @@ static void threshold_value_cb(GtkWidget * widget, gpointer data) {
 
   threshold_value = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
 
-  amide_gconf_set_float(GCONF_AMIDE_ANALYSIS,"ThresholdValue", threshold_value);
+  amide_gconf_set_float(GCONF_AMIDE_ANALYSIS,"threshold-value", threshold_value);
 
   return;
 }

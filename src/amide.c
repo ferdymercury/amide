@@ -125,11 +125,12 @@ void missing_functionality_warning(AmitkPreferences * preferences) {
   return; /* nothing to complain about */
 #endif
 
-  already_warned = amide_gconf_get_string_with_default("MISSING_FUNCTIONALITY", "AlreadyWarned", "0.0.0");
+  already_warned = amide_gconf_get_string_with_default("missing-functionality", "already-warned", "0.0.0");
 
-  if (g_strcmp0(already_warned, VERSION) == 0)
+  if (g_strcmp0(already_warned, VERSION) == 0) {
+    g_free(already_warned);
     return;
-  else {
+  } else {
     comments = g_strconcat(_("This version of AMIDE has been compiled without the following functionality:"), 
 			   "\n\n",
 #ifndef AMIDE_LIBGSL_SUPPORT
@@ -152,7 +153,8 @@ void missing_functionality_warning(AmitkPreferences * preferences) {
     g_warning("%s", comments);
     
     g_free(comments);
-    amide_gconf_set_string("MISSING_FUNCTIONALITY", "AlreadyWarned", VERSION);
+    g_free(already_warned);
+    amide_gconf_set_string("missing-functionality", "already-warned", VERSION);
     return;
   }
 }

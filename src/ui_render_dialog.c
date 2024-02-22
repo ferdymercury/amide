@@ -117,7 +117,7 @@ static void update_without_release_toggle_cb(GtkWidget * widget, gpointer data) 
     ui_render->update_without_release = update_without_release;
 
     /* save user preferences */
-    amide_gconf_set_bool(GCONF_AMIDE_RENDERING,"UpdateWithoutRelease", 
+    amide_gconf_set_bool(GCONF_AMIDE_RENDERING,"update-without-release",
 			 ui_render->update_without_release);
   }
 
@@ -141,7 +141,7 @@ static void change_eye_angle_cb(GtkWidget * widget, gpointer data) {
     ui_render->stereo_eye_angle = temp_val;
     
     /* save user preferences */
-    amide_gconf_set_float(GCONF_AMIDE_RENDERING,"EyeAngle", 
+    amide_gconf_set_float(GCONF_AMIDE_RENDERING,"eye-angle",
 			  ui_render->stereo_eye_angle);
     
     /* do updating */
@@ -170,7 +170,7 @@ static void change_eye_width_cb(GtkWidget * widget, gpointer data) {
     ui_render->stereo_eye_width = temp_val;
     
     /* save user preferences */
-    amide_gconf_set_int(GCONF_AMIDE_RENDERING,"EyeWidth", 
+    amide_gconf_set_int(GCONF_AMIDE_RENDERING,"eye-width",
 			ui_render->stereo_eye_width);
     
     /* do updating */

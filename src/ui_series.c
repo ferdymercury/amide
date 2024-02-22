@@ -57,7 +57,7 @@ static gchar * series_explanations[] = {
 
 #define UPDATE_NONE 0
 #define UPDATE_SERIES 0x1
-#define GCONF_AMIDE_SERIES "SERIES"
+#define GCONF_AMIDE_SERIES "series"
 
 
 
@@ -943,8 +943,8 @@ static gboolean update_immediate(gpointer data) {
 
 static void read_series_preferences(series_type_t * series_type, AmitkView * view) {
 
-  *series_type = amide_gconf_get_int(GCONF_AMIDE_SERIES,"Type");
-  *view = amide_gconf_get_int(GCONF_AMIDE_SERIES,"View");
+  *series_type = amide_gconf_get_int(GCONF_AMIDE_SERIES,"type");
+  *view = amide_gconf_get_int(GCONF_AMIDE_SERIES,"view");
 
   return;
 }
@@ -1311,13 +1311,13 @@ static void init_view_cb(GtkWidget * widget, gpointer data);
 
 
 static void init_series_type_cb(GtkWidget * widget, gpointer data) {
-  amide_gconf_set_int(GCONF_AMIDE_SERIES,"Type", 
+  amide_gconf_set_int(GCONF_AMIDE_SERIES,"type",
 		      GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "series_type")));
   return;
 }
 
 static void init_view_cb(GtkWidget * widget, gpointer data) {
-  amide_gconf_set_int(GCONF_AMIDE_SERIES,"View",
+  amide_gconf_set_int(GCONF_AMIDE_SERIES,"view",
 		      GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "view")));
   return;
 }
