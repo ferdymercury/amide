@@ -568,9 +568,6 @@ void amitk_roi_calc_far_corner(AmitkRoi * roi) {
 AmitkDataSet * amitk_roi_get_intersection_slice(const AmitkRoi * roi, 
 						const AmitkVolume * canvas_volume,
 						const amide_real_t pixel_dim
-#ifndef AMIDE_LIBGNOMECANVAS_AA
-						,const gboolean fill_map_roi
-#endif
 						) {
   
   AmitkDataSet * intersection = NULL;
@@ -583,33 +580,21 @@ AmitkDataSet * amitk_roi_get_intersection_slice(const AmitkRoi * roi,
   case AMITK_ROI_TYPE_ISOCONTOUR_2D:
     intersection = 
       amitk_roi_ISOCONTOUR_2D_get_intersection_slice(roi, canvas_volume, pixel_dim 
-#ifndef AMIDE_LIBGNOMECANVAS_AA
-						     , fill_map_roi
-#endif
 						     );
     break;
   case AMITK_ROI_TYPE_ISOCONTOUR_3D:
     intersection = 
       amitk_roi_ISOCONTOUR_3D_get_intersection_slice(roi, canvas_volume, pixel_dim 
-#ifndef AMIDE_LIBGNOMECANVAS_AA
-						     , fill_map_roi
-#endif
 						     );
     break;
   case AMITK_ROI_TYPE_FREEHAND_2D:
     intersection =
       amitk_roi_FREEHAND_2D_get_intersection_slice(roi, canvas_volume, pixel_dim 
-#ifndef AMIDE_LIBGNOMECANVAS_AA
-						   , fill_map_roi
-#endif
 						   );
     break;
   case AMITK_ROI_TYPE_FREEHAND_3D:
     intersection =
       amitk_roi_FREEHAND_3D_get_intersection_slice(roi, canvas_volume, pixel_dim 
-#ifndef AMIDE_LIBGNOMECANVAS_AA
-						   , fill_map_roi
-#endif
 						   );
     break;
   default: 

@@ -32,6 +32,7 @@
 //#include <gtk/gtk.h>
 //#include <libgnomecanvas/libgnomecanvas.h>
 #include "amitk_study.h"
+#include "amitk_canvas_compat.h"
 
 G_BEGIN_DECLS
 
@@ -61,14 +62,14 @@ typedef struct _AmitkCanvasClass        AmitkCanvasClass;
 
 struct _AmitkCanvas
 {
-  GtkVBox vbox;
+  GtkBox vbox;
 
   GtkWidget * canvas;
   GtkWidget * label;
   GtkWidget * scrollbar;
-  GtkObject * scrollbar_adjustment;
-  GnomeCanvasItem * arrows[4];
-  GnomeCanvasItem * orientation_label[4];
+  GtkAdjustment * scrollbar_adjustment;
+  AmitkCanvasItem * arrows[4];
+  AmitkCanvasItem * orientation_label[4];
   AmitkCanvasType type;
 
   AmitkVolume * volume; /* the volume that this canvas slice displays */
@@ -84,11 +85,11 @@ struct _AmitkCanvas
   gint max_slice_cache_size;
   gint pixbuf_width, pixbuf_height;
   gdouble border_width;
-  GnomeCanvasItem * image;
+  AmitkCanvasItem * image;
   GdkPixbuf * pixbuf;
 
   gboolean time_on_image;
-  GnomeCanvasItem * time_label;
+  AmitkCanvasItem * time_label;
 
   AmitkStudy * study;
   GList * undrawn_rois;
@@ -99,10 +100,10 @@ struct _AmitkCanvas
   GList * next_update_objects;
 
   /* profile stuff */
-  GnomeCanvasItem * line_profile_item;
+  AmitkCanvasItem * line_profile_item;
 
   /* target stuff */
-  GnomeCanvasItem * target[8];
+  AmitkCanvasItem * target[8];
   AmitkCanvasTargetAction next_target_action;
   AmitkPoint next_target_center;
   amide_real_t next_target_thickness;
@@ -111,7 +112,7 @@ struct _AmitkCanvas
 
 struct _AmitkCanvasClass
 {
-  GtkVBoxClass parent_class;
+  GtkBoxClass parent_class;
   
   void (* help_event)                (AmitkCanvas *Canvas,
 				      AmitkHelpInfo which_help,

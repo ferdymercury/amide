@@ -30,7 +30,7 @@
 
 /* includes we always need with this widget */
 #include <gtk/gtk.h>
-#include <libgnomecanvas/libgnomecanvas.h>
+#include "amitk_canvas_compat.h"
 #include "amitk_data_set.h"
 #include "amitk_study.h"
 
@@ -86,17 +86,17 @@ typedef enum {
 
 struct _AmitkThreshold
 {
-  GtkVBox vbox;
+  GtkBox vbox;
 
   gboolean minimal; /* true if we just want the color table menu and the color scale */
   AmitkViewMode view_mode;
   GtkWidget * color_scales[2];
   GtkWidget * histogram;
   GtkWidget * histogram_label;
-  GnomeCanvasItem * color_scale_image[2][AMITK_THRESHOLD_SCALE_NUM_SCALES];
-  GnomeCanvasItem * histogram_image;
-  GnomeCanvasItem * arrow[2][AMITK_THRESHOLD_ARROW_NUM_ARROWS];
-  GnomeCanvasItem * connector_line[2][AMITK_THRESHOLD_LINE_NUM_LINES];
+  AmitkCanvasItem * color_scale_image[2][AMITK_THRESHOLD_SCALE_NUM_SCALES];
+  AmitkCanvasItem * histogram_image;
+  AmitkCanvasItem * arrow[2][AMITK_THRESHOLD_ARROW_NUM_ARROWS];
+  AmitkCanvasItem * connector_line[2][AMITK_THRESHOLD_LINE_NUM_LINES];
   GtkWidget * spin_button[2][AMITK_THRESHOLD_ENTRY_NUM_ENTRIES];
   GtkWidget * color_table_label[AMITK_VIEW_MODE_NUM];
   GtkWidget * color_table_hbox[AMITK_VIEW_MODE_NUM];
@@ -129,7 +129,7 @@ struct _AmitkThreshold
 
 struct _AmitkThresholdClass
 {
-  GtkVBoxClass parent_class;
+  GtkBoxClass parent_class;
 };  
 
 

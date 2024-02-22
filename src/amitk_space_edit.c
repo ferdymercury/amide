@@ -36,8 +36,9 @@
 
 static void space_edit_class_init (AmitkSpaceEditClass *klass);
 static void space_edit_init (AmitkSpaceEdit *space_edit);
-static void space_edit_destroy(GtkObject * object);
+static void space_edit_destroy(GtkWidget * object);
 static void space_edit_update_entries(AmitkSpaceEdit * space_edit);
+static gboolean space_edit_button_release(GtkWidget * widget, GdkEvent * event, gpointer data);
 static void space_edit_rotate_axis(GtkAdjustment * adjustment, gpointer data);
 static gboolean space_edit_prompt(AmitkSpaceEdit * space_edit, const gchar * message);
 static void space_edit_apply_entries(GtkWidget * button, gpointer space_edit);
@@ -48,7 +49,7 @@ static void space_edit_apply_air(GtkWidget * button, gpointer data);
 static void space_edit_export_air(GtkWidget * button, gpointer data);
 #endif
 
-static GtkVBoxClass *parent_class;
+static GtkBoxClass *parent_class;
 
 GType amitk_space_edit_get_type (void) {
 
@@ -70,7 +71,7 @@ GType amitk_space_edit_get_type (void) {
 	NULL /* value table */
       };
 
-      space_edit_type = g_type_register_static(GTK_TYPE_VBOX, "AmitkSpaceEdit", &space_edit_info, 0);
+      space_edit_type = g_type_register_static(GTK_TYPE_BOX, "AmitkSpaceEdit", &space_edit_info, 0);
     }
 
   return space_edit_type;
@@ -80,11 +81,11 @@ static void space_edit_class_init (AmitkSpaceEditClass *klass)
 {
   /*  GObjectClass   *gobject_class;
       GtkWidgetClass *widget_class; */
-  GtkObjectClass *gtkobject_class;
+  GtkWidgetClass *gtkobject_class;
 
   /*  gobject_class =   (GObjectClass *) klass;
       widget_class =    (GtkWidgetClass*) klass; */
-  gtkobject_class = (GtkObjectClass*) klass;
+  gtkobject_class = (GtkWidgetClass*) klass;
 
   parent_class = g_type_class_peek_parent(klass);
 
@@ -102,13 +103,18 @@ static void space_edit_init (AmitkSpaceEdit *space_edit)
   GtkWidget * hseparator;
   guint row=0;
   AmitkView i_view;
-  GtkObject * adjustment;
+  GtkAdjustment * adjustment;
   AmitkAxis i_axis, j_axis;
+
+  gtk_orientable_set_orientation(GTK_ORIENTABLE(space_edit),
+                                 GTK_ORIENTATION_VERTICAL);
 
   /* initialize some critical stuff */
   space_edit->object = NULL;
 
-  table = gtk_table_new(14,5, FALSE);
+  table = gtk_grid_new();
+  gtk_grid_set_row_spacing(GTK_GRID(table), Y_PADDING);
+  gtk_grid_set_column_spacing(GTK_GRID(table), X_PADDING);
   gtk_container_add(GTK_CONTAINER(space_edit), table);
   gtk_widget_show(table);
 
@@ -118,38 +124,37 @@ static void space_edit_init (AmitkSpaceEdit *space_edit)
 
     /* label */
     label = gtk_label_new(amitk_view_get_name(i_view));
-    gtk_table_attach(GTK_TABLE(table), label, 0,1, row, row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), label, 0, row, 1, 1);
     gtk_widget_show(label);
 
     /* the slider */
     adjustment = gtk_adjustment_new(0,-45.0,45.5,0.5,0.5,0.5);
     g_object_set_data(G_OBJECT(adjustment), "view", GINT_TO_POINTER(i_view));
-    slider = gtk_hscale_new(GTK_ADJUSTMENT(adjustment));
-    gtk_range_set_update_policy(GTK_RANGE(slider), GTK_UPDATE_DISCONTINUOUS);
-    gtk_table_attach(GTK_TABLE(table), slider, 1,5, row, row+1,
-		     X_PACKING_OPTIONS | GTK_FILL,FALSE, X_PADDING, Y_PADDING);
-    g_signal_connect(G_OBJECT(adjustment), "value_changed", 
-		     G_CALLBACK(space_edit_rotate_axis), space_edit);
+    slider = gtk_scale_new(GTK_ORIENTATION_HORIZONTAL, adjustment);
+    gtk_widget_set_hexpand(slider, TRUE);
+    gtk_grid_attach(GTK_GRID(table), slider, 1, row, 4, 1);
+    g_signal_connect(slider, "button-release-event",
+                     G_CALLBACK(space_edit_button_release), space_edit);
     gtk_widget_show(slider);
     row++;
   }
 
 
   /* a separator for clarity */
-  hseparator = gtk_hseparator_new();
-  gtk_table_attach(GTK_TABLE(table), hseparator, 0, 5, row, row+1,GTK_FILL, 0, X_PADDING, Y_PADDING);
+  hseparator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+  gtk_grid_attach(GTK_GRID(table), hseparator, 0, row, 5, 1);
   row++;
   gtk_widget_show(hseparator);
 
   /* and a display of the current axis */
   label = gtk_label_new(_("i"));
-  gtk_table_attach(GTK_TABLE(table), label, 1,2, row, row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), label, 1, row, 1, 1);
   gtk_widget_show(label);
   label = gtk_label_new(_("j"));
-  gtk_table_attach(GTK_TABLE(table), label, 2,3, row, row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), label, 2, row, 1, 1);
   gtk_widget_show(label);
   label = gtk_label_new(_("k"));
-  gtk_table_attach(GTK_TABLE(table), label, 3,4, row, row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), label, 3, row, 1, 1);
   gtk_widget_show(label);
   row++;
 
@@ -158,7 +163,7 @@ static void space_edit_init (AmitkSpaceEdit *space_edit)
 
     /* the row label */
     label = gtk_label_new(amitk_axis_get_name(i_axis));
-    gtk_table_attach(GTK_TABLE(table), label, 0,1, row, row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), label, 0, row, 1, 1);
     gtk_widget_show(label);
 
     for (j_axis=0;j_axis<AMITK_AXIS_NUM;j_axis++) {
@@ -166,14 +171,14 @@ static void space_edit_init (AmitkSpaceEdit *space_edit)
       space_edit->entry[i_axis][j_axis] = gtk_entry_new();
       gtk_widget_set_size_request(space_edit->entry[i_axis][j_axis], DEFAULT_ENTRY_WIDTH,-1);
       gtk_editable_set_editable(GTK_EDITABLE(space_edit->entry[i_axis][j_axis]), TRUE);
-      gtk_table_attach(GTK_TABLE(table), space_edit->entry[i_axis][j_axis],j_axis+1, j_axis+2,
-		       row, row+1, 0, 0, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(table), space_edit->entry[i_axis][j_axis],
+                      j_axis+1, row, 1, 1);
       gtk_widget_show(space_edit->entry[i_axis][j_axis]);
     }
     
     /* the invert button */
     button = gtk_button_new_with_label("invert axis");
-    gtk_table_attach(GTK_TABLE(table), button, 4,5, row, row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), button, 4, row, 1, 1);
     g_object_set_data(G_OBJECT(button), "axis", GINT_TO_POINTER(i_axis));
     g_signal_connect(G_OBJECT(button), "pressed",
 		     G_CALLBACK(space_edit_invert_axis), space_edit);
@@ -184,22 +189,19 @@ static void space_edit_init (AmitkSpaceEdit *space_edit)
   }
 
   label = gtk_label_new(_("data set axis:"));
-  gtk_table_attach(GTK_TABLE(table), label, 0,1, row, row+1,
-  		   0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), label, 0, row, 1, 1);
   gtk_widget_show(label);
   
   /* button to apply entries */
   button = gtk_button_new_with_label(_("apply manual entries"));
-  gtk_table_attach(GTK_TABLE(table), button, 1,2, 
-		   row, row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), button, 1, row, 1, 1);
   g_signal_connect(G_OBJECT(button), "pressed",
 		   G_CALLBACK(space_edit_apply_entries), space_edit);
   gtk_widget_show(button);
 
   /* button to reset the axis */
   button = gtk_button_new_with_label(_("reset to identity"));
-  gtk_table_attach(GTK_TABLE(table), button, 2,3, 
-		   row, row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), button, 2, row, 1, 1);
   g_signal_connect(G_OBJECT(button), "pressed",
 		   G_CALLBACK(space_edit_reset_axis), space_edit);
   gtk_widget_show(button);
@@ -236,7 +238,7 @@ static void space_edit_init (AmitkSpaceEdit *space_edit)
 #endif
 }
 
-static void space_edit_destroy (GtkObject * gtkobject) {
+static void space_edit_destroy (GtkWidget * gtkobject) {
 
   AmitkSpaceEdit * space_edit;
 
@@ -254,8 +256,8 @@ static void space_edit_destroy (GtkObject * gtkobject) {
 
 
 
-  if (GTK_OBJECT_CLASS (parent_class)->destroy)
-    (* GTK_OBJECT_CLASS (parent_class)->destroy) (gtkobject);
+  if (GTK_WIDGET_CLASS (parent_class)->destroy)
+    (* GTK_WIDGET_CLASS (parent_class)->destroy) (gtkobject);
 }
 
 
@@ -282,6 +284,17 @@ static void space_edit_update_entries(AmitkSpaceEdit * space_edit) {
   return;
 }
 
+/* Compensate the lack of GTK_UPDATE_DISCONTINUOUS.  */
+static gboolean space_edit_button_release(GtkWidget * widget, GdkEvent * event, gpointer data) {
+
+  AmitkSpaceEdit * space_edit = data;
+  GtkAdjustment * adjustment;
+
+  adjustment = gtk_range_get_adjustment(GTK_RANGE(widget));
+  space_edit_rotate_axis(adjustment, space_edit);
+
+  return FALSE;
+}
 
 static void space_edit_rotate_axis(GtkAdjustment * adjustment, gpointer data) {
 
@@ -293,7 +306,7 @@ static void space_edit_rotate_axis(GtkAdjustment * adjustment, gpointer data) {
   /* figure out which scale widget called me */
   i_view = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(adjustment),"view"));
 
-  rotation = (adjustment->value/180)*M_PI; /* get rotation in radians */
+  rotation = (gtk_adjustment_get_value(adjustment)/180)*M_PI; /* get rotation in radians */
 
   /* compensate for sagittal being a left-handed coordinate frame */
   if (i_view == AMITK_VIEW_SAGITTAL) rotation = -rotation; 
@@ -311,8 +324,7 @@ static void space_edit_rotate_axis(GtkAdjustment * adjustment, gpointer data) {
 			       rotation, center);
 
   /* return adjustment back to normal */
-  adjustment->value = 0.0;
-  gtk_adjustment_changed(adjustment);
+  gtk_adjustment_set_value(adjustment, 0.0);
 
   return;
 }

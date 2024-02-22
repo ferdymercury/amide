@@ -28,7 +28,7 @@
 
 /* header files that are always needed with this file */
 #include <gtk/gtk.h>
-#include <libgnomecanvas/libgnomecanvas.h>
+#include "amitk_canvas_compat.h"
 #include "amide_intl.h"
 
 G_BEGIN_DECLS
@@ -148,7 +148,7 @@ void amitk_real_cell_data_func(GtkTreeViewColumn *tree_column, GtkCellRenderer *
 			       GtkTreeModel *tree_model, GtkTreeIter *iter, gpointer data);
 gint amitk_spin_button_scientific_output (GtkSpinButton *spin_button, gpointer data);
 gint amitk_spin_button_discard_double_or_triple_click(GtkWidget *widget, GdkEventButton *event, gpointer func_data);
-GdkPixbuf * amitk_get_pixbuf_from_canvas(GnomeCanvas * canvas, gint xoffset, gint yoffset,
+GdkPixbuf * amitk_get_pixbuf_from_canvas(AmitkSimpleCanvas * canvas, gint xoffset, gint yoffset,
 					 gint width, gint height);
 
 gboolean amitk_is_xif_directory(const gchar * filename, gboolean * plegacy, gchar ** pxml_filename);

@@ -123,7 +123,7 @@ static tb_export_t * tb_export_init(void) {
 }
 
 
-static void destroy_cb(GtkObject * object, gpointer data) {
+static void destroy_cb(GtkWidget * object, gpointer data) {
   tb_export_t * tb_export = data;
   tb_export = tb_export_unref(tb_export); /* free the associated data structure */
 }
@@ -249,8 +249,8 @@ static void response_cb (GtkDialog * main_dialog, gint response_id, gpointer dat
     file_chooser = gtk_file_chooser_dialog_new(_("Export to File"),
 					       GTK_WINDOW(main_dialog), /* parent window */
 					       GTK_FILE_CHOOSER_ACTION_SAVE,
-					       GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-					       GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+					       _("_Cancel"), GTK_RESPONSE_CANCEL,
+					       _("_Save"), GTK_RESPONSE_ACCEPT,
 					       NULL);
     gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(file_chooser), TRUE);
     amitk_preferences_set_file_chooser_directory(tb_export->preferences, file_chooser); /* set the default directory if applicable */
@@ -535,8 +535,8 @@ void tb_export_data_set(AmitkStudy * study,
   temp_string = g_strdup_printf(_("%s: Export Data Set Dialog"), PACKAGE);
   tb_export->dialog = gtk_dialog_new_with_buttons (temp_string,  parent,
 						   GTK_DIALOG_DESTROY_WITH_PARENT,
-						   GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, 
-						   GTK_STOCK_EXECUTE, AMITK_RESPONSE_EXECUTE,
+						   _("_Cancel"), GTK_RESPONSE_CANCEL,
+						   _("_Execute"), AMITK_RESPONSE_EXECUTE,
 						   NULL);
   gtk_window_set_title(GTK_WINDOW(tb_export->dialog), temp_string);
   g_free(temp_string);
@@ -557,21 +557,22 @@ void tb_export_data_set(AmitkStudy * study,
 				 _("Exporting Data Sets"));
 
   /* start making the widgets for this dialog box */
-  table = gtk_table_new(5,4,FALSE);
+  table = gtk_grid_new();
+  gtk_grid_set_row_spacing(GTK_GRID(table), Y_PADDING);
+  gtk_grid_set_column_spacing(GTK_GRID(table), X_PADDING);
   table_row=0;
-  gtk_container_add(GTK_CONTAINER(GTK_DIALOG(tb_export->dialog)->vbox), table);
+  gtk_container_add(GTK_CONTAINER(gtk_dialog_get_content_area
+                                  (GTK_DIALOG(tb_export->dialog))), table);
 
   label = gtk_label_new(_("Export:"));
-  gtk_table_attach(GTK_TABLE(table), label, 0,1, 
-		   table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), label, 0, table_row, 1, 1);
 
   // tooltip N_("Export the data set in its original orientation (unresliced)")
   temp_string = g_strdup_printf(_("Original Orientation - %s"), AMITK_OBJECT_NAME(tb_export->active_ds));
   radio_button[0] = gtk_radio_button_new_with_label(NULL, temp_string);
   g_free(temp_string);
 						    
-  gtk_table_attach(GTK_TABLE(table), radio_button[0], 1,4, 
-		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), radio_button[0], 1, table_row, 3, 1);
   g_object_set_data(G_OBJECT(radio_button[0]), "resliced", GINT_TO_POINTER(FALSE));
   g_object_set_data(G_OBJECT(radio_button[0]), "all_visible", GINT_TO_POINTER(FALSE));
   table_row++;
@@ -581,8 +582,7 @@ void tb_export_data_set(AmitkStudy * study,
   radio_button[1] = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(radio_button[0])),
 						    temp_string);
   g_free(temp_string);
-  gtk_table_attach(GTK_TABLE(table), radio_button[1], 1,4, 
-		   table_row, table_row+1,  GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), radio_button[1], 1, table_row, 2, 1);
   g_object_set_data(G_OBJECT(radio_button[1]), "resliced", GINT_TO_POINTER(TRUE));
   g_object_set_data(G_OBJECT(radio_button[1]), "all_visible", GINT_TO_POINTER(FALSE));
   table_row++;
@@ -590,8 +590,7 @@ void tb_export_data_set(AmitkStudy * study,
   // tooltip N_("Export all the visible data sets into a single file")
   radio_button[2] = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(radio_button[0])),
 						    _("All Visible Data Sets (resliced)"));
-  gtk_table_attach(GTK_TABLE(table), radio_button[2], 1,4, 
-		   table_row, table_row+1,  GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), radio_button[2], 1, table_row, 3, 1);
   g_object_set_data(G_OBJECT(radio_button[2]), "resliced", GINT_TO_POINTER(TRUE));
   g_object_set_data(G_OBJECT(radio_button[2]), "all_visible", GINT_TO_POINTER(TRUE));
   table_row++;
@@ -608,18 +607,16 @@ void tb_export_data_set(AmitkStudy * study,
   g_signal_connect(G_OBJECT(radio_button[2]), "clicked", G_CALLBACK(reslice_radio_buttons_cb), tb_export);
 
   /* a separator for clarity */
-  hseparator = gtk_hseparator_new();
-  gtk_table_attach(GTK_TABLE(table), hseparator, 0,4,table_row, table_row+1,
-		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  hseparator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+  gtk_grid_attach(GTK_GRID(table), hseparator, 0, table_row, 4, 1);
   table_row++;
 
 
   label = gtk_label_new(_("export format:"));
-  gtk_table_attach(GTK_TABLE(table), GTK_WIDGET(label), 0,1,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), label, 0, table_row, 1, 1);
 
   /* select the export type */
-  export_menu = gtk_combo_box_new_text();
+  export_menu = gtk_combo_box_text_new();
 
   counter = 0;
   current = 0;
@@ -628,7 +625,7 @@ void tb_export_data_set(AmitkStudy * study,
     if (i_export_method == AMITK_EXPORT_METHOD_LIBMDC) {
       for (i_libmdc_export=0; i_libmdc_export < LIBMDC_NUM_EXPORT_METHODS; i_libmdc_export++) {
 	if (libmdc_supports(libmdc_export_to_format[i_libmdc_export])) {
-	  gtk_combo_box_append_text(GTK_COMBO_BOX(export_menu),
+	  gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(export_menu),
 				    libmdc_export_menu_names[i_libmdc_export]);
 	  // add tooltips at some point libmdc_export_menu_explanations[i_libmdc_export]
 	  if ((method == i_export_method) && (submethod == libmdc_export_to_format[i_libmdc_export]))
@@ -639,7 +636,7 @@ void tb_export_data_set(AmitkStudy * study,
     } else 
 #endif
       {
-	gtk_combo_box_append_text(GTK_COMBO_BOX(export_menu),
+	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(export_menu),
 				  amitk_export_menu_names[i_export_method]);
 	// add tooltips at some point amitk_export_menu_explanations[i_export_method],
 	
@@ -651,16 +648,14 @@ void tb_export_data_set(AmitkStudy * study,
 
   g_signal_connect(G_OBJECT(export_menu), "changed", G_CALLBACK(change_export_cb), NULL);
   gtk_combo_box_set_active(GTK_COMBO_BOX(export_menu), current); /* done after signal attachment, in case current never got matched and is still zero */
-  gtk_table_attach(GTK_TABLE(table), export_menu, 1,4, 
-		   table_row,table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), export_menu, 1, table_row, 3, 1);
   gtk_widget_show(export_menu);
   table_row++;
     
 
   /* widgets to change the voxel size of the data set */
   label = gtk_label_new(_("voxel size (mm) [x,y,z]:"));
-  gtk_table_attach(GTK_TABLE(table), GTK_WIDGET(label), 0,1,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), label, 0, table_row, 1, 1);
 
 
   for (i_axis=0; i_axis<AMITK_AXIS_NUM; i_axis++) {
@@ -671,8 +666,8 @@ void tb_export_data_set(AmitkStudy * study,
     g_object_set_data(G_OBJECT(tb_export->vs_spin_button[i_axis]), "axis", GINT_TO_POINTER(i_axis));
     g_signal_connect(G_OBJECT(tb_export->vs_spin_button[i_axis]), "value_changed", G_CALLBACK(change_voxel_size_cb), tb_export);
 
-    gtk_table_attach(GTK_TABLE(table), GTK_WIDGET(tb_export->vs_spin_button[i_axis]),i_axis+1,i_axis+2,
-		     table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), tb_export->vs_spin_button[i_axis],
+                    i_axis+1, table_row, 1, 1);
     gtk_widget_set_sensitive(GTK_WIDGET(tb_export->vs_spin_button[i_axis]), resliced || all_visible);
   }
   recommend_voxel_size(tb_export); /* updates voxel size guestimate, and updates the entry boxes */
@@ -684,21 +679,20 @@ void tb_export_data_set(AmitkStudy * study,
 
 
   label = gtk_label_new(_("bounding box:"));
-  gtk_table_attach(GTK_TABLE(table), GTK_WIDGET(label), 0,1,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), label, 0, table_row, 1, 1);
 
   // tooltip N_("Export the data set in its original orientation (unresliced)")
   tb_export->bb_radio_button[0] = gtk_radio_button_new_with_label(NULL, "tight");
 						    
-  gtk_table_attach(GTK_TABLE(table), tb_export->bb_radio_button[0], 1,2, 
-		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), tb_export->bb_radio_button[0],
+                  1, table_row, 1, 1);
   g_object_set_data(G_OBJECT(tb_export->bb_radio_button[0]), "inclusive_bounding_box", GINT_TO_POINTER(FALSE));
 
   // tooltip N_("Export the data set in its current orientation (resliced)")
   tb_export->bb_radio_button[1] = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(tb_export->bb_radio_button[0])),
 						    "inclusive (of all data sets)");
-  gtk_table_attach(GTK_TABLE(table), tb_export->bb_radio_button[1], 2,4, 
-		   table_row, table_row+1,  GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), tb_export->bb_radio_button[1],
+                  2, table_row, 2, 1);
   g_object_set_data(G_OBJECT(tb_export->bb_radio_button[1]), "inclusive_bounding_box", GINT_TO_POINTER(TRUE));
   table_row++;
 

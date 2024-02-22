@@ -32,6 +32,8 @@
 #include "ui_common.h"
 #include "ui_render_dialog.h"
 #include "amitk_color_table_menu.h"
+#include "amitk_curve.h"
+#include "amitk_gamma.h"
 
 
 #define GAMMA_CURVE_WIDTH -1 /* sets automatically */
@@ -155,11 +157,16 @@ static void change_eye_angle_cb(GtkWidget * widget, gpointer data) {
 static void change_eye_width_cb(GtkWidget * widget, gpointer data) {
 
   ui_render_t * ui_render = data;
+  GdkMonitor * monitor;
+  GdkRectangle geom;
   gdouble temp_val;
 
   temp_val = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
 
-  temp_val = temp_val*gdk_screen_width()/gdk_screen_width_mm();
+  monitor = gdk_display_get_monitor_at_window(gdk_display_get_default(),
+                                              gtk_widget_get_window(widget));
+  gdk_monitor_get_geometry(monitor, &geom);
+  temp_val = temp_val*geom.width/gdk_monitor_get_width_mm(monitor);
   if (temp_val < 0) /* weird mutants? */
     return;
   if (temp_val > 1000) /* just plain wrong? */
@@ -294,20 +301,20 @@ static void change_opacity_cb(GtkWidget * widget, gpointer data) {
 
   for (i_classification = 0; i_classification < NUM_CLASSIFICATIONS; i_classification++) {
     /* figure out the curve type */
-    switch (GTK_CURVE(GTK_GAMMA_CURVE(gamma_curve[i_classification])->curve)->curve_type) {
-    case GTK_CURVE_TYPE_SPLINE:
+    switch (AMITK_CURVE(AMITK_GAMMA_CURVE(gamma_curve[i_classification])->curve)->curve_type) {
+    case AMITK_CURVE_TYPE_SPLINE:
       curve_type = CURVE_SPLINE;
-      num_points = GTK_CURVE(GTK_GAMMA_CURVE(gamma_curve[i_classification])->curve)->num_ctlpoints; 
+      num_points = AMITK_CURVE(AMITK_GAMMA_CURVE(gamma_curve[i_classification])->curve)->num_ctlpoints;
       break;
-    case GTK_CURVE_TYPE_LINEAR:       
+    case AMITK_CURVE_TYPE_LINEAR:
     default:
       curve_type = CURVE_LINEAR;
-      num_points = GTK_CURVE(GTK_GAMMA_CURVE(gamma_curve[i_classification])->curve)->num_ctlpoints; 
+      num_points = AMITK_CURVE(AMITK_GAMMA_CURVE(gamma_curve[i_classification])->curve)->num_ctlpoints;
       break;
     }
 
     /* set the ramp table to what's in the curve widget */
-    gtk_curve_get_vector(GTK_CURVE(GTK_GAMMA_CURVE(gamma_curve[i_classification])->curve), 
+    amitk_curve_get_vector(AMITK_CURVE(AMITK_GAMMA_CURVE(gamma_curve[i_classification])->curve),
 			 (i_classification == DENSITY_CLASSIFICATION) ?  RENDERING_DENSITY_MAX:RENDERING_GRADIENT_MAX,
 			 (i_classification == DENSITY_CLASSIFICATION) ? rendering->density_ramp : rendering->gradient_ramp);   
     
@@ -331,8 +338,8 @@ static void change_opacity_cb(GtkWidget * widget, gpointer data) {
     
     /* copy the new ctrl points */
     for (i=0;i<rendering->num_points[i_classification];i++) {
-      rendering->ramp_x[i_classification][i] = GTK_CURVE(GTK_GAMMA_CURVE(gamma_curve[i_classification])->curve)->ctlpoint[i][0];
-      rendering->ramp_y[i_classification][i] = GTK_CURVE(GTK_GAMMA_CURVE(gamma_curve[i_classification])->curve)->ctlpoint[i][1];
+      rendering->ramp_x[i_classification][i] = AMITK_CURVE(AMITK_GAMMA_CURVE(gamma_curve[i_classification])->curve)->ctlpoint[i][0];
+      rendering->ramp_y[i_classification][i] = AMITK_CURVE(AMITK_GAMMA_CURVE(gamma_curve[i_classification])->curve)->ctlpoint[i][1];
     }
 
     rendering->need_reclassify = TRUE;
@@ -412,7 +419,7 @@ static void setup_curve(GtkWidget * gamma_curve, gpointer data, classification_t
   gfloat (*curve_ctrl_points)[2];
   guint i;
 
-  curve = GTK_GAMMA_CURVE(gamma_curve)->curve;
+  curve = AMITK_GAMMA_CURVE(gamma_curve)->curve;
 
   /* allocate some memory for the curve we're passing to the curve widget */
   if ((curve_ctrl_points = g_try_malloc(rendering->num_points[type]*sizeof(gfloat)*2)) == NULL) {
@@ -426,20 +433,20 @@ static void setup_curve(GtkWidget * gamma_curve, gpointer data, classification_t
     curve_ctrl_points[i][1]=rendering->ramp_y[type][i];
   }
   
-  GTK_CURVE(curve)->num_ctlpoints =  rendering->num_points[type];
-  g_free(GTK_CURVE(curve)->ctlpoint);
-  GTK_CURVE(curve)->ctlpoint = curve_ctrl_points;
+  AMITK_CURVE(curve)->num_ctlpoints = rendering->num_points[type];
+  g_free(AMITK_CURVE(curve)->ctlpoint);
+  AMITK_CURVE(curve)->ctlpoint = curve_ctrl_points;
   
   /* doing some hackish stuff to get this to work as I'd like it (i.e. saving state) */
   switch (rendering->curve_type[type]) {
   case CURVE_SPLINE:
-    GTK_CURVE(curve)->curve_type = GTK_CURVE_TYPE_SPLINE;
-    GTK_TOGGLE_BUTTON(GTK_GAMMA_CURVE(gamma_curve)->button[0])->active=TRUE;
+    AMITK_CURVE(curve)->curve_type = AMITK_CURVE_TYPE_SPLINE;
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(AMITK_GAMMA_CURVE(gamma_curve)->button[0]), TRUE);
     break;
   case CURVE_LINEAR:
   default:
-    GTK_CURVE(curve)->curve_type = GTK_CURVE_TYPE_LINEAR;
-    GTK_TOGGLE_BUTTON(GTK_GAMMA_CURVE(gamma_curve)->button[1])->active=TRUE;
+    AMITK_CURVE(curve)->curve_type = AMITK_CURVE_TYPE_LINEAR;
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(AMITK_GAMMA_CURVE(gamma_curve)->button[1]), TRUE);
     break;
   }
 
@@ -457,6 +464,8 @@ void ui_render_dialog_create_parameters(ui_render_t * ui_render) {
   GtkWidget * check_button;
   GtkWidget * spin_button;
   GtkWidget * hseparator;
+  GdkMonitor * monitor;
+  GdkRectangle geom;
   rendering_quality_t i_quality;
   guint table_row = 0;
   
@@ -465,8 +474,8 @@ void ui_render_dialog_create_parameters(ui_render_t * ui_render) {
   temp_string = g_strdup_printf(_("%s: Rendering Parameters Dialog"),PACKAGE);
   dialog = gtk_dialog_new_with_buttons (temp_string,  ui_render->window,
 					GTK_DIALOG_DESTROY_WITH_PARENT,
-					GTK_STOCK_HELP, GTK_RESPONSE_HELP,
-					GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE,
+					_("_Help"), GTK_RESPONSE_HELP,
+					_("_Close"), GTK_RESPONSE_CLOSE,
 					NULL);
   g_free(temp_string);
   ui_render->parameter_dialog = dialog;
@@ -480,23 +489,23 @@ void ui_render_dialog_create_parameters(ui_render_t * ui_render) {
 
 
   /* start making the widgets for this dialog box */
-  packing_table = gtk_table_new(4,2,FALSE);
+  packing_table = gtk_grid_new();
+  gtk_grid_set_row_spacing(GTK_GRID(packing_table), Y_PADDING);
+  gtk_grid_set_column_spacing(GTK_GRID(packing_table), X_PADDING);
   table_row=0;
-  gtk_container_add (GTK_CONTAINER (GTK_DIALOG(dialog)->vbox), packing_table);
+  gtk_container_add (GTK_CONTAINER (gtk_dialog_get_content_area
+                                    (GTK_DIALOG(dialog))), packing_table);
 
   /* widgets to change the quality versus speed of rendering */
   label = gtk_label_new(_("Speed versus Quality"));
-  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
 
-  menu = gtk_combo_box_new_text();
+  menu = gtk_combo_box_text_new();
   for (i_quality=0; i_quality<NUM_QUALITIES; i_quality++) 
-    gtk_combo_box_append_text(GTK_COMBO_BOX(menu), _(rendering_quality_names[i_quality]));
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(menu), _(rendering_quality_names[i_quality]));
   gtk_combo_box_set_active(GTK_COMBO_BOX(menu), ui_render->quality);
   g_signal_connect(G_OBJECT(menu), "changed", G_CALLBACK(change_quality_cb), ui_render);
-  gtk_table_attach(GTK_TABLE(packing_table), menu, 1,2, 
-		   table_row,table_row+1, GTK_EXPAND | GTK_FILL, 0, 
-		   X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), menu, 1, table_row, 1, 1);
   table_row++;
 
 
@@ -505,86 +514,78 @@ void ui_render_dialog_create_parameters(ui_render_t * ui_render) {
   check_button = gtk_check_button_new_with_label (_("update without button release"));
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), ui_render->update_without_release);
   g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(update_without_release_toggle_cb), ui_render);
-  gtk_table_attach(GTK_TABLE(packing_table), check_button, 0,2, 
-		   table_row,table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), check_button, 0, table_row, 2, 1);
   table_row++;
 
   /* a separator for clarity */
-  hseparator = gtk_hseparator_new();
-  gtk_table_attach(GTK_TABLE(packing_table), hseparator,0,2,
-		   table_row, table_row+1, GTK_FILL, GTK_FILL, X_PADDING, Y_PADDING);
+  hseparator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+  gtk_grid_attach(GTK_GRID(packing_table), hseparator, 0, table_row, 2, 1);
   table_row++;
 
 
   /* widget for the stereo eye angle */
   label = gtk_label_new(_("Stereo Angle"));
-  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
 
   spin_button = gtk_spin_button_new_with_range(-90.0, 90.0, 0.2);
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), FALSE);
   gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button), 2);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), ui_render->stereo_eye_angle);
   g_signal_connect(G_OBJECT(spin_button), "value_changed", G_CALLBACK(change_eye_angle_cb), ui_render);
-  gtk_table_attach(GTK_TABLE(packing_table), spin_button,1,2,
-		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), spin_button, 1, table_row, 1, 1);
   table_row++;
 
   /* widget for the stereo eye width */
   label = gtk_label_new(_("Eye Width (mm)"));
-  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
 
   spin_button = gtk_spin_button_new_with_range(0, G_MAXDOUBLE, 1.0);
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), FALSE);
   gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button), 2);
+  monitor = gdk_display_get_monitor_at_window(gdk_display_get_default(),
+                                              gtk_widget_get_window
+                                              (GTK_WIDGET(ui_render->window)));
+  gdk_monitor_get_geometry(monitor, &geom);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), 
-			    gdk_screen_width_mm()*ui_render->stereo_eye_width/
-			    ((gdouble) gdk_screen_width()));
+			    gdk_monitor_get_width_mm(monitor)*ui_render->stereo_eye_width/
+			    ((gdouble) geom.width));
   g_signal_connect(G_OBJECT(spin_button), "value_changed", G_CALLBACK(change_eye_width_cb), ui_render);
-  gtk_table_attach(GTK_TABLE(packing_table), spin_button,1,2,
-		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), spin_button, 1, table_row, 1, 1);
   table_row++;
 
   /* a separator for clarity */
-  hseparator = gtk_hseparator_new();
-  gtk_table_attach(GTK_TABLE(packing_table), hseparator,0,2,
-		   table_row, table_row+1, GTK_FILL, GTK_FILL, X_PADDING, Y_PADDING);
+  hseparator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+  gtk_grid_attach(GTK_GRID(packing_table), hseparator, 0, table_row, 2, 1);
   table_row++;
 
   /* the depth cueing enabling button */
   check_button = gtk_check_button_new_with_label (_("enable/disable depth cueing"));
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), ui_render->depth_cueing);
   g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(depth_cueing_toggle_cb), ui_render);
-  gtk_table_attach(GTK_TABLE(packing_table), check_button, 0,2, 
-		   table_row,table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), check_button, 0, table_row, 2, 1);
   table_row++;
 
 
   label = gtk_label_new(_("Front Factor"));
-  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
 
   spin_button = gtk_spin_button_new_with_range(-G_MAXDOUBLE, G_MAXDOUBLE, 0.2);
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), FALSE);
   gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button), 2);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), ui_render->front_factor);
   g_signal_connect(G_OBJECT(spin_button), "value_changed", G_CALLBACK(change_front_factor_cb), ui_render);
-  gtk_table_attach(GTK_TABLE(packing_table), spin_button,1,2,
-		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), spin_button, 1, table_row, 1, 1);
   table_row++;
 
   label = gtk_label_new(_("Density"));
-  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
 
   spin_button = gtk_spin_button_new_with_range(-G_MAXDOUBLE, G_MAXDOUBLE, 0.2);
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), FALSE);
   gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button), 2);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), ui_render->density);
   g_signal_connect(G_OBJECT(spin_button), "value_changed", G_CALLBACK(change_density_cb), ui_render);
-  gtk_table_attach(GTK_TABLE(packing_table), spin_button,1,2,
-		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), spin_button, 1, table_row, 1, 1);
   table_row++;
 
 
@@ -618,8 +619,8 @@ void ui_render_dialog_create_transfer_function(ui_render_t * ui_render) {
   temp_string = g_strdup_printf(_("%s: Transfer Function Dialog"),PACKAGE);
   dialog = gtk_dialog_new_with_buttons (temp_string,  ui_render->window,
 					GTK_DIALOG_DESTROY_WITH_PARENT,
-					GTK_STOCK_HELP, GTK_RESPONSE_HELP,
-					GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE,
+					_("_Help"), GTK_RESPONSE_HELP,
+					_("_Close"), GTK_RESPONSE_CLOSE,
 					NULL);
   g_free(temp_string);
   ui_render->transfer_function_dialog = dialog;
@@ -630,41 +631,40 @@ void ui_render_dialog_create_transfer_function(ui_render_t * ui_render) {
 		   
 
   notebook = gtk_notebook_new();
-  gtk_container_add (GTK_CONTAINER (GTK_DIALOG(dialog)->vbox), notebook);
+  gtk_container_add (GTK_CONTAINER (gtk_dialog_get_content_area
+                                    (GTK_DIALOG(dialog))), notebook);
 
 
   temp_list = ui_render->renderings;
   while (temp_list != NULL) {
-    packing_table = gtk_table_new(4,3,FALSE);
+    packing_table = gtk_grid_new();
+    gtk_grid_set_row_spacing(GTK_GRID(packing_table), Y_PADDING);
+    gtk_grid_set_column_spacing(GTK_GRID(packing_table), X_PADDING);
     table_row=0;
     label = gtk_label_new(temp_list->rendering->name);
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), packing_table, label);
 
     /* widgets to change the returned pixel type of the rendering */
     label = gtk_label_new(_("Return Type"));
-    gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
 
-    menu = gtk_combo_box_new_text();
+    menu = gtk_combo_box_text_new();
     for (i_pixel_type=0; i_pixel_type<NUM_PIXEL_TYPES; i_pixel_type++) 
-      gtk_combo_box_append_text(GTK_COMBO_BOX(menu), _(pixel_type_names[i_pixel_type]));
+      gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(menu), _(pixel_type_names[i_pixel_type]));
     g_object_set_data(G_OBJECT(menu), "ui_render", ui_render);
     gtk_combo_box_set_active(GTK_COMBO_BOX(menu), temp_list->rendering->pixel_type);
     g_signal_connect(G_OBJECT(menu), "changed", G_CALLBACK(change_pixel_type_cb), temp_list->rendering);
-    gtk_table_attach(GTK_TABLE(packing_table), menu, 1,2, 
-		     table_row,table_row+1, GTK_EXPAND | GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), menu, 1, table_row, 1, 1);
     table_row++;
 
     /* color table selector */
     label = gtk_label_new(_("color table:"));
-    gtk_table_attach(GTK_TABLE(packing_table), label, 0,1, table_row,table_row+1,
-		     X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
     gtk_widget_show(label);
 
     menu = amitk_color_table_menu_new();
     g_object_set_data(G_OBJECT(menu), "ui_render", ui_render);
-    gtk_table_attach(GTK_TABLE(packing_table), menu, 1,2, table_row,table_row+1,
-		     X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), menu, 1, table_row, 1, 1);
     gtk_combo_box_set_active(GTK_COMBO_BOX(menu),temp_list->rendering->color_table);
     g_signal_connect(G_OBJECT(menu), "changed", G_CALLBACK(color_table_cb), 
 		     temp_list->rendering);
@@ -674,9 +674,8 @@ void ui_render_dialog_create_transfer_function(ui_render_t * ui_render) {
 
 
     /* a separator for clarity */
-    hseparator = gtk_hseparator_new();
-    gtk_table_attach(GTK_TABLE(packing_table), hseparator,0,2,
-		     table_row, table_row+1, GTK_FILL, GTK_FILL, X_PADDING, Y_PADDING);
+    hseparator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+    gtk_grid_attach(GTK_GRID(packing_table), hseparator, 0, table_row, 2, 1);
     table_row++;
 
     /* widgets for changing the density and gradient classification parameters */
@@ -686,24 +685,19 @@ void ui_render_dialog_create_transfer_function(ui_render_t * ui_render) {
 	label = gtk_label_new(_("Density\nDependent\nOpacity"));
       else /* gradient classification*/
 	label = gtk_label_new(_("Gradient\nDependent\nOpacity"));
-      gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
   
-      gamma_curve[i_classification] = gtk_gamma_curve_new();
+      gamma_curve[i_classification] = amitk_gamma_curve_new();
       gtk_widget_set_size_request(gamma_curve[i_classification], GAMMA_CURVE_WIDTH, GAMMA_CURVE_HEIGHT);
-      gtk_curve_set_range(GTK_CURVE(GTK_GAMMA_CURVE(gamma_curve[i_classification])->curve), 0.0, 
+      amitk_curve_set_range(AMITK_CURVE(AMITK_GAMMA_CURVE(gamma_curve[i_classification])->curve), 0.0,
 			  (i_classification == DENSITY_CLASSIFICATION) ? RENDERING_DENSITY_MAX: RENDERING_GRADIENT_MAX, 
 			  0.0, 1.0);
 
       setup_curve(gamma_curve[i_classification], temp_list->rendering, i_classification);
-      /* disable the gamma button and free drawing button */
-      gtk_widget_destroy(GTK_GAMMA_CURVE(gamma_curve[i_classification])->button[3]);
-      gtk_widget_destroy(GTK_GAMMA_CURVE(gamma_curve[i_classification])->button[2]);
     
       /* and attach */
-      gtk_table_attach(GTK_TABLE(packing_table), gamma_curve[i_classification], 1,3,
-		       table_row, table_row+1,
-		       GTK_EXPAND | GTK_FILL, GTK_FILL, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(packing_table), gamma_curve[i_classification],
+                      1, table_row, 1, 1);
       table_row++;
     }
 
@@ -714,8 +708,7 @@ void ui_render_dialog_create_transfer_function(ui_render_t * ui_render) {
     g_object_set_data(G_OBJECT(button), "gamma_curve_gradient", gamma_curve[GRADIENT_CLASSIFICATION]);
     g_object_set_data(G_OBJECT(button), "ui_render", ui_render);
     /* and attach */
-    gtk_table_attach(GTK_TABLE(packing_table), button, 1,3, table_row, table_row+1, 
-		     GTK_EXPAND | GTK_FILL, GTK_FILL, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), button, 1, table_row, 2, 1);
     gtk_widget_show(button);
     table_row++;
     g_signal_connect(G_OBJECT(button), "clicked", G_CALLBACK(change_opacity_cb), 

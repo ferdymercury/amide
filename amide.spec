@@ -28,7 +28,7 @@ BuildRequires:  gsl-devel
 BuildRequires:  dcmtk-devel
 BuildRequires:  perl-XML-Parser
 BuildRequires:  glib2-devel
-BuildRequires:  gtk2-devel >= 2.10
+BuildRequires:  gtk3-devel
 BuildRequires:	gnome-vfs2-devel
 
 %description 

@@ -43,7 +43,7 @@
 
 static void object_dialog_class_init (AmitkObjectDialogClass *class);
 static void object_dialog_init (AmitkObjectDialog *object_dialog);
-static void object_dialog_destroy (GtkObject * object);
+static void object_dialog_destroy (GtkWidget * object);
 static void object_dialog_construct(AmitkObjectDialog * dialog, 
 				    AmitkObject * object,
 				    AmitkLayout layout);
@@ -86,18 +86,13 @@ static void dialog_change_weight_unit_cb   (GtkWidget * widget, gpointer data);
 static void dialog_change_cylinder_unit_cb (GtkWidget * widget, gpointer data);
 
 static void dialog_change_roi_width_cb           (GtkWidget * widget, gpointer data);
-#ifdef AMIDE_LIBGNOMECANVAS_AA
 static void dialog_change_roi_transparency_cb    (GtkWidget * widget, gpointer data);
-#else
-static void dialog_change_line_style_cb          (GtkWidget * widget, gpointer data);
-static void dialog_change_fill_roi_cb            (GtkWidget * widget, gpointer data);
-#endif
 static void dialog_change_layout_cb              (GtkWidget * widget, gpointer data);
 static void dialog_change_panel_layout_cb        (GtkWidget * widget, gpointer data);
 static void dialog_change_maintain_size_cb       (GtkWidget * widget, gpointer data);
 static void dialog_change_target_empty_area_cb   (GtkWidget * widget, gpointer data);
 static void dialog_specify_color_cb              (GtkWidget * widget, gpointer data);
-static void dialog_change_color_cb               (GtkWidget * widget, gpointer data);
+static void dialog_change_color_cb               (GtkWidget * widget, GdkRGBA *rgba, gpointer data);
 
 static GtkDialogClass *object_dialog_parent_class;
 
@@ -131,9 +126,9 @@ GType amitk_object_dialog_get_type (void)
 
 static void object_dialog_class_init (AmitkObjectDialogClass *klass)
 {
-  GtkObjectClass *gtkobject_class;
+  GtkWidgetClass *gtkobject_class;
 
-  gtkobject_class = (GtkObjectClass*) klass;
+  gtkobject_class = (GtkWidgetClass*) klass;
 
   object_dialog_parent_class = g_type_class_peek_parent(klass);
 
@@ -141,7 +136,7 @@ static void object_dialog_class_init (AmitkObjectDialogClass *klass)
 
 }
 
-static void object_dialog_destroy (GtkObject * object) {
+static void object_dialog_destroy (GtkWidget * object) {
 
   AmitkObjectDialog * dialog;
 
@@ -176,8 +171,8 @@ static void object_dialog_destroy (GtkObject * object) {
     dialog->duration_spins = NULL;
   }
 
-  if (GTK_OBJECT_CLASS (object_dialog_parent_class)->destroy)
-    (* GTK_OBJECT_CLASS (object_dialog_parent_class)->destroy) (object);
+  if (GTK_WIDGET_CLASS (object_dialog_parent_class)->destroy)
+    (* GTK_WIDGET_CLASS (object_dialog_parent_class)->destroy) (object);
 }
 
 
@@ -215,11 +210,10 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
   guint i;
   gboolean immutables;
 
-  gtk_dialog_set_has_separator(GTK_DIALOG(dialog), FALSE);
   gtk_dialog_add_buttons(GTK_DIALOG(dialog),
-			 GTK_STOCK_REVERT_TO_SAVED, AMITK_RESPONSE_REVERT,
-			 GTK_STOCK_HELP, GTK_RESPONSE_HELP,
-			 GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE, 
+			 _("_Revert"), AMITK_RESPONSE_REVERT,
+			 _("_Help"), GTK_RESPONSE_HELP,
+			 _("_Close"), GTK_RESPONSE_CLOSE,
 			 NULL);
 
   /* create the temp object which will store the old info if we want revert */
@@ -231,7 +225,8 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
   		   G_CALLBACK(dialog_response_cb), NULL);
 
   notebook = gtk_notebook_new();
-  gtk_container_add (GTK_CONTAINER (GTK_DIALOG(dialog)->vbox), notebook);
+  gtk_container_add (GTK_CONTAINER (gtk_dialog_get_content_area
+                                    (GTK_DIALOG (dialog))), notebook);
   gtk_widget_show(notebook);
 
   /* ---------------------------
@@ -239,7 +234,9 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
      --------------------------- */
 
   /* start making the widgets for this dialog box */
-  packing_table = gtk_table_new(14,4,FALSE);
+  packing_table = gtk_grid_new();
+  gtk_grid_set_row_spacing(GTK_GRID(packing_table), Y_PADDING);
+  gtk_grid_set_column_spacing(GTK_GRID(packing_table), X_PADDING);
   label = gtk_label_new(_("Basic Info"));
   table_row=0;
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook), packing_table, label);
@@ -251,15 +248,15 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     label = gtk_label_new(_("Data Set Name:"));
   else 
     label = gtk_label_new(_("Name:"));
-  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1, 
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
   gtk_widget_show(label);
 
   dialog->name_entry = gtk_entry_new();
   gtk_editable_set_editable(GTK_EDITABLE(dialog->name_entry), TRUE);
   g_signal_connect(G_OBJECT(dialog->name_entry), "changed", G_CALLBACK(dialog_change_name_cb), dialog);
-  gtk_table_attach(GTK_TABLE(packing_table),dialog->name_entry,1,4, 
-		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_widget_set_hexpand(dialog->name_entry, TRUE);
+  gtk_grid_attach(GTK_GRID(packing_table), dialog->name_entry,
+                  1, table_row, 3, 1);
   gtk_widget_show(dialog->name_entry);
   table_row++;
 
@@ -271,11 +268,10 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 
     /* widgets to change the object's type */
     label = gtk_label_new(_("Type:"));
-    gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
     gtk_widget_show(label);
     
-    dialog->roi_type_menu = gtk_combo_box_new_text();
+    dialog->roi_type_menu = gtk_combo_box_text_new();
 
     switch(AMITK_ROI_TYPE(object)) {
     case AMITK_ROI_TYPE_ELLIPSOID:
@@ -297,12 +293,12 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     }
 
     for (i_roi_type=type_start; i_roi_type<=type_end; i_roi_type++) 
-      gtk_combo_box_append_text(GTK_COMBO_BOX(dialog->roi_type_menu),
+      gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(dialog->roi_type_menu),
     				amitk_roi_type_get_name(i_roi_type));
     if (type_start != type_end)
       g_signal_connect(G_OBJECT(dialog->roi_type_menu), "changed", G_CALLBACK(dialog_change_roi_type_cb), dialog);
-    gtk_table_attach(GTK_TABLE(packing_table), dialog->roi_type_menu, 1,2, 
-		     table_row,table_row+1, GTK_FILL, 0,  X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), dialog->roi_type_menu,
+                    1, table_row, 1, 1);
     gtk_widget_show(dialog->roi_type_menu);
     table_row++;
 
@@ -323,42 +319,38 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 
     /* widgets to change the date of the scan name */
     label = gtk_label_new(_("Scan Date:"));
-    gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
     gtk_widget_show(label);
 
     dialog->scan_date_entry = gtk_entry_new();
     gtk_editable_set_editable(GTK_EDITABLE(dialog->scan_date_entry), TRUE);
     g_signal_connect(G_OBJECT(dialog->scan_date_entry), "changed", G_CALLBACK(dialog_change_scan_date_cb), dialog);
-    gtk_table_attach(GTK_TABLE(packing_table), dialog->scan_date_entry,1,2,
-		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), dialog->scan_date_entry,
+                    1, table_row, 1, 1);
     gtk_widget_show(dialog->scan_date_entry);
 
     /* widgets to change the object's modality */
     label = gtk_label_new(_("Modality:"));
-    gtk_table_attach(GTK_TABLE(packing_table), label, 2,3,
-		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), label, 2, table_row, 1, 1);
     gtk_widget_show(label);
 
-    dialog->modality_menu = gtk_combo_box_new_text();
+    dialog->modality_menu = gtk_combo_box_text_new();
     for (i_modality=0; i_modality<AMITK_MODALITY_NUM; i_modality++) 
-      gtk_combo_box_append_text(GTK_COMBO_BOX(dialog->modality_menu),
+      gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(dialog->modality_menu),
 				amitk_modality_get_name(i_modality));
     g_signal_connect(G_OBJECT(dialog->modality_menu), "changed", G_CALLBACK(dialog_change_modality_cb), dialog);
-    gtk_table_attach(GTK_TABLE(packing_table), dialog->modality_menu, 3,4, 
-		     table_row,table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), dialog->modality_menu,
+                    3, table_row, 1, 1);
     gtk_widget_show(dialog->modality_menu);
     table_row++;
     
     /* widget to change the interpolation */
     label = gtk_label_new(_("Interpolation Type:"));
-    gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
     gtk_widget_show(label);
     
-    hbox = gtk_hbox_new(FALSE, 0);
-    gtk_table_attach(GTK_TABLE(packing_table), hbox,1,2,
-		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+    hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+    gtk_grid_attach(GTK_GRID(packing_table), hbox, 1, table_row, 1, 1);
     gtk_widget_show(hbox);
 
     for (i_interpolation = 0; i_interpolation < AMITK_INTERPOLATION_NUM; i_interpolation++) {
@@ -371,10 +363,10 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 
       switch (i_interpolation) {
       case AMITK_INTERPOLATION_NEAREST_NEIGHBOR:
-	image = gtk_image_new_from_stock("amide_icon_interpolation_nearest_neighbor",GTK_ICON_SIZE_LARGE_TOOLBAR);
+	image = gtk_image_new_from_icon_name("amide_icon_interpolation_nearest_neighbor",GTK_ICON_SIZE_LARGE_TOOLBAR);
 	break;
       case AMITK_INTERPOLATION_TRILINEAR:
-	image = gtk_image_new_from_stock("amide_icon_interpolation_trilinear",GTK_ICON_SIZE_LARGE_TOOLBAR);
+	image = gtk_image_new_from_icon_name("amide_icon_interpolation_trilinear",GTK_ICON_SIZE_LARGE_TOOLBAR);
 	break;
       default:
 	g_error("unexpected case in %s at line %d",__FILE__, __LINE__);
@@ -398,28 +390,26 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 
     /* widget to change the rendering */
     label = gtk_label_new(_("Rendering Type:"));
-    gtk_table_attach(GTK_TABLE(packing_table), label, 2,3,
-		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), label, 2, table_row, 1, 1);
     gtk_widget_show(label);
     
 
-    dialog->rendering_menu = gtk_combo_box_new_text();
-    /*  gtk_widget_set_tooltip_text(dialog->rendering_menu, _(amitk_rendering_explanation)); 
-	combo box's (as of 2.24 at least, don't have functioning tool tips */
+    dialog->rendering_menu = gtk_combo_box_text_new();
+    gtk_widget_set_tooltip_text(dialog->rendering_menu,
+                                _(amitk_rendering_explanation));
     for (i_rendering = 0; i_rendering < AMITK_RENDERING_NUM; i_rendering++)
-      gtk_combo_box_append_text(GTK_COMBO_BOX(dialog->rendering_menu),
+      gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(dialog->rendering_menu),
 				amitk_rendering_get_name(i_rendering));
     g_signal_connect(G_OBJECT(dialog->rendering_menu), "changed", G_CALLBACK(dialog_change_rendering_cb), dialog);
-    gtk_table_attach(GTK_TABLE(packing_table), dialog->rendering_menu, 3,4,
-		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), dialog->rendering_menu,
+                    3, table_row, 1, 1);
     gtk_widget_show(dialog->rendering_menu);
     table_row++;
 
 
     /* a separator for clarity */
-    hseparator = gtk_hseparator_new();
-    gtk_table_attach(GTK_TABLE(packing_table), hseparator, 0, 5, table_row, table_row+1,
-		     GTK_FILL, 0, X_PADDING, Y_PADDING);
+    hseparator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+    gtk_grid_attach(GTK_GRID(packing_table), hseparator, 0, table_row, 5, 1);
     gtk_widget_show(hseparator);
     table_row++;
   
@@ -429,82 +419,76 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 
     /* widgets to change the subject name associated with the data */
     label = gtk_label_new(_("Subject Name:"));
-    gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
     gtk_widget_show(label);
 
     dialog->subject_name_entry = gtk_entry_new();
     gtk_editable_set_editable(GTK_EDITABLE(dialog->subject_name_entry), TRUE);
     g_signal_connect(G_OBJECT(dialog->subject_name_entry), "changed", G_CALLBACK(dialog_change_subject_name_cb), dialog);
-    gtk_table_attach(GTK_TABLE(packing_table), dialog->subject_name_entry,1,4,
-		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), dialog->subject_name_entry,
+                    1, table_row, 3, 1);
     gtk_widget_show(dialog->subject_name_entry);
     table_row++;
 
     /* widgets to change the id associated with the data */
     label = gtk_label_new(_("Subject ID:"));
-    gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
     gtk_widget_show(label);
 
     dialog->subject_id_entry = gtk_entry_new();
     gtk_editable_set_editable(GTK_EDITABLE(dialog->subject_id_entry), TRUE);
     g_signal_connect(G_OBJECT(dialog->subject_id_entry), "changed", G_CALLBACK(dialog_change_subject_id_cb), dialog);
-    gtk_table_attach(GTK_TABLE(packing_table), dialog->subject_id_entry,1,2,
-		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), dialog->subject_id_entry,
+                    1, table_row, 1, 1);
     gtk_widget_show(dialog->subject_id_entry);
 
     /* widgets to change the subject's date of birth */
     label = gtk_label_new(_("Subject DOB:"));
-    gtk_table_attach(GTK_TABLE(packing_table), label, 2,3,
-		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), label, 2, table_row, 1, 1);
     gtk_widget_show(label);
 
     dialog->subject_dob_entry = gtk_entry_new();
     gtk_editable_set_editable(GTK_EDITABLE(dialog->subject_dob_entry), TRUE);
     g_signal_connect(G_OBJECT(dialog->subject_dob_entry), "changed", G_CALLBACK(dialog_change_subject_dob_cb), dialog);
-    gtk_table_attach(GTK_TABLE(packing_table), dialog->subject_dob_entry,3,4,
-		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), dialog->subject_dob_entry,
+                    3, table_row, 1, 1);
     gtk_widget_show(dialog->subject_dob_entry);
 
     table_row++;
 
     /* widgets to change the subject's orientation */
     label = gtk_label_new(_("Subject Orientation:"));
-    gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
     gtk_widget_show(label);
 
-    dialog->subject_orientation_menu = gtk_combo_box_new_text();
+    dialog->subject_orientation_menu = gtk_combo_box_text_new();
     for (i_subject_orientation=0; i_subject_orientation<AMITK_SUBJECT_ORIENTATION_NUM; i_subject_orientation++) 
-      gtk_combo_box_append_text(GTK_COMBO_BOX(dialog->subject_orientation_menu),
+      gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(dialog->subject_orientation_menu),
 				amitk_subject_orientation_get_name(i_subject_orientation));
     g_signal_connect(G_OBJECT(dialog->subject_orientation_menu), "changed", G_CALLBACK(dialog_change_subject_orientation_cb), dialog);
-    gtk_table_attach(GTK_TABLE(packing_table), dialog->subject_orientation_menu, 1,2, 
-		     table_row,table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), dialog->subject_orientation_menu,
+                    1, table_row, 1, 1);
     gtk_widget_show(dialog->subject_orientation_menu);
 
     /* widgets to change the subject's sex (much easier in the virtual world than in real life) */
     label = gtk_label_new(_("Subject Sex:"));
-    gtk_table_attach(GTK_TABLE(packing_table), label, 2,3,
-		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), label, 2, table_row, 1, 1);
     gtk_widget_show(label);
 
-    dialog->subject_sex_menu = gtk_combo_box_new_text();
+    dialog->subject_sex_menu = gtk_combo_box_text_new();
     for (i_subject_sex=0; i_subject_sex<AMITK_SUBJECT_SEX_NUM; i_subject_sex++) 
-      gtk_combo_box_append_text(GTK_COMBO_BOX(dialog->subject_sex_menu),
+      gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(dialog->subject_sex_menu),
 				amitk_subject_sex_get_name(i_subject_sex));
     g_signal_connect(G_OBJECT(dialog->subject_sex_menu), "changed", G_CALLBACK(dialog_change_subject_sex_cb), dialog);
-    gtk_table_attach(GTK_TABLE(packing_table), dialog->subject_sex_menu, 3,4,
-		     table_row,table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), dialog->subject_sex_menu,
+                    3, table_row, 1, 1);
     gtk_widget_show(dialog->subject_sex_menu);
 
     table_row++;
     
     /* a separator for clarity */
-    hseparator = gtk_hseparator_new();
-    gtk_table_attach(GTK_TABLE(packing_table), hseparator, 0, 5, table_row, table_row+1,
-		     GTK_FILL, 0, X_PADDING, Y_PADDING);
+    hseparator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+    gtk_grid_attach(GTK_GRID(packing_table), hseparator, 0, table_row, 5, 1);
     gtk_widget_show(hseparator);
     table_row++;
   
@@ -514,8 +498,8 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 
     /* widget to change the scaling factor */
     label = gtk_label_new(_("Conversion Type:"));
-    gtk_table_attach(GTK_TABLE(packing_table), label, table_column,table_column+1,
-		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), label,
+                    table_column, table_row, 1, 1);
     gtk_widget_show(label);
 
 
@@ -531,9 +515,11 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
       
       g_object_set_data(G_OBJECT(dialog->conversion_button[i_conversion]), "conversion", 
 			GINT_TO_POINTER(i_conversion));
-      gtk_table_attach(GTK_TABLE(packing_table), dialog->conversion_button[i_conversion], 
-		       table_column,table_column+1, inner_table_row, inner_table_row+1,
-		       0, 0, X_PADDING, Y_PADDING);
+      gtk_widget_set_halign(dialog->conversion_button[i_conversion],
+                            GTK_ALIGN_CENTER);
+      gtk_grid_attach(GTK_GRID(packing_table),
+                      dialog->conversion_button[i_conversion],
+                      table_column, inner_table_row, 1, 1);
       gtk_widget_show(dialog->conversion_button[i_conversion]);
       g_signal_connect(G_OBJECT(dialog->conversion_button[i_conversion]), "clicked",  
 		       G_CALLBACK(dialog_conversion_cb), dialog);
@@ -548,8 +534,8 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 
 
     label = gtk_label_new(_("Scaling Factor:"));
-    gtk_table_attach(GTK_TABLE(packing_table), label, table_column,table_column+1,
-		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), label,
+                    table_column, table_row, 1, 1);
     gtk_widget_show(label);
 
     dialog->scaling_factor_spin = gtk_spin_button_new_with_range(0.0, G_MAXDOUBLE, 1.0);
@@ -558,25 +544,23 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 		     G_CALLBACK(dialog_change_scale_factor_cb), dialog);
     g_signal_connect(G_OBJECT(dialog->scaling_factor_spin), "output",
 		     G_CALLBACK(amitk_spin_button_scientific_output), NULL);
-    gtk_table_attach(GTK_TABLE(packing_table), dialog->scaling_factor_spin,
-		     table_column+1,table_column+2,table_row, table_row+1, 
-		     GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), dialog->scaling_factor_spin,
+                    table_column+1, table_row, 1, 1);
     gtk_widget_show(dialog->scaling_factor_spin);
     table_row++;
 
 
     /* a separator for clarity */
-    hseparator = gtk_hseparator_new();
-    gtk_table_attach(GTK_TABLE(packing_table), hseparator, 1, 5, table_row, table_row+1,
-		     GTK_FILL, 0, X_PADDING, Y_PADDING);
+    hseparator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+    gtk_grid_attach(GTK_GRID(packing_table), hseparator, 1, table_row, 4, 1);
     gtk_widget_show(hseparator);
     table_row++;
   
 
     /* injected dose */
     label = gtk_label_new(_("Injected Dose:"));
-    gtk_table_attach(GTK_TABLE(packing_table), label, table_column,table_column+1,
-		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), label,
+                    table_column, table_row, 1, 1);
     gtk_widget_show(label);
 
     dialog->dose_spin = gtk_spin_button_new_with_range(0.0, G_MAXDOUBLE, 1.0);
@@ -585,21 +569,19 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 		     G_CALLBACK(dialog_change_dose_cb), dialog);
     g_signal_connect(G_OBJECT(dialog->dose_spin), "output",
 		     G_CALLBACK(amitk_spin_button_scientific_output), NULL);
-    gtk_table_attach(GTK_TABLE(packing_table), dialog->dose_spin,
-		     table_column+1,table_column+2,table_row, table_row+1, 
-		     GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), dialog->dose_spin,
+                    table_column+1, table_row, 1, 1);
     gtk_widget_show(dialog->dose_spin);
 
     /* injected dose units */
-    dialog->dose_unit_menu = gtk_combo_box_new_text();
+    dialog->dose_unit_menu = gtk_combo_box_text_new();
     for (i_dose_unit=0; i_dose_unit<AMITK_DOSE_UNIT_NUM; i_dose_unit++) 
-      gtk_combo_box_append_text(GTK_COMBO_BOX(dialog->dose_unit_menu),
+      gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(dialog->dose_unit_menu),
 				amitk_dose_unit_names[i_dose_unit]);				
     g_signal_connect(G_OBJECT(dialog->dose_unit_menu), "changed", 
 		     G_CALLBACK(dialog_change_dose_unit_cb), dialog);
-    gtk_table_attach(GTK_TABLE(packing_table), dialog->dose_unit_menu, 
-		     table_column+2, table_column+3, table_row,table_row+1, 
-		     GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), dialog->dose_unit_menu,
+                    table_column+2, table_row, 1, 1);
     gtk_widget_show(dialog->dose_unit_menu);
     table_row++;
 
@@ -607,8 +589,8 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 
     /* subject weight */
     label = gtk_label_new(_("Subject Weight:"));
-    gtk_table_attach(GTK_TABLE(packing_table), label, table_column,table_column+1,
-		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), label,
+                    table_column, table_row, 1, 1);
     gtk_widget_show(label);
 
     dialog->weight_spin = gtk_spin_button_new_with_range(0.0, G_MAXDOUBLE, 1.0);
@@ -617,21 +599,19 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 		     G_CALLBACK(dialog_change_weight_cb), dialog);
     g_signal_connect(G_OBJECT(dialog->weight_spin), "output",
 		     G_CALLBACK(amitk_spin_button_scientific_output), NULL);
-    gtk_table_attach(GTK_TABLE(packing_table), dialog->weight_spin,
-		     table_column+1,table_column+2,table_row, table_row+1, 
-		     GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), dialog->weight_spin,
+                    table_column+1, table_row, 1, 1);
     gtk_widget_show(dialog->weight_spin);
 
     /* subject weight units */
-    dialog->weight_unit_menu = gtk_combo_box_new_text();
+    dialog->weight_unit_menu = gtk_combo_box_text_new();
     for (i_weight_unit=0; i_weight_unit<AMITK_WEIGHT_UNIT_NUM; i_weight_unit++) 
-      gtk_combo_box_append_text(GTK_COMBO_BOX(dialog->weight_unit_menu),
+      gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(dialog->weight_unit_menu),
 				amitk_weight_unit_names[i_weight_unit]);
     g_signal_connect(G_OBJECT(dialog->weight_unit_menu), "changed", 
 		     G_CALLBACK(dialog_change_weight_unit_cb), dialog);
-    gtk_table_attach(GTK_TABLE(packing_table), dialog->weight_unit_menu, 
-		     table_column+2, table_column+3, table_row,table_row+1, 
-		     GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), dialog->weight_unit_menu,
+                    table_column+2, table_row, 1, 1);
     gtk_widget_show(dialog->weight_unit_menu);
     table_row++;
     
@@ -639,8 +619,8 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 
     /* cylinder factor */
     label = gtk_label_new(_("Cylinder Factor:"));
-    gtk_table_attach(GTK_TABLE(packing_table), label, table_column,table_column+1,
-		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), label,
+                    table_column, table_row, 1, 1);
     gtk_widget_show(label);
 
     dialog->cylinder_spin = gtk_spin_button_new_with_range(0.0, G_MAXDOUBLE, 1.0);
@@ -649,21 +629,19 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 		     G_CALLBACK(dialog_change_cylinder_cb), dialog);
     g_signal_connect(G_OBJECT(dialog->cylinder_spin), "output",
 		     G_CALLBACK(amitk_spin_button_scientific_output), NULL);
-    gtk_table_attach(GTK_TABLE(packing_table), dialog->cylinder_spin,
-		     table_column+1,table_column+2,table_row, table_row+1, 
-		     GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), dialog->cylinder_spin,
+                    table_column+1, table_row, 1, 1);
     gtk_widget_show(dialog->cylinder_spin);
 
     /* cylinder factor units */
-    dialog->cylinder_unit_menu = gtk_combo_box_new_text();
+    dialog->cylinder_unit_menu = gtk_combo_box_text_new();
     for (i_cylinder_unit=0; i_cylinder_unit<AMITK_CYLINDER_UNIT_NUM; i_cylinder_unit++) 
-      gtk_combo_box_append_text(GTK_COMBO_BOX(dialog->cylinder_unit_menu),
+      gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(dialog->cylinder_unit_menu),
 				amitk_cylinder_unit_names[i_cylinder_unit]);				
     g_signal_connect(G_OBJECT(dialog->cylinder_unit_menu), "changed", 
 		     G_CALLBACK(dialog_change_cylinder_unit_cb), dialog);
-    gtk_table_attach(GTK_TABLE(packing_table), dialog->cylinder_unit_menu, 
-		     table_column+2, table_column+3, table_row,table_row+1, 
-		     GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), dialog->cylinder_unit_menu,
+                    table_column+2, table_row, 1, 1);
     gtk_widget_show(dialog->cylinder_unit_menu);
     table_row++;
     
@@ -677,15 +655,15 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
   } else if (AMITK_IS_STUDY(object)) {
     /* widgets to change the study's creation date */
     label = gtk_label_new(_("Creation Date:"));
-    gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
     gtk_widget_show(label);
 
     dialog->creation_date_entry = gtk_entry_new();
     gtk_editable_set_editable(GTK_EDITABLE(dialog->creation_date_entry), TRUE);
     g_signal_connect(G_OBJECT(dialog->creation_date_entry), "changed", G_CALLBACK(dialog_change_creation_date_cb), dialog);
-    gtk_table_attach(GTK_TABLE(packing_table), dialog->creation_date_entry,1,2,
-		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_widget_set_hexpand(dialog->creation_date_entry, TRUE);
+    gtk_grid_attach(GTK_GRID(packing_table), dialog->creation_date_entry,
+                    1, table_row, 1, 1);
     gtk_widget_show(dialog->creation_date_entry);
     table_row++;
  
@@ -706,14 +684,15 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
   /* keep this on page 1 for fiducial points */
   if (AMITK_IS_FIDUCIAL_MARK(object)) {
     /* a separator for clarity */
-    hseparator = gtk_hseparator_new();
-    gtk_table_attach(GTK_TABLE(packing_table), hseparator, 0, 4, 
-		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+    hseparator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+    gtk_grid_attach(GTK_GRID(packing_table), hseparator, 0, table_row, 4, 1);
     gtk_widget_show(hseparator);
     table_row++;
   } else {
     /* the next page of options */
-    packing_table = gtk_table_new(7,7,FALSE);
+    packing_table = gtk_grid_new();
+    gtk_grid_set_row_spacing(GTK_GRID(packing_table), Y_PADDING);
+    gtk_grid_set_column_spacing(GTK_GRID(packing_table), X_PADDING);
     table_row=0;
     if (AMITK_IS_STUDY(object))
       label = gtk_label_new(_("View Center"));
@@ -728,16 +707,14 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     label = gtk_label_new(_("View Center (mm from origin)"));
   else
     label = gtk_label_new(_("Center Location (mm from origin)"));
-  gtk_table_attach(GTK_TABLE(packing_table), label, 0,2,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 2, 1);
   gtk_widget_show(label);
   table_row++;
 
   /* location, and dimensions for data set's */
   for (i_axis=0; i_axis<AMITK_AXIS_NUM; i_axis++) {
     label = gtk_label_new(amitk_axis_get_name(i_axis));
-    gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
     gtk_widget_show(label);
     
     dialog->center_spin[i_axis] = 
@@ -748,8 +725,8 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 		     G_CALLBACK(dialog_change_center_cb), dialog);
     g_signal_connect(G_OBJECT(dialog->center_spin[i_axis]), "output",
 		     G_CALLBACK(amitk_spin_button_scientific_output), NULL);
-    gtk_table_attach(GTK_TABLE(packing_table), dialog->center_spin[i_axis],1,2,
-		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), dialog->center_spin[i_axis],
+                    1, table_row, 1, 1);
     gtk_widget_show(dialog->center_spin[i_axis]);
     
     table_row++;
@@ -757,8 +734,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 
   if (AMITK_IS_STUDY(object)) {
     button = gtk_button_new_with_label("Shift all objects so view center is origin");
-    gtk_table_attach(GTK_TABLE(packing_table), button, 0,3,
-		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), button, 0, table_row, 3, 1);
     g_signal_connect(G_OBJECT(button), "clicked", G_CALLBACK(dialog_set_view_center_to_origin_cb), object);
     gtk_widget_show(button);
     table_row++;
@@ -766,16 +742,14 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
   }
   
   /* a separator for clarity */
-  hseparator = gtk_hseparator_new();
-  gtk_table_attach(GTK_TABLE(packing_table), hseparator, 0, 5, table_row, table_row+1,
-		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  hseparator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+  gtk_grid_attach(GTK_GRID(packing_table), hseparator, 0, table_row, 5, 1);
   gtk_widget_show(hseparator);
   table_row++;
 
   /* a canvas to indicate which way is x, y, and z */
   axis_indicator = ui_common_create_view_axis_indicator(layout);
-  gtk_table_attach(GTK_TABLE(packing_table), axis_indicator,0,5,
-		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), axis_indicator, 0, table_row, 5, 1);
   gtk_widget_show(axis_indicator);
   
   table_row++;
@@ -790,22 +764,22 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
   if (AMITK_IS_DATA_SET(object)) {
 
     /* the next page of options */
-    packing_table = gtk_table_new(4,2,FALSE);
+    packing_table = gtk_grid_new();
+    gtk_grid_set_row_spacing(GTK_GRID(packing_table), Y_PADDING);
+    gtk_grid_set_column_spacing(GTK_GRID(packing_table), X_PADDING);
     table_row=0;
     label = gtk_label_new(_("Voxel Size"));
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), packing_table, label);
     gtk_widget_show(label);
 
     label = gtk_label_new(_("Voxel Size (mm)"));
-    gtk_table_attach(GTK_TABLE(packing_table), label, 0,2,
-		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 2, 1);
     gtk_widget_show(label);
     table_row++;
       
     for (i_axis=0; i_axis<AMITK_AXIS_NUM; i_axis++) {
       label = gtk_label_new(amitk_axis_get_name(i_axis));
-      gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
       gtk_widget_show(label);
 
       dialog->voxel_size_spin[i_axis] = 
@@ -817,8 +791,8 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 		       G_CALLBACK(dialog_change_voxel_size_cb), dialog);
       g_signal_connect(G_OBJECT(dialog->voxel_size_spin[i_axis]), "output",
 		       G_CALLBACK(amitk_spin_button_scientific_output), NULL);
-      gtk_table_attach(GTK_TABLE(packing_table), dialog->voxel_size_spin[i_axis],1,2,
-		       table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(packing_table), dialog->voxel_size_spin[i_axis],
+                      1, table_row, 1, 1);
       gtk_widget_show(dialog->voxel_size_spin[i_axis]);
       table_row++;
     }	
@@ -827,8 +801,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), 
 				 dialog->aspect_ratio);
     g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(dialog_aspect_ratio_cb), dialog);
-    gtk_table_attach(GTK_TABLE(packing_table), check_button,1,2,
-		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), check_button, 1, table_row, 1, 1);
     gtk_widget_show(check_button);
     table_row++;
 
@@ -848,7 +821,9 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 	(AMITK_ROI_TYPE(object) != AMITK_ROI_TYPE_FREEHAND_3D)) {
       
       /* the next page of options */
-      packing_table = gtk_table_new(4,2,FALSE);
+      packing_table = gtk_grid_new();
+      gtk_grid_set_row_spacing(GTK_GRID(packing_table), Y_PADDING);
+      gtk_grid_set_column_spacing(GTK_GRID(packing_table), X_PADDING);
       table_row=0;
       label = gtk_label_new(_("Dimensions"));
       gtk_notebook_append_page(GTK_NOTEBOOK(notebook), packing_table, label);
@@ -856,8 +831,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 
       /* widgets to change the dimensions of the objects (in object's space) */
       label = gtk_label_new(_("Dimensions (mm) wrt to ROI"));
-      gtk_table_attach(GTK_TABLE(packing_table), label, 0,2,
-		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 2, 1);
       gtk_widget_show(label);
       table_row++;
       
@@ -868,8 +842,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 	
 	  /**************/
 	  label = gtk_label_new(amitk_axis_get_name(i_axis));
-	  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-			   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+	  gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
 	  gtk_widget_show(label);
 	
 	  dialog->dimension_spin[i_axis] = 
@@ -880,8 +853,8 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 			   G_CALLBACK(dialog_change_dim_cb), dialog);
 	  g_signal_connect(G_OBJECT(dialog->dimension_spin[i_axis]), "output",
 			   G_CALLBACK(amitk_spin_button_scientific_output), NULL);
-	  gtk_table_attach(GTK_TABLE(packing_table), dialog->dimension_spin[i_axis],1,2,
-			   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+	  gtk_grid_attach(GTK_GRID(packing_table),
+			  dialog->dimension_spin[i_axis], 1, table_row, 1, 1);
 	  gtk_widget_show(dialog->dimension_spin[i_axis]);
 	  table_row++;
 	}
@@ -933,7 +906,9 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 
     /* start making the page to adjust time values */
     label = gtk_label_new(_("Time/Gate"));
-    packing_table = gtk_table_new(4,5,FALSE);
+    packing_table = gtk_grid_new();
+    gtk_grid_set_row_spacing(GTK_GRID(packing_table), X_PADDING);
+    gtk_grid_set_column_spacing(GTK_GRID(packing_table), Y_PADDING);
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), packing_table, label);
     table_row=0;
     gtk_widget_show(label);
@@ -941,39 +916,35 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 
     /* scan start time..... */
     label = gtk_label_new(_("Scan Start Time (s)"));
-    gtk_table_attach(GTK_TABLE(packing_table),label, 0,1,
-		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
     gtk_widget_show(label);
 
     dialog->start_spin = gtk_spin_button_new_with_range(-G_MAXDOUBLE, G_MAXDOUBLE, 1.0);
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(dialog->start_spin), FALSE);
-    g_signal_connect(GTK_OBJECT(dialog->start_spin), "value_changed", 
+    g_signal_connect(dialog->start_spin, "value_changed",
 		     G_CALLBACK(dialog_change_scan_start_cb), dialog);
     g_signal_connect(G_OBJECT(dialog->start_spin), "output",
 		     G_CALLBACK(amitk_spin_button_scientific_output), NULL);
-    gtk_table_attach(GTK_TABLE(packing_table), dialog->start_spin,1,2,
-		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), dialog->start_spin,
+                    1, table_row, 1, 1);
     gtk_widget_show(dialog->start_spin);
     table_row++;
 
 
     /* a separator for clarity */
-    hseparator = gtk_hseparator_new();
-    gtk_table_attach(GTK_TABLE(packing_table), hseparator,0,2,
-		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+    hseparator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+    gtk_grid_attach(GTK_GRID(packing_table), hseparator, 0, table_row, 2, 1);
     gtk_widget_show(hseparator);
     table_row++;
 
 
     /* frame duration(s).... */
     label = gtk_label_new(_("Frame"));
-    gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
     gtk_widget_show(label);
 
     label = gtk_label_new(_("Duration (s)"));
-    gtk_table_attach(GTK_TABLE(packing_table), label, 1,2,
-		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), label, 1, table_row, 1, 1);
     gtk_widget_show(label);
     table_row++;
 
@@ -982,12 +953,17 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled),
 				   GTK_POLICY_NEVER,
 				   GTK_POLICY_AUTOMATIC);
-    secondary_table = gtk_table_new(AMITK_DATA_SET_NUM_FRAMES(object),2,TRUE);
-    gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolled), secondary_table);
+    gtk_widget_set_vexpand(scrolled, TRUE);
+    secondary_table = gtk_grid_new();
+    gtk_grid_set_row_homogeneous(GTK_GRID(secondary_table), TRUE);
+    gtk_grid_set_column_homogeneous(GTK_GRID(secondary_table), TRUE);
+    gtk_grid_set_row_spacing(GTK_GRID(secondary_table), Y_PADDING);
+    gtk_grid_set_column_spacing(GTK_GRID(secondary_table), X_PADDING);
+    gtk_widget_set_valign(secondary_table, GTK_ALIGN_START);
+    gtk_container_add(GTK_CONTAINER(scrolled), secondary_table);
     gtk_widget_show(secondary_table);
 
-    gtk_table_attach(GTK_TABLE(packing_table), scrolled, 0,2,
-		     table_row, table_row+1, 0, GTK_FILL|GTK_EXPAND, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), scrolled, 0, table_row, 2, 1);
 
     /* get memory for the spin buttons */
     dialog->duration_spins = g_try_new(GtkWidget *,AMITK_DATA_SET_NUM_FRAMES(object));
@@ -999,7 +975,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
       temp_string = g_strdup_printf("%d", i);
       label = gtk_label_new(temp_string);
       g_free(temp_string);
-      gtk_table_attach(GTK_TABLE(secondary_table), label, 0,1, i, i+1, 0, 0, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(secondary_table), label, 0, i, 1, 1);
       gtk_widget_show(label);
       
       /* and this frame's spin_button */
@@ -1012,8 +988,8 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 		       G_CALLBACK(dialog_change_frame_duration_cb), dialog);
       g_signal_connect(G_OBJECT(dialog->duration_spins[i]), "output",
 		       G_CALLBACK(amitk_spin_button_scientific_output), NULL);
-      gtk_table_attach(GTK_TABLE(secondary_table), dialog->duration_spins[i],1,2,
-		       i, i+1, 0, 0, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(secondary_table), dialog->duration_spins[i],
+                      1, i, 1, 1);
       gtk_widget_show(dialog->duration_spins[i]);
       
     }
@@ -1022,9 +998,8 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 
 
     /* a separator for clarity */
-    vseparator = gtk_vseparator_new();
-    gtk_table_attach(GTK_TABLE(packing_table), vseparator,2,3,
-		     0, table_row+1, GTK_FILL, GTK_FILL, X_PADDING, Y_PADDING);
+    vseparator = gtk_separator_new(GTK_ORIENTATION_VERTICAL);
+    gtk_grid_attach(GTK_GRID(packing_table), vseparator, 2, 0, 1, table_row+1);
     gtk_widget_show(vseparator);
     table_row=0;
 
@@ -1034,13 +1009,11 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     
     /* gate time(s).... */
     label = gtk_label_new(_("Gate"));
-    gtk_table_attach(GTK_TABLE(packing_table), label, 3,4,
-		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), label, 3, table_row, 1, 1);
     gtk_widget_show(label);
 
     label = gtk_label_new(_("Trigger Time (s)"));
-    gtk_table_attach(GTK_TABLE(packing_table), label, 4,5,
-		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), label, 4, table_row, 1, 1);
     gtk_widget_show(label);
     table_row++;
 
@@ -1049,12 +1022,17 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled),
 				   GTK_POLICY_NEVER,
 				   GTK_POLICY_AUTOMATIC);
-    secondary_table = gtk_table_new(AMITK_DATA_SET_NUM_GATES(object),2,TRUE);
-    gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolled), secondary_table);
+    gtk_widget_set_vexpand(scrolled, TRUE);
+    secondary_table = gtk_grid_new();
+    gtk_grid_set_row_homogeneous(GTK_GRID(secondary_table), TRUE);
+    gtk_grid_set_column_homogeneous(GTK_GRID(secondary_table), TRUE);
+    gtk_grid_set_row_spacing(GTK_GRID(secondary_table), Y_PADDING);
+    gtk_grid_set_column_spacing(GTK_GRID(secondary_table), X_PADDING);
+    gtk_widget_set_valign(secondary_table, GTK_ALIGN_START);
+    gtk_container_add(GTK_CONTAINER(scrolled), secondary_table);
     gtk_widget_show(secondary_table);
 
-    gtk_table_attach(GTK_TABLE(packing_table), scrolled, 3,5,
-		     table_row, table_row+1, 0, GTK_FILL|GTK_EXPAND, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), scrolled, 3, table_row, 2, 1);
 
     /* get memory for the spin buttons */
     dialog->gate_spins = g_try_new(GtkWidget *,AMITK_DATA_SET_NUM_GATES(object));
@@ -1066,7 +1044,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
       temp_string = g_strdup_printf("%d", i);
       label = gtk_label_new(temp_string);
       g_free(temp_string);
-      gtk_table_attach(GTK_TABLE(secondary_table), label, 0,1, i, i+1, 0, 0, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(secondary_table), label, 0, i, 1, 1);
       gtk_widget_show(label);
       
       /* and this gates spin_button */
@@ -1078,8 +1056,8 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 		       G_CALLBACK(dialog_change_gate_time_cb), dialog);
       g_signal_connect(G_OBJECT(dialog->gate_spins[i]), "output",
 		       G_CALLBACK(amitk_spin_button_scientific_output), NULL);
-      gtk_table_attach(GTK_TABLE(secondary_table), dialog->gate_spins[i],1,2,
-		       i, i+1, 0, 0, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(secondary_table), dialog->gate_spins[i],
+                      1, i, 1, 1);
       gtk_widget_show(dialog->gate_spins[i]);
       
     }
@@ -1094,7 +1072,9 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
      ---------------------------------------- */
   if (AMITK_IS_STUDY(object) || AMITK_IS_DATA_SET(object)) {
 
-    packing_table = gtk_table_new(4,2,FALSE);
+    packing_table = gtk_grid_new();
+    gtk_grid_set_row_spacing(GTK_GRID(packing_table), Y_PADDING);
+    gtk_grid_set_column_spacing(GTK_GRID(packing_table), X_PADDING);
     if (AMITK_IS_STUDY(object))
       label = gtk_label_new(_("ROI/View Preferences"));
     else /* AMITK_IS_DATA_SET */
@@ -1108,12 +1088,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
       ui_common_study_preferences_widgets(packing_table, table_row,
 					  &(dialog->roi_width_spin),
 					  &(dialog->roi_item), 
-#ifdef AMIDE_LIBGNOMECANVAS_AA
 					  &(dialog->roi_transparency_spin),
-#else
-					  &(dialog->line_style_menu),
-					  &(dialog->fill_roi_button),
-#endif
 					  &(dialog->layout_button1), 
 					  &(dialog->layout_button2), 
 					  &(dialog->panel_layout_button1), 
@@ -1125,15 +1100,8 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 
       g_signal_connect(G_OBJECT(dialog->roi_width_spin), "value_changed",  
 		       G_CALLBACK(dialog_change_roi_width_cb), dialog);
-#ifdef AMIDE_LIBGNOMECANVAS_AA
       g_signal_connect(G_OBJECT(dialog->roi_transparency_spin), "value_changed",  
 		       G_CALLBACK(dialog_change_roi_transparency_cb), dialog);
-#else
-      g_signal_connect(G_OBJECT(dialog->line_style_menu), "changed", 
-		       G_CALLBACK(dialog_change_line_style_cb), dialog);
-      g_signal_connect(G_OBJECT(dialog->fill_roi_button), "toggled", 
-		       G_CALLBACK(dialog_change_fill_roi_cb), dialog);
-#endif
       g_signal_connect(G_OBJECT(dialog->layout_button1), "clicked", 
 		       G_CALLBACK(dialog_change_layout_cb), dialog);
       g_signal_connect(G_OBJECT(dialog->layout_button2), "clicked", 
@@ -1160,11 +1128,11 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 				     GTK_POLICY_AUTOMATIC);
 
       windows_widget = amitk_window_edit_new(AMITK_DATA_SET(object), NULL);
-      gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolled), windows_widget);
+      gtk_container_add(GTK_CONTAINER(scrolled), windows_widget);
       gtk_widget_show(windows_widget);
 
-      gtk_table_attach(GTK_TABLE(packing_table), scrolled, 0,4,
-		       table_row, table_row+1, 0, GTK_FILL|GTK_EXPAND, X_PADDING, Y_PADDING);
+      gtk_widget_set_vexpand(scrolled, TRUE);
+      gtk_grid_attach(GTK_GRID(packing_table), scrolled, 0, table_row, 4, 1);
       gtk_widget_show(scrolled);
 
     }
@@ -1178,12 +1146,13 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
      ---------------------------------------- */
   if (AMITK_IS_ROI(object) || AMITK_IS_FIDUCIAL_MARK(object)) {
     rgba_t color_rgba;
-    GdkColor color_gdk;
-    guint16 alpha_gdk;
+    GdkRGBA rgba;
     GtkWidget * color_sel;
 
 
-    packing_table = gtk_table_new(2,2,FALSE);
+    packing_table = gtk_grid_new();
+    gtk_grid_set_row_spacing(GTK_GRID(packing_table), Y_PADDING);
+    gtk_grid_set_column_spacing(GTK_GRID(packing_table), X_PADDING);
     label = gtk_label_new(_("Color"));
     table_row=0;
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), packing_table, label);
@@ -1194,27 +1163,22 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 				 AMITK_IS_ROI(object) ? AMITK_ROI_SPECIFY_COLOR(object) :
 				 AMITK_FIDUCIAL_MARK_SPECIFY_COLOR(object));
     g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(dialog_specify_color_cb), dialog);
-    gtk_table_attach(GTK_TABLE(packing_table), check_button,0,1,
-		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), check_button, 0, table_row, 1, 1);
     gtk_widget_show(check_button);
     table_row++;
 
     
     color_rgba = AMITK_IS_ROI(object) ? AMITK_ROI_COLOR(object) : AMITK_FIDUCIAL_MARK_COLOR(object);
-    color_gdk.red = color_rgba.r << 8;
-    color_gdk.green = color_rgba.g << 8;
-    color_gdk.blue = color_rgba.b << 8;
-    alpha_gdk = color_rgba.a << 8;
-  
+    rgba.red = CLAMP(color_rgba.r / 255., 0., 1.);
+    rgba.green = CLAMP(color_rgba.g / 255., 0., 1.);
+    rgba.blue = CLAMP(color_rgba.b / 255., 0., 1.);
+    rgba.alpha = CLAMP(color_rgba.a / 255., 0., 1.);
 
-    color_sel = gtk_color_selection_new();
-    gtk_color_selection_set_has_opacity_control(GTK_COLOR_SELECTION(color_sel), TRUE);
-    gtk_color_selection_set_has_palette(GTK_COLOR_SELECTION(color_sel), TRUE);
-    gtk_color_selection_set_current_alpha(GTK_COLOR_SELECTION(color_sel), alpha_gdk);
-    gtk_color_selection_set_current_color(GTK_COLOR_SELECTION(color_sel), &color_gdk);
-    g_signal_connect(G_OBJECT(color_sel), "color_changed", G_CALLBACK(dialog_change_color_cb), dialog);
-    gtk_table_attach(GTK_TABLE(packing_table), color_sel, 0, 2,
-		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+    color_sel = gtk_color_chooser_widget_new();
+    gtk_color_chooser_set_use_alpha(GTK_COLOR_CHOOSER(color_sel), TRUE);
+    gtk_color_chooser_set_rgba(GTK_COLOR_CHOOSER(color_sel), &rgba);
+    g_signal_connect(color_sel, "color-activated", G_CALLBACK(dialog_change_color_cb), dialog);
+    gtk_grid_attach(GTK_GRID(packing_table), color_sel, 0, table_row, 2, 1);
     gtk_widget_show(color_sel);
     table_row++;
 
@@ -1239,7 +1203,9 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     
   if (immutables) {
 
-    packing_table = gtk_table_new(12,5,FALSE);
+    packing_table = gtk_grid_new();
+    gtk_grid_set_row_spacing(GTK_GRID(packing_table), Y_PADDING);
+    gtk_grid_set_column_spacing(GTK_GRID(packing_table), X_PADDING);
     label = gtk_label_new(_("Immutables"));
     table_row=0;
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), packing_table, label);
@@ -1247,14 +1213,13 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     
     if (AMITK_IS_STUDY(object)) {
       label = gtk_label_new(_("Max-Min Voxel Dim"));
-      gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
       gtk_widget_show(label);
       
       dialog->voxel_dim_entry = gtk_entry_new();
       gtk_editable_set_editable(GTK_EDITABLE(dialog->voxel_dim_entry), FALSE);
-      gtk_table_attach(GTK_TABLE(packing_table), dialog->voxel_dim_entry,1,2,
-		       table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(packing_table), dialog->voxel_dim_entry,
+                      1, table_row, 1, 1);
       gtk_widget_show(dialog->voxel_dim_entry);
       
       table_row++;
@@ -1263,27 +1228,25 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
       if (AMITK_ROI_TYPE_ISOCONTOUR(object)) {
 
 	label = gtk_label_new(_("Isocontour Min Specified Value"));
-	gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-			 table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+	gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
 	gtk_widget_show(label);
 	
 	dialog->isocontour_min_value_entry = gtk_entry_new();
 	gtk_editable_set_editable(GTK_EDITABLE(dialog->isocontour_min_value_entry), FALSE);
-	gtk_table_attach(GTK_TABLE(packing_table), dialog->isocontour_min_value_entry,1,2,
-			 table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+	gtk_grid_attach(GTK_GRID(packing_table),
+			dialog->isocontour_min_value_entry, 1, table_row, 1, 1);
 	gtk_widget_show(dialog->isocontour_min_value_entry);
 	
 	table_row++;
 
 	label = gtk_label_new(_("Isocontour Max Specified Value"));
-	gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-			 table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+	gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
 	gtk_widget_show(label);
 	
 	dialog->isocontour_max_value_entry = gtk_entry_new();
 	gtk_editable_set_editable(GTK_EDITABLE(dialog->isocontour_max_value_entry), FALSE);
-	gtk_table_attach(GTK_TABLE(packing_table), dialog->isocontour_max_value_entry,1,2,
-			 table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+	gtk_grid_attach(GTK_GRID(packing_table),
+			dialog->isocontour_max_value_entry, 1, table_row, 1, 1);
 	gtk_widget_show(dialog->isocontour_max_value_entry);
 	
 	table_row++;
@@ -1329,8 +1292,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 	label = gtk_label_new(_("Memory Used (bytes):"));
 	break;
       }
-      gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
       gtk_widget_show(label);
       
       entry = gtk_entry_new();
@@ -1338,62 +1300,53 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
       gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
       g_free(temp_string);
       gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
-      gtk_table_attach(GTK_TABLE(packing_table), entry,
-		       1,2, table_row, table_row+1, 
-		       GTK_FILL, 0, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(packing_table), entry, 1, table_row, 1, 1);
       gtk_widget_show(entry);
       table_row++;
       
       /* widget to tell you the internal data format */
       label = gtk_label_new(_("Data Format:"));
-      gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
       gtk_widget_show(label);
       
       entry = gtk_entry_new();
       gtk_entry_set_text(GTK_ENTRY(entry), 
 			 amitk_format_names[AMITK_DATA_SET_FORMAT(object)]);
       gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
-      gtk_table_attach(GTK_TABLE(packing_table), entry,
-		       1,2, table_row, table_row+1, 
-		       GTK_FILL, 0, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(packing_table), entry, 1, table_row, 1, 1);
       gtk_widget_show(entry);
       table_row++;
       
       /* a separator for clarity */
-      hseparator = gtk_hseparator_new();
-      gtk_table_attach(GTK_TABLE(packing_table), hseparator,0,2,
-		       table_row, table_row+1, GTK_FILL, GTK_FILL, X_PADDING, Y_PADDING);
+      hseparator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+      gtk_widget_set_valign(hseparator, GTK_ALIGN_CENTER);
+      gtk_grid_attach(GTK_GRID(packing_table), hseparator, 0, table_row, 2, 1);
       gtk_widget_show(hseparator);
       table_row++;
       
       /* widget to tell you the scaling format */
       label = gtk_label_new(_("Scale Format:"));
-      gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
       gtk_widget_show(label);
       
       entry = gtk_entry_new();
       gtk_entry_set_text(GTK_ENTRY(entry), 
 			 amitk_scaling_menu_names[AMITK_DATA_SET_SCALING_TYPE(object)]);
       gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
-      gtk_table_attach(GTK_TABLE(packing_table), entry,
-		       1,2, table_row, table_row+1, 
-		       GTK_FILL, 0, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(packing_table), entry, 1, table_row, 1, 1);
       gtk_widget_show(entry);
       table_row++;
       
       /* a separator for clarity */
-      hseparator = gtk_hseparator_new();
-      gtk_table_attach(GTK_TABLE(packing_table), hseparator,0,2,
-		       table_row, table_row+1, GTK_FILL, GTK_FILL, X_PADDING, Y_PADDING);
+      hseparator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+      gtk_widget_set_valign(hseparator, GTK_ALIGN_CENTER);
+      gtk_grid_attach(GTK_GRID(packing_table), hseparator, 0, table_row, 2, 1);
       gtk_widget_show(hseparator);
       table_row++;
       
       /* widgets to display the data set dimensions */
       label = gtk_label_new(_("Data Set Dimensions (voxels)"));
-      gtk_table_attach(GTK_TABLE(packing_table), label, 0,2,
-		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 2, 1);
       gtk_widget_show(label);
       table_row++;
       
@@ -1401,8 +1354,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
       for (i_dim=0; i_dim < AMITK_DIM_NUM; i_dim++) {
 
 	label = gtk_label_new(amitk_dim_get_name(i_dim));
-	gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-			 table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+	gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
 	gtk_widget_show(label);
 	
 	entry = gtk_entry_new();
@@ -1410,25 +1362,22 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 	gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
 	g_free(temp_string);
 	gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
-	gtk_table_attach(GTK_TABLE(packing_table), entry,1,2,
-			 table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+	gtk_grid_attach(GTK_GRID(packing_table), entry, 1, table_row, 1, 1);
 	gtk_widget_show(entry);
 	table_row++;
       }
 
 
       /* a separator for clarity */
-      vseparator = gtk_vseparator_new();
-      gtk_table_attach(GTK_TABLE(packing_table), vseparator,2,3,
-		       0, table_row, GTK_FILL, GTK_FILL, X_PADDING, Y_PADDING);
+      vseparator = gtk_separator_new(GTK_ORIENTATION_VERTICAL);
+      gtk_grid_attach(GTK_GRID(packing_table), vseparator, 2, 0, 1, table_row);
       gtk_widget_show(vseparator);
 
       table_row=0;
 
       /* MRI parameters */
       label = gtk_label_new(_("MRI Parameters"));
-      gtk_table_attach(GTK_TABLE(packing_table), label, 3,5,
-		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(packing_table), label, 3, table_row, 2, 1);
       gtk_widget_show(label);
       table_row++;
 
@@ -1436,8 +1385,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 
       /* inversion time */
       label = gtk_label_new(_("Inversion Time (ms):"));
-      gtk_table_attach(GTK_TABLE(packing_table), label, 3,4,
-		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(packing_table), label, 3, table_row, 1, 1);
       gtk_widget_show(label);
       
       entry = gtk_entry_new();
@@ -1446,16 +1394,13 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
       g_free(temp_string);
 			 
       gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
-      gtk_table_attach(GTK_TABLE(packing_table), entry,
-		       4,5, table_row, table_row+1, 
-		       GTK_FILL, 0, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(packing_table), entry, 4, table_row, 1, 1);
       gtk_widget_show(entry);
       table_row++;
 
       /* echo time */
       label = gtk_label_new(_("Echo Time (ms):"));
-      gtk_table_attach(GTK_TABLE(packing_table), label, 3,4,
-		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(packing_table), label, 3, table_row, 1, 1);
       gtk_widget_show(label);
       
       entry = gtk_entry_new();
@@ -1464,16 +1409,13 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
       g_free(temp_string);
 			 
       gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
-      gtk_table_attach(GTK_TABLE(packing_table), entry,
-		       4,5, table_row, table_row+1, 
-		       GTK_FILL, 0, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(packing_table), entry, 4, table_row, 1, 1);
       gtk_widget_show(entry);
       table_row++;
 
       /* b factor */
       label = gtk_label_new(_("Diffusion B Value:"));
-      gtk_table_attach(GTK_TABLE(packing_table), label, 3,4,
-		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(packing_table), label, 3, table_row, 1, 1);
       gtk_widget_show(label);
       
       entry = gtk_entry_new();
@@ -1482,16 +1424,13 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
       g_free(temp_string);
 			 
       gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
-      gtk_table_attach(GTK_TABLE(packing_table), entry,
-		       4,5, table_row, table_row+1, 
-		       GTK_FILL, 0, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(packing_table), entry, 4, table_row, 1, 1);
       gtk_widget_show(entry);
       table_row++;
 
       /* diffusion direction */
       label = gtk_label_new(_("Diffusion Direction:"));
-      gtk_table_attach(GTK_TABLE(packing_table), label, 3,4,
-		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(packing_table), label, 3, table_row, 1, 1);
       gtk_widget_show(label);
       
       entry = gtk_entry_new();
@@ -1503,30 +1442,26 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
       g_free(temp_string);
 			 
       gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
-      gtk_table_attach(GTK_TABLE(packing_table), entry,
-		       4,5, table_row, table_row+1, 
-		       GTK_FILL, 0, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(packing_table), entry, 4, table_row, 1, 1);
       gtk_widget_show(entry);
       table_row++;
 
       /* a separator for clarity */
-      hseparator = gtk_hseparator_new();
-      gtk_table_attach(GTK_TABLE(packing_table), hseparator,3,5,
-		       table_row, table_row+1, GTK_FILL, GTK_FILL, X_PADDING, Y_PADDING);
+      hseparator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+      gtk_widget_set_valign(hseparator, GTK_ALIGN_CENTER);
+      gtk_grid_attach(GTK_GRID(packing_table), hseparator, 3, table_row, 2, 1);
       gtk_widget_show(hseparator);
       table_row++;
 
       /* additional parameters */
       label = gtk_label_new(_("Misc. Parameters"));
-      gtk_table_attach(GTK_TABLE(packing_table), label, 3,5,
-		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(packing_table), label, 3, table_row, 2, 1);
       gtk_widget_show(label);
       table_row++;
 
       /* series number */
       label = gtk_label_new(_("Series Number:"));
-      gtk_table_attach(GTK_TABLE(packing_table), label, 3,4,
-		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(packing_table), label, 3, table_row, 1, 1);
       gtk_widget_show(label);
       
       entry = gtk_entry_new();
@@ -1535,16 +1470,13 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
       g_free(temp_string);
 			 
       gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
-      gtk_table_attach(GTK_TABLE(packing_table), entry,
-		       4,5, table_row, table_row+1, 
-		       GTK_FILL, 0, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(packing_table), entry, 4, table_row, 1, 1);
       gtk_widget_show(entry);
       table_row++;
 
       /* dicom image type */
       label = gtk_label_new(_("Dicom Image Type:"));
-      gtk_table_attach(GTK_TABLE(packing_table), label, 3,4,
-		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(packing_table), label, 3, table_row, 1, 1);
       gtk_widget_show(label);
       
       entry = gtk_entry_new();
@@ -1552,9 +1484,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 	gtk_entry_set_text(GTK_ENTRY(entry), AMITK_DATA_SET_DICOM_IMAGE_TYPE(object));
 			 
       gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
-      gtk_table_attach(GTK_TABLE(packing_table), entry,
-		       4,5, table_row, table_row+1, 
-		       GTK_FILL, 0, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(packing_table), entry, 4, table_row, 1, 1);
       gtk_widget_show(entry);
       table_row++;
     }
@@ -1737,19 +1667,9 @@ static void dialog_update_entries(AmitkObjectDialog * dialog) {
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(dialog->roi_width_spin), AMITK_STUDY_CANVAS_ROI_WIDTH(dialog->object));
       g_signal_handlers_unblock_by_func(G_OBJECT(dialog->roi_width_spin),  G_CALLBACK(dialog_change_roi_width_cb), dialog);
 
-#ifdef AMIDE_LIBGNOMECANVAS_AA
       g_signal_handlers_block_by_func(G_OBJECT(dialog->roi_transparency_spin),  G_CALLBACK(dialog_change_roi_transparency_cb), dialog);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(dialog->roi_transparency_spin), AMITK_STUDY_CANVAS_ROI_TRANSPARENCY(dialog->object));
       g_signal_handlers_unblock_by_func(G_OBJECT(dialog->roi_transparency_spin),  G_CALLBACK(dialog_change_roi_transparency_cb), dialog);
-#else
-      g_signal_handlers_block_by_func(G_OBJECT(dialog->line_style_menu), G_CALLBACK(dialog_change_line_style_cb), dialog);
-      gtk_combo_box_set_active(GTK_COMBO_BOX(dialog->line_style_menu), AMITK_STUDY_CANVAS_LINE_STYLE(dialog->object));
-      g_signal_handlers_unblock_by_func(G_OBJECT(dialog->line_style_menu), G_CALLBACK(dialog_change_line_style_cb), dialog);
-      g_signal_handlers_block_by_func(G_OBJECT(dialog->fill_roi_button), G_CALLBACK(dialog_change_fill_roi_cb), dialog);
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog->fill_roi_button), 
-				   AMITK_STUDY_CANVAS_FILL_ROI(dialog->object));
-      g_signal_handlers_unblock_by_func(G_OBJECT(dialog->fill_roi_button), G_CALLBACK(dialog_change_fill_roi_cb), dialog);
-#endif
 
       g_signal_handlers_block_by_func(G_OBJECT(dialog->layout_button1), G_CALLBACK(dialog_change_layout_cb), dialog);
       g_signal_handlers_block_by_func(G_OBJECT(dialog->layout_button2),  G_CALLBACK(dialog_change_layout_cb), dialog);
@@ -1860,8 +1780,6 @@ static void dialog_update_interpolation(AmitkObjectDialog * dialog) {
   for (i_interpolation=0; i_interpolation < AMITK_INTERPOLATION_NUM; i_interpolation++)
     g_signal_handlers_block_by_func(G_OBJECT(dialog->interpolation_button[i_interpolation]),
 				    G_CALLBACK(dialog_change_interpolation_cb), dialog);
-  /* need the button pressed to get the display to update correctly */
-  gtk_button_pressed(GTK_BUTTON(dialog->interpolation_button[interpolation]));
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog->interpolation_button[interpolation]),TRUE);
 
   for (i_interpolation=0; i_interpolation < AMITK_INTERPOLATION_NUM; i_interpolation++)
@@ -1892,8 +1810,6 @@ static void dialog_update_conversion(AmitkObjectDialog * dialog) {
   for (i_conversion=0; i_conversion < AMITK_CONVERSION_NUM; i_conversion++)
     g_signal_handlers_block_by_func(G_OBJECT(dialog->conversion_button[i_conversion]),
 				    G_CALLBACK(dialog_conversion_cb), dialog);
-  /* need the button pressed to get the display to update correctly */
-  gtk_button_pressed(GTK_BUTTON(dialog->conversion_button[conversion]));
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog->conversion_button[conversion]),TRUE);
 
   for (i_conversion=0; i_conversion < AMITK_CONVERSION_NUM; i_conversion++)
@@ -1928,11 +1844,7 @@ static void dialog_update_roi_sample_item(AmitkObjectDialog * dialog) {
 
   ui_common_update_sample_roi_item(dialog->roi_item,
 				   AMITK_STUDY_CANVAS_ROI_WIDTH(dialog->object),
-#ifdef AMIDE_LIBGNOMECANVAS_AA
 				   AMITK_STUDY_CANVAS_ROI_TRANSPARENCY(dialog->object)
-#else
-				   AMITK_STUDY_CANVAS_LINE_STYLE(dialog->object)
-#endif
 				   );
   
   return;
@@ -2493,7 +2405,6 @@ static void dialog_change_roi_width_cb(GtkWidget * widget, gpointer data){
   return;
 }
 
-#ifdef AMIDE_LIBGNOMECANVAS_AA
 static void dialog_change_roi_transparency_cb(GtkWidget * widget, gpointer data){
   AmitkObjectDialog * dialog = data;
   g_return_if_fail(AMITK_IS_STUDY(dialog->object));
@@ -2502,24 +2413,6 @@ static void dialog_change_roi_transparency_cb(GtkWidget * widget, gpointer data)
 
   return;
 }
-
-#else
-static void dialog_change_line_style_cb(GtkWidget * widget, gpointer data) {
-  AmitkObjectDialog * dialog = data;
-  g_return_if_fail(AMITK_IS_STUDY(dialog->object));
-  amitk_study_set_canvas_line_style(AMITK_STUDY(dialog->object), 
-				    gtk_combo_box_get_active(GTK_COMBO_BOX(widget)));
-  return;
-}
-
-static void dialog_change_fill_roi_cb(GtkWidget * widget, gpointer data) {
-  AmitkObjectDialog * dialog = data;
-  g_return_if_fail(AMITK_IS_STUDY(dialog->object));
-  amitk_study_set_canvas_fill_roi(AMITK_STUDY(dialog->object),
-				  gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
-  return;
-}
-#endif
 
 static void dialog_change_layout_cb(GtkWidget * widget, gpointer data) {
   AmitkObjectDialog * dialog = data;
@@ -2571,20 +2464,14 @@ static void dialog_specify_color_cb(GtkWidget * widget, gpointer data) {
   return;
 }
 
-static void dialog_change_color_cb(GtkWidget * widget, gpointer data) {
+static void dialog_change_color_cb(GtkWidget * widget, GdkRGBA *rgba, gpointer data) {
   AmitkObjectDialog * dialog = data;
   rgba_t new_color;
-  GdkColor color_gdk;
-  guint16 alpha;
 
-
-  gtk_color_selection_get_current_color(GTK_COLOR_SELECTION(widget), &color_gdk);
-  alpha = gtk_color_selection_get_current_alpha(GTK_COLOR_SELECTION(widget));
-
-  new_color.r = color_gdk.red >> 8;
-  new_color.g = color_gdk.green >> 8;
-  new_color.b = color_gdk.blue >> 8;
-  new_color.a = alpha >> 8;
+  new_color.r = (int)(0.5 + CLAMP(rgba->red, 0., 1.) * 255.);
+  new_color.g = (int)(0.5 + CLAMP(rgba->green, 0., 1.) * 255.);
+  new_color.b = (int)(0.5 + CLAMP(rgba->blue, 0., 1.) * 255.);
+  new_color.a = (int)(0.5 + CLAMP(rgba->alpha, 0., 1.) * 255.);
 
   if (AMITK_IS_ROI(dialog->object))
     amitk_roi_set_color(AMITK_ROI(dialog->object), new_color);

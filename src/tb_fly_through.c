@@ -28,7 +28,6 @@
 #if (AMIDE_FFMPEG_SUPPORT || AMIDE_LIBFAME_SUPPORT)
 
 #include <sys/stat.h>
-#include <libgnomecanvas/gnome-canvas-pixbuf.h>
 #include "amide.h"
 #include "amitk_threshold.h"
 #include "amitk_progress_dialog.h"
@@ -102,7 +101,7 @@ static void set_end_position_pressed_cb(GtkWidget * button, gpointer data);
 static void change_start_position_spin_cb(GtkWidget * widget, gpointer data);
 static void change_end_position_spin_cb(GtkWidget * widget, gpointer data);
 static void change_duration_spin_cb(GtkWidget * widget, gpointer data);
-static void destroy_cb(GtkObject * object, gpointer data);
+static void destroy_cb(GtkWidget * object, gpointer data);
 static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data);
 static void response_cb (GtkDialog * dialog, gint response_id, gpointer data);
 
@@ -272,7 +271,7 @@ static void change_duration_spin_cb(GtkWidget * widget, gpointer data) {
   return;
 }
 
-static void destroy_cb(GtkObject * object, gpointer data) {
+static void destroy_cb(GtkWidget * object, gpointer data) {
   tb_fly_through_t * tb_fly_through = data;
   tb_fly_through = tb_fly_through_unref(tb_fly_through); /* free the associated data structure */
 }
@@ -308,8 +307,8 @@ static void response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
     file_chooser = gtk_file_chooser_dialog_new(_("Output MPEG As"),
 					       GTK_WINDOW(dialog), /* parent window */
 					       GTK_FILE_CHOOSER_ACTION_SAVE,
-					       GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-					       GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+					       _("_Cancel"), GTK_RESPONSE_CANCEL,
+					       _("_Save"), GTK_RESPONSE_ACCEPT,
 					       NULL);
     gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(file_chooser), TRUE);
     gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(file_chooser), TRUE);
@@ -697,8 +696,8 @@ void tb_fly_through(AmitkStudy * study,
 
   tb_fly_through->dialog = 
     gtk_dialog_new_with_buttons(_("Fly Through Generation"),  parent,
-				GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_NO_SEPARATOR,
-				GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+				GTK_DIALOG_DESTROY_WITH_PARENT,
+				_("_Cancel"), GTK_RESPONSE_CANCEL,
 				_("_Generate Fly Through"), AMITK_RESPONSE_EXECUTE,
 				NULL);
 
@@ -711,26 +710,28 @@ void tb_fly_through(AmitkStudy * study,
   gtk_window_set_resizable(GTK_WINDOW(tb_fly_through->dialog), TRUE);
 
   /* make the widgets for this dialog box */
-  packing_table = gtk_table_new(2,3,FALSE);
-  gtk_container_add (GTK_CONTAINER (GTK_DIALOG(tb_fly_through->dialog)->vbox), packing_table);
+  packing_table = gtk_grid_new();
+  gtk_grid_set_row_spacing(GTK_GRID(packing_table), Y_PADDING);
+  gtk_grid_set_column_spacing(GTK_GRID(packing_table), X_PADDING);
+  gtk_container_add (GTK_CONTAINER (gtk_dialog_get_content_area
+                                    (GTK_DIALOG(tb_fly_through->dialog))),
+                     packing_table);
 
-  right_table = gtk_table_new(9,2,FALSE);
-  gtk_table_attach(GTK_TABLE(packing_table), right_table, 2,3, 0,2,
-		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+  right_table = gtk_grid_new();
+  gtk_grid_set_row_spacing(GTK_GRID(right_table), Y_PADDING);
+  gtk_grid_set_column_spacing(GTK_GRID(right_table), X_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), right_table, 2, 0, 1, 2);
 
   label = gtk_label_new(_("Current Position (mm):"));
-  gtk_table_attach(GTK_TABLE(right_table), label, 0,1, table_row,table_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(right_table), label, 0, table_row, 1, 1);
   tb_fly_through->position_entry = gtk_entry_new();
   gtk_editable_set_editable(GTK_EDITABLE(tb_fly_through->position_entry), FALSE);
-  gtk_table_attach(GTK_TABLE(right_table), tb_fly_through->position_entry,
-		   1,2, table_row, table_row+1, 
-		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(right_table), tb_fly_through->position_entry,
+                  1, table_row, 1, 1);
   table_row++;
 
   label = gtk_label_new(_("Start Position (mm):"));
-  gtk_table_attach(GTK_TABLE(right_table), label, 0,1, table_row,table_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(right_table), label, 0, table_row, 1, 1);
   tb_fly_through->start_position_spin = 
     gtk_spin_button_new_with_range(-G_MAXDOUBLE, G_MAXDOUBLE, 1.0);
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(tb_fly_through->start_position_spin), FALSE);
@@ -738,14 +739,12 @@ void tb_fly_through(AmitkStudy * study,
 		   G_CALLBACK(change_start_position_spin_cb), tb_fly_through);
   g_signal_connect(G_OBJECT(tb_fly_through->start_position_spin), "output",
 		   G_CALLBACK(amitk_spin_button_scientific_output), NULL);
-  gtk_table_attach(GTK_TABLE(right_table), tb_fly_through->start_position_spin,
-		   1,2, table_row, table_row+1, 
-		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(right_table), tb_fly_through->start_position_spin,
+                  1, table_row, 1, 1);
   table_row++;
 
   label = gtk_label_new(_("End Position (mm):"));
-  gtk_table_attach(GTK_TABLE(right_table), label, 0,1, table_row,table_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(right_table), label, 0, table_row, 1, 1);
   tb_fly_through->end_position_spin = 
     gtk_spin_button_new_with_range(-G_MAXDOUBLE, G_MAXDOUBLE, 1.0);
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(tb_fly_through->end_position_spin), FALSE);
@@ -753,14 +752,12 @@ void tb_fly_through(AmitkStudy * study,
 		   G_CALLBACK(change_end_position_spin_cb), tb_fly_through);
   g_signal_connect(G_OBJECT(tb_fly_through->end_position_spin), "output",
 		   G_CALLBACK(amitk_spin_button_scientific_output), NULL);
-  gtk_table_attach(GTK_TABLE(right_table), tb_fly_through->end_position_spin,
-		   1,2, table_row, table_row+1, 
-		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(right_table), tb_fly_through->end_position_spin,
+                  1, table_row, 1, 1);
   table_row++;
 
   label = gtk_label_new(_("Movie Duration (sec):"));
-  gtk_table_attach(GTK_TABLE(right_table), label, 0,1, table_row,table_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(right_table), label, 0, table_row, 1, 1);
   tb_fly_through->duration_spin_button = 
     gtk_spin_button_new_with_range(0, G_MAXDOUBLE, 1.0);
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(tb_fly_through->duration_spin_button), FALSE);
@@ -768,9 +765,8 @@ void tb_fly_through(AmitkStudy * study,
 		   G_CALLBACK(change_duration_spin_cb), tb_fly_through);
   g_signal_connect(G_OBJECT(tb_fly_through->duration_spin_button), "output",
 		   G_CALLBACK(amitk_spin_button_scientific_output), NULL);
-  gtk_table_attach(GTK_TABLE(right_table), tb_fly_through->duration_spin_button,
-		   1,2, table_row, table_row+1, 
-		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(right_table), tb_fly_through->duration_spin_button,
+                  1, table_row, 1, 1);
   table_row++;
 
   /* the progress dialog */
@@ -783,20 +779,18 @@ void tb_fly_through(AmitkStudy * study,
 					    AMITK_VIEW_MODE_SINGLE, AMITK_CANVAS_TYPE_FLY_THROUGH);
   g_signal_connect(G_OBJECT(tb_fly_through->canvas), "view_changed",
 		   G_CALLBACK(view_changed_cb), tb_fly_through);
-  gtk_table_attach(GTK_TABLE(packing_table), tb_fly_through->canvas, 0,2,0,1,
-		   X_PACKING_OPTIONS | GTK_FILL, Y_PACKING_OPTIONS | GTK_FILL,
-		   X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), tb_fly_through->canvas, 0, 0, 2, 1);
 
   tb_fly_through->start_position_button = gtk_button_new_with_label(_("Set Start Position"));
   g_signal_connect(G_OBJECT(tb_fly_through->start_position_button), "pressed",
 		   G_CALLBACK(set_start_position_pressed_cb), tb_fly_through);
-  gtk_table_attach(GTK_TABLE(packing_table), tb_fly_through->start_position_button, 
-		   0,1,1,2, X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), tb_fly_through->start_position_button,
+                  0, 1, 1, 1);
   tb_fly_through->end_position_button = gtk_button_new_with_label(_("Set End Position"));
   g_signal_connect(G_OBJECT(tb_fly_through->end_position_button), "pressed",
 		   G_CALLBACK(set_end_position_pressed_cb), tb_fly_through);
-  gtk_table_attach(GTK_TABLE(packing_table), tb_fly_through->end_position_button, 
-		   1,2,1,2, X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), tb_fly_through->end_position_button,
+                  1, 1, 1, 1);
   table_row++;
 
 
@@ -844,19 +838,16 @@ void tb_fly_through(AmitkStudy * study,
 
   if (tb_fly_through->dynamic || tb_fly_through->gated) {
     /* a separator for clarity */
-    hseparator = gtk_hseparator_new();
-    gtk_table_attach(GTK_TABLE(right_table), hseparator, 0,2,
-		     table_row, table_row+1,GTK_FILL, 0, X_PADDING, Y_PADDING);
+    hseparator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+    gtk_grid_attach(GTK_GRID(right_table), hseparator, 0, table_row, 2, 1);
     table_row++;
     
     /* do we want to make a movie over time or over frames */
     label = gtk_label_new(_("Dynamic Movie:"));
-    gtk_table_attach(GTK_TABLE(right_table), label, 0,1,
-		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(right_table), label, 0, table_row, 1, 1);
     
-    hbox = gtk_hbox_new(FALSE, 0);
-    gtk_table_attach(GTK_TABLE(right_table), hbox,1,2,
-		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+    hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+    gtk_grid_attach(GTK_GRID(right_table), hbox, 1, table_row, 1, 1);
     gtk_widget_show(hbox);
     table_row++;
     
@@ -877,9 +868,8 @@ void tb_fly_through(AmitkStudy * study,
       g_object_set_data(G_OBJECT(radio_button3), "dynamic_type", GINT_TO_POINTER(OVER_FRAMES));
     }
     
-    hbox = gtk_hbox_new(FALSE, 0);
-    gtk_table_attach(GTK_TABLE(right_table), hbox,1,2,
-		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+    hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+    gtk_grid_attach(GTK_GRID(right_table), hbox, 1, table_row, 1, 1);
     gtk_widget_show(hbox);
     table_row++;
 
@@ -911,11 +901,11 @@ void tb_fly_through(AmitkStudy * study,
     
     /* widgets to specify the start and end times */
     tb_fly_through->start_time_label = gtk_label_new(_("Start Time (s)"));
-    gtk_table_attach(GTK_TABLE(right_table), tb_fly_through->start_time_label, 0,1,
-		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(right_table), tb_fly_through->start_time_label,
+                    0, table_row, 1, 1);
     tb_fly_through->start_frame_label = gtk_label_new(_("Start Frame"));
-    gtk_table_attach(GTK_TABLE(right_table), tb_fly_through->start_frame_label, 0,1,
-		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(right_table), tb_fly_through->start_frame_label,
+                    0, table_row, 1, 1);
     
     tb_fly_through->start_time_spin_button = 
       gtk_spin_button_new_with_range(tb_fly_through->start_time, tb_fly_through->end_time, 1.0);
@@ -926,8 +916,8 @@ void tb_fly_through(AmitkStudy * study,
 		     G_CALLBACK(change_start_time_cb), tb_fly_through);
     g_signal_connect(G_OBJECT(tb_fly_through->start_time_spin_button), "output",
 		     G_CALLBACK(amitk_spin_button_scientific_output), NULL);
-    gtk_table_attach(GTK_TABLE(right_table), tb_fly_through->start_time_spin_button,1,2,
-		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(right_table), tb_fly_through->start_time_spin_button,
+                    1, table_row, 1, 1);
     
     tb_fly_through->start_frame_spin_button =
       gtk_spin_button_new_with_range(tb_fly_through->start_frame,tb_fly_through->end_frame+0.1, 1.0);
@@ -936,16 +926,17 @@ void tb_fly_through(AmitkStudy * study,
 			      tb_fly_through->start_frame);
     g_signal_connect(G_OBJECT(tb_fly_through->start_frame_spin_button), "value_changed", 
 		     G_CALLBACK(change_start_frame_cb), tb_fly_through);
-    gtk_table_attach(GTK_TABLE(right_table), tb_fly_through->start_frame_spin_button,1,2,
-		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(right_table),
+                    tb_fly_through->start_frame_spin_button,
+                    1, table_row, 1, 1);
     table_row++;
     
     tb_fly_through->end_time_label = gtk_label_new(_("End Time (s)"));
-    gtk_table_attach(GTK_TABLE(right_table), tb_fly_through->end_time_label, 0,1,
-		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(right_table), tb_fly_through->end_time_label,
+                    0, table_row, 1, 1);
     tb_fly_through->end_frame_label = gtk_label_new(_("End Frame"));
-    gtk_table_attach(GTK_TABLE(right_table), tb_fly_through->end_frame_label, 0,1,
-		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(right_table), tb_fly_through->end_frame_label,
+                    0, table_row, 1, 1);
     
     
     tb_fly_through->end_time_spin_button =
@@ -957,8 +948,8 @@ void tb_fly_through(AmitkStudy * study,
 		     G_CALLBACK(change_end_time_cb), tb_fly_through);
     g_signal_connect(G_OBJECT(tb_fly_through->end_time_spin_button), "output",
 		     G_CALLBACK(amitk_spin_button_scientific_output), NULL);
-    gtk_table_attach(GTK_TABLE(right_table), tb_fly_through->end_time_spin_button,1,2,
-		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(right_table), tb_fly_through->end_time_spin_button,
+                    1, table_row, 1, 1);
     
     tb_fly_through->end_frame_spin_button =
       gtk_spin_button_new_with_range(tb_fly_through->start_frame,tb_fly_through->end_frame+0.1, 1.0);
@@ -967,19 +958,20 @@ void tb_fly_through(AmitkStudy * study,
 			      tb_fly_through->end_frame);
     g_signal_connect(G_OBJECT(tb_fly_through->end_frame_spin_button), "value_changed", 
 		     G_CALLBACK(change_end_frame_cb), tb_fly_through);
-    gtk_table_attach(GTK_TABLE(right_table), tb_fly_through->end_frame_spin_button,1,2,
-		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(right_table),
+                    tb_fly_through->end_frame_spin_button,
+                    1, table_row, 1, 1);
     table_row++;
 
     tb_fly_through->time_on_image_label = gtk_label_new(_("Display time on image"));
-    gtk_table_attach(GTK_TABLE(right_table), tb_fly_through->time_on_image_label, 0,1,
-		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(right_table), tb_fly_through->time_on_image_label,
+                    0, table_row, 1, 1);
     tb_fly_through->time_on_image_button = gtk_check_button_new();
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tb_fly_through->time_on_image_button), FALSE);
     g_signal_connect(G_OBJECT(tb_fly_through->time_on_image_button), "toggled", 
 		     G_CALLBACK(time_on_image_cb), tb_fly_through);
-    gtk_table_attach(GTK_TABLE(right_table), tb_fly_through->time_on_image_button,1,2,
-		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(right_table), tb_fly_through->time_on_image_button,
+                    1, table_row, 1, 1);
     table_row++;
   }
   

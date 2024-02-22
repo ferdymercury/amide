@@ -114,7 +114,7 @@ static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_an
 			    gboolean raw_data);
 static gchar * analyses_as_string(analysis_roi_t * roi_analyses);
 static void response_cb (GtkDialog * dialog, gint response_id, gpointer data);
-static void destroy_cb(GtkObject * object, gpointer data);
+static void destroy_cb(GtkWidget * object, gpointer data);
 static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * delete_event, gpointer data);
 static void add_pages(GtkWidget * notebook, AmitkStudy * study, analysis_roi_t * roi_analyses);
 static void read_preferences(gboolean * all_data_sets, 
@@ -142,8 +142,8 @@ static void export_data(tb_roi_analysis_t * tb_roi_analysis, gboolean raw_data) 
   file_chooser = gtk_file_chooser_dialog_new ((!raw_data) ? _("Export Statistics") : _("Export ROI Raw Data Values"),
 					      GTK_WINDOW(tb_roi_analysis->dialog), /* parent window */
 					      GTK_FILE_CHOOSER_ACTION_SAVE,
-					      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-					      GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+					      _("_Cancel"), GTK_RESPONSE_CANCEL,
+					      _("_Save"), GTK_RESPONSE_ACCEPT,
 					      NULL);
   gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(file_chooser), TRUE);
   gtk_file_chooser_set_do_overwrite_confirmation (GTK_FILE_CHOOSER (file_chooser), TRUE);
@@ -470,7 +470,7 @@ static void response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
 
 
 /* function called to destroy the roi analysis dialog */
-static void destroy_cb(GtkObject * object, gpointer data) {
+static void destroy_cb(GtkWidget * object, gpointer data) {
   tb_roi_analysis_t * tb_roi_analysis = data;
   tb_roi_analysis = tb_roi_analysis_free(tb_roi_analysis);
   return;
@@ -504,6 +504,7 @@ static void add_pages(GtkWidget * notebook, AmitkStudy * study, analysis_roi_t *
   GtkTreeViewColumn *column;
   GtkTreeSelection *selection;
   GtkTreeIter iter;
+  GdkRectangle geom;
   column_t i_column;
   gint width;
   analysis_volume_t * volume_analyses;
@@ -538,12 +539,13 @@ static void add_pages(GtkWidget * notebook, AmitkStudy * study, analysis_roi_t *
 	label = gtk_label_new(AMITK_OBJECT_NAME(roi_analyses->roi));
       else
 	label = gtk_label_new(_("ROI Statistics"));
-      table = gtk_table_new(5,3,FALSE);
+      table = gtk_grid_new();
+      gtk_grid_set_row_spacing(GTK_GRID(table), Y_PADDING);
+      gtk_grid_set_column_spacing(GTK_GRID(table), X_PADDING);
       gtk_notebook_append_page(GTK_NOTEBOOK(notebook), table, label);
 
-      hbox = gtk_hbox_new(FALSE, 0);
-      gtk_table_attach(GTK_TABLE(table), GTK_WIDGET(hbox), 0,5,
-		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+      hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+      gtk_grid_attach(GTK_GRID(table), hbox, 0, table_row, 5, 1);
       table_row++;
       gtk_widget_show(hbox);
 
@@ -559,7 +561,9 @@ static void add_pages(GtkWidget * notebook, AmitkStudy * study, analysis_roi_t *
       }
     
       /* try to get a reasonable estimate for how wide the statistics box should be */
-      width = 0.9*gdk_screen_width();
+      gdk_monitor_get_geometry(gdk_display_get_primary_monitor
+                               (gdk_display_get_default()), &geom);
+      width = 0.9*geom.width;
       if (width > ROI_STATISTICS_WIDTH)
 	width = ROI_STATISTICS_WIDTH;
       
@@ -571,10 +575,9 @@ static void add_pages(GtkWidget * notebook, AmitkStudy * study, analysis_roi_t *
 				     GTK_POLICY_AUTOMATIC);
     
       /* and throw the scrolled widget into the packing table */
-      gtk_table_attach(GTK_TABLE(table), GTK_WIDGET(scrolled), 0,5,table_row, table_row+1,
-		       X_PACKING_OPTIONS | GTK_FILL,
-		       Y_PACKING_OPTIONS | GTK_FILL,
-		       X_PADDING, Y_PADDING);
+      gtk_widget_set_hexpand(scrolled, TRUE);
+      gtk_widget_set_vexpand(scrolled, TRUE);
+      gtk_grid_attach(GTK_GRID(table), scrolled, 0, table_row, 5, 1);
       table_row++;
     
       /* and the list itself */
@@ -828,11 +831,11 @@ void tb_roi_analysis(AmitkStudy * study, AmitkPreferences * preferences, GtkWind
 			  AMITK_OBJECT_NAME(study));
   tb_roi_analysis->dialog = gtk_dialog_new_with_buttons(title, GTK_WINDOW(parent),
 							GTK_DIALOG_DESTROY_WITH_PARENT,
-							GTK_STOCK_SAVE_AS, AMITK_RESPONSE_SAVE_AS,
-							GTK_STOCK_COPY, AMITK_RESPONSE_COPY,
+							_("Save _As"), AMITK_RESPONSE_SAVE_AS,
+							_("_Copy"), AMITK_RESPONSE_COPY,
 							"Save Raw Values", AMITK_RESPONSE_SAVE_RAW_AS,
-							GTK_STOCK_HELP, GTK_RESPONSE_HELP,
-							GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE,
+							_("_Help"), GTK_RESPONSE_HELP,
+							_("_Close"), GTK_RESPONSE_CLOSE,
 							NULL);
   g_free(title);
 
@@ -848,7 +851,9 @@ void tb_roi_analysis(AmitkStudy * study, AmitkPreferences * preferences, GtkWind
   notebook = gtk_notebook_new();
   gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook), TRUE);
   gtk_container_set_border_width(GTK_CONTAINER(tb_roi_analysis->dialog), 10);
-  gtk_container_add(GTK_CONTAINER(GTK_DIALOG(tb_roi_analysis->dialog)->vbox), notebook);
+  gtk_container_add(GTK_CONTAINER(gtk_dialog_get_content_area
+                                  (GTK_DIALOG(tb_roi_analysis->dialog))),
+                    notebook);
 
   /* add the data pages */
   add_pages(notebook, study, tb_roi_analysis->roi_analyses);
@@ -950,7 +955,7 @@ GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent) {
   guint table_row;
   GtkWidget * radio_button[4];
   GtkWidget * hseparator;
-  GtkObject * adjustment;
+  GtkAdjustment * adjustment;
   GtkWidget * spin_buttons[3];
   GtkWidget * check_button;
   analysis_calculation_t i_calculation_type;
@@ -968,8 +973,8 @@ GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent) {
   temp_string = g_strdup_printf(_("%s: ROI Analysis Initialization Dialog"), PACKAGE);
   tb_roi_init_dialog = gtk_dialog_new_with_buttons (temp_string,  parent,
 						    GTK_DIALOG_DESTROY_WITH_PARENT,
-						    GTK_STOCK_CANCEL, GTK_RESPONSE_CLOSE, 
-						    GTK_STOCK_EXECUTE, AMITK_RESPONSE_EXECUTE,
+						    _("_Cancel"), GTK_RESPONSE_CLOSE,
+						    _("_Execute"), AMITK_RESPONSE_EXECUTE,
 						    NULL);
   gtk_window_set_title(GTK_WINDOW(tb_roi_init_dialog), temp_string);
   g_free(temp_string);
@@ -981,52 +986,50 @@ GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent) {
   gtk_container_set_border_width(GTK_CONTAINER(tb_roi_init_dialog), 10);
 
   /* start making the widgets for this dialog box */
-  table = gtk_table_new(5,3,FALSE);
+  table = gtk_grid_new();
+  gtk_grid_set_row_spacing(GTK_GRID(table), Y_PADDING);
+  gtk_grid_set_column_spacing(GTK_GRID(table), X_PADDING);
   table_row=0;
-  gtk_container_add(GTK_CONTAINER(GTK_DIALOG(tb_roi_init_dialog)->vbox), table);
+  gtk_container_add(GTK_CONTAINER(gtk_dialog_get_content_area
+                                  (GTK_DIALOG(tb_roi_init_dialog))), table);
 
   label = gtk_label_new(_("Calculate:"));
-  gtk_table_attach(GTK_TABLE(table), label, 0,1, 
-		   table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), label, 0, table_row, 1, 1);
   label = gtk_label_new(_("All ROIS:"));
-  gtk_table_attach(GTK_TABLE(table), label, 1,2, 
-		   table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), label, 1, table_row, 1, 1);
   label = gtk_label_new(_("Selected ROIS:"));
-  gtk_table_attach(GTK_TABLE(table), label, 2,3, 
-		   table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), label, 2, table_row, 1, 1);
   table_row++;
 
   label = gtk_label_new(_("On All Data Sets:"));
-  gtk_table_attach(GTK_TABLE(table), label, 0,1, 
-		   table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), label, 0, table_row, 1, 1);
 
   radio_button[0] = gtk_radio_button_new(NULL);
-  gtk_table_attach(GTK_TABLE(table), radio_button[0], 1,2, 
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_widget_set_halign(radio_button[0], GTK_ALIGN_CENTER);
+  gtk_grid_attach(GTK_GRID(table), radio_button[0], 1, table_row, 1, 1);
   g_object_set_data(G_OBJECT(radio_button[0]), "all_data_sets", GINT_TO_POINTER(TRUE));
   g_object_set_data(G_OBJECT(radio_button[0]), "all_rois", GINT_TO_POINTER(TRUE));
 
   radio_button[1] = gtk_radio_button_new_from_widget(GTK_RADIO_BUTTON(radio_button[0]));
-  gtk_table_attach(GTK_TABLE(table), radio_button[1], 2,3, 
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_widget_set_halign(radio_button[1], GTK_ALIGN_CENTER);
+  gtk_grid_attach(GTK_GRID(table), radio_button[1], 2, table_row, 1, 1);
   g_object_set_data(G_OBJECT(radio_button[1]), "all_data_sets", GINT_TO_POINTER(TRUE));
   g_object_set_data(G_OBJECT(radio_button[1]), "all_rois", GINT_TO_POINTER(FALSE));
   table_row++;
 
 
   label = gtk_label_new(_("On Selected Data Sets:"));
-  gtk_table_attach(GTK_TABLE(table), label, 0,1, 
-		   table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), label, 0, table_row, 1, 1);
 
   radio_button[2] = gtk_radio_button_new_from_widget(GTK_RADIO_BUTTON(radio_button[0]));
-  gtk_table_attach(GTK_TABLE(table), radio_button[2], 1,2, 
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_widget_set_halign(radio_button[2], GTK_ALIGN_CENTER);
+  gtk_grid_attach(GTK_GRID(table), radio_button[2], 1, table_row, 1, 1);
   g_object_set_data(G_OBJECT(radio_button[2]), "all_data_sets", GINT_TO_POINTER(FALSE));
   g_object_set_data(G_OBJECT(radio_button[2]), "all_rois", GINT_TO_POINTER(TRUE));
 
   radio_button[3] = gtk_radio_button_new_from_widget(GTK_RADIO_BUTTON(radio_button[0]));
-  gtk_table_attach(GTK_TABLE(table), radio_button[3], 2,3, 
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_widget_set_halign(radio_button[3], GTK_ALIGN_CENTER);
+  gtk_grid_attach(GTK_GRID(table), radio_button[3], 2, table_row, 1, 1);
   g_object_set_data(G_OBJECT(radio_button[3]), "all_data_sets", GINT_TO_POINTER(FALSE));
   g_object_set_data(G_OBJECT(radio_button[3]), "all_rois", GINT_TO_POINTER(FALSE));
   table_row++;
@@ -1047,30 +1050,27 @@ GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent) {
 
 
   /* a separator for clarity */
-  hseparator = gtk_hseparator_new();
-  gtk_table_attach(GTK_TABLE(table), hseparator, 0,3,table_row, table_row+1,
-		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  hseparator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+  gtk_grid_attach(GTK_GRID(table), hseparator, 0, table_row, 3, 1);
   table_row++;
 
   /* do we want to calculate over a subfraction */
   label = gtk_label_new(_("Calculate over all voxels (normal):"));
-  gtk_table_attach(GTK_TABLE(table), label, 
-		   0,1, table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), label, 0, table_row, 1, 1);
   radio_button[0] = gtk_radio_button_new(NULL);
-  gtk_table_attach(GTK_TABLE(table), radio_button[0], 1,2,table_row, table_row+1,
-		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_widget_set_halign(radio_button[0], GTK_ALIGN_CENTER);
+  gtk_grid_attach(GTK_GRID(table), radio_button[0], 1, table_row, 1, 1);
   g_object_set_data(G_OBJECT(radio_button[0]), "calculation_type", GINT_TO_POINTER(ALL_VOXELS));
   table_row++;
 
 
   /* do we want to calculate over a subfraction */
   label = gtk_label_new(_("Calculate over % highest voxels:"));
-  gtk_table_attach(GTK_TABLE(table), label, 
-		   0,1, table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), label, 0, table_row, 1, 1);
 
   radio_button[1] = gtk_radio_button_new_from_widget(GTK_RADIO_BUTTON(radio_button[0]));
-  gtk_table_attach(GTK_TABLE(table), radio_button[1], 1,2,table_row, table_row+1,
-		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_widget_set_halign(radio_button[1], GTK_ALIGN_CENTER);
+  gtk_grid_attach(GTK_GRID(table), radio_button[1], 1, table_row, 1, 1);
   g_object_set_data(G_OBJECT(radio_button[1]), "calculation_type", GINT_TO_POINTER(HIGHEST_FRACTION_VOXELS));
 
   adjustment = gtk_adjustment_new(100.0*subfraction, 0.0, 100.0,1.0, 1.0, 0.0);
@@ -1082,19 +1082,17 @@ GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent) {
   g_signal_connect(G_OBJECT(spin_buttons[0]), "output",
 		   G_CALLBACK(amitk_spin_button_scientific_output), NULL);
   g_signal_connect(G_OBJECT(spin_buttons[0]), "value_changed",  G_CALLBACK(subfraction_precentage_cb), NULL);
-  gtk_table_attach(GTK_TABLE(table), spin_buttons[0], 2,3, 
-		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), spin_buttons[0], 2, table_row, 1, 1);
   gtk_widget_set_sensitive(spin_buttons[0], calculation_type == HIGHEST_FRACTION_VOXELS);
   table_row++;
 
   /* do we want to calculate over a percentage of max */
   label = gtk_label_new(_("Calculate for voxels >= % of Max:"));
-  gtk_table_attach(GTK_TABLE(table), label, 
-		   0,1, table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), label, 0, table_row, 1, 1);
 
   radio_button[2] = gtk_radio_button_new_from_widget(GTK_RADIO_BUTTON(radio_button[0]));
-  gtk_table_attach(GTK_TABLE(table), radio_button[2], 1,2,table_row, table_row+1,
-		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_widget_set_halign(radio_button[2], GTK_ALIGN_CENTER);
+  gtk_grid_attach(GTK_GRID(table), radio_button[2], 1, table_row, 1, 1);
   g_object_set_data(G_OBJECT(radio_button[2]), "calculation_type", GINT_TO_POINTER(VOXELS_NEAR_MAX));
 
   adjustment = gtk_adjustment_new(threshold_percentage, 0.0, 100.0,1.0, 1.0, 0.0);
@@ -1106,19 +1104,17 @@ GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent) {
   g_signal_connect(G_OBJECT(spin_buttons[1]), "output",
 		   G_CALLBACK(amitk_spin_button_scientific_output), NULL);
   g_signal_connect(G_OBJECT(spin_buttons[1]), "value_changed",  G_CALLBACK(threshold_percentage_cb), NULL);
-  gtk_table_attach(GTK_TABLE(table), spin_buttons[1], 2,3, 
-		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), spin_buttons[1], 2, table_row, 1, 1);
   gtk_widget_set_sensitive(spin_buttons[1], calculation_type == VOXELS_NEAR_MAX);
   table_row++;
 
   /* do we want to calculate over a percentage of max */
   label = gtk_label_new(_("Calculate for voxels >= Value:"));
-  gtk_table_attach(GTK_TABLE(table), label, 
-		   0,1, table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), label, 0, table_row, 1, 1);
 
   radio_button[3] = gtk_radio_button_new_from_widget(GTK_RADIO_BUTTON(radio_button[0]));
-  gtk_table_attach(GTK_TABLE(table), radio_button[3], 1,2,table_row, table_row+1,
-		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_widget_set_halign(radio_button[3], GTK_ALIGN_CENTER);
+  gtk_grid_attach(GTK_GRID(table), radio_button[3], 1, table_row, 1, 1);
   g_object_set_data(G_OBJECT(radio_button[3]), "calculation_type", GINT_TO_POINTER(VOXELS_GREATER_THAN_VALUE));
 
   spin_buttons[2] = gtk_spin_button_new_with_range(-G_MAXDOUBLE, G_MAXDOUBLE, 1.0);
@@ -1130,8 +1126,7 @@ GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent) {
   g_signal_connect(G_OBJECT(spin_buttons[2]), "output",
 		   G_CALLBACK(amitk_spin_button_scientific_output), NULL);
   g_signal_connect(G_OBJECT(spin_buttons[2]), "value_changed",  G_CALLBACK(threshold_value_cb), NULL);
-  gtk_table_attach(GTK_TABLE(table), spin_buttons[2], 2,3, 
-		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), spin_buttons[2], 2, table_row, 1, 1);
   gtk_widget_set_sensitive(spin_buttons[2], calculation_type == VOXELS_GREATER_THAN_VALUE);
   table_row++;
 
@@ -1146,16 +1141,14 @@ GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent) {
   }
 
   /* a separator for clarity */
-  hseparator = gtk_hseparator_new();
-  gtk_table_attach(GTK_TABLE(table), hseparator, 0,3,table_row, table_row+1,
-		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  hseparator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+  gtk_grid_attach(GTK_GRID(table), hseparator, 0, table_row, 3, 1);
   table_row++;
 
   /* do we want more accurate quantitation */
   check_button = gtk_check_button_new_with_label(_("More Accurate Quantitation (Slow)"));
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), accurate);
-  gtk_table_attach(GTK_TABLE(table), check_button, 
-		   0,2, table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), check_button, 0, table_row, 2, 1);
   g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(accurate_cb), tb_roi_init_dialog);
   table_row++;
 

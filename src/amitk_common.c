@@ -160,7 +160,7 @@ void amitk_real_cell_data_func(GtkTreeViewColumn *tree_column,
 
 gint amitk_spin_button_scientific_output (GtkSpinButton *spin_button, gpointer data) {
 
-  gchar *buf = g_strdup_printf ("%g", spin_button->adjustment->value);
+  gchar *buf = g_strdup_printf ("%g", gtk_spin_button_get_value(spin_button));
 
   if (strcmp (buf, gtk_entry_get_text (GTK_ENTRY (spin_button))))
     gtk_entry_set_text (GTK_ENTRY (spin_button), buf);
@@ -178,65 +178,44 @@ gint amitk_spin_button_discard_double_or_triple_click(GtkWidget *widget, GdkEven
     return FALSE;
 }
 
-/* The following function should return a pixbuf representing the currently shown data 
-   on the canvas (within the specified height/width at the given offset).  
-   -The code is based on gnome_canvas_paint_rect in gnome-canvas.c */
-GdkPixbuf * amitk_get_pixbuf_from_canvas(GnomeCanvas * canvas, gint xoffset, gint yoffset,
+/* The following function should return a pixbuf representing the
+   currently shown data on the canvas (within the specified
+   height/width at the given offset).  */
+GdkPixbuf * amitk_get_pixbuf_from_canvas(AmitkSimpleCanvas * canvas, gint xoffset, gint yoffset,
 					 gint width, gint height) {
 
   GdkPixbuf * pixbuf;
+  GdkRGBA * bg;
+  GtkWidget * toplevel;
+  GtkStyleContext * ctxt;
+  cairo_t * cr;
+  cairo_surface_t * surf;
+  AmitkCanvasBounds bounds;
 
-  if (canvas->aa) {
-    GnomeCanvasBuf buf;
-    GdkColor *color;
-    guchar * px;
+  bounds.x1 = (gdouble) xoffset;
+  bounds.y1 = (gdouble) yoffset;
+  bounds.x2 = (gdouble) (xoffset+width);
+  bounds.y2 = (gdouble) (yoffset+height);
 
-    px = g_new (guchar, width*height * 3);
+  surf = cairo_image_surface_create(CAIRO_FORMAT_RGB24, width, height);
+  cr = cairo_create(surf);
 
-    buf.buf = px;
-    buf.buf_rowstride = width * 3;
-    buf.rect.x0 = xoffset;
-    buf.rect.y0 = yoffset;
-    buf.rect.x1 = xoffset+width;
-    buf.rect.y1 = yoffset+height;
-    color = &GTK_WIDGET(canvas)->style->bg[GTK_STATE_NORMAL];
-    buf.bg_color = (((color->red & 0xff00) << 8) | (color->green & 0xff00) | (color->blue >> 8));
-    buf.is_bg = 1;
-    buf.is_buf = 0;
-    
-    /* render the background */
-    if ((* GNOME_CANVAS_GET_CLASS(canvas)->render_background) != NULL)
-      (* GNOME_CANVAS_GET_CLASS(canvas)->render_background) (canvas, &buf);
-    
-    /* render the rest */
-    if (canvas->root->object.flags & GNOME_CANVAS_ITEM_VISIBLE)
-      (* GNOME_CANVAS_ITEM_GET_CLASS (canvas->root)->render) (canvas->root, &buf);
-    
-    if (buf.is_bg) {
-      g_warning("No code written to implement case buf.is_bg: %s at %d\n", __FILE__, __LINE__);
-      pixbuf = NULL;
-    } else {
-      pixbuf = gdk_pixbuf_new_from_data(buf.buf, GDK_COLORSPACE_RGB, FALSE, 8, 
-					width, height,width*3, NULL, NULL);
-    }
-  } else {
-    GdkPixmap * pixmap;
+  /* Obtain the style context of the toplevel widget because canvas'
+     background is transparent black (that is, not set).  */
+  toplevel = gtk_widget_get_toplevel(GTK_WIDGET(canvas));
+  ctxt = gtk_widget_get_style_context(toplevel);
+  gtk_style_context_get(ctxt, GTK_STATE_FLAG_NORMAL,
+                        GTK_STYLE_PROPERTY_BACKGROUND_COLOR, &bg, NULL);
+  gdk_cairo_set_source_rgba(cr, bg);
+  cairo_rectangle(cr, 0, 0, width, height);
+  cairo_fill(cr);
+  amitk_canvas_render_to_bounds(canvas, cr, &bounds, 0.0);
+  cairo_surface_flush(surf);
+  pixbuf = gdk_pixbuf_get_from_surface(surf, 0, 0, width, height);
 
-    pixmap = gdk_pixmap_new (canvas->layout.bin_window, width, height,
-			     gtk_widget_get_visual (GTK_WIDGET(canvas))->depth);
-
-    /* draw the background */
-    (* GNOME_CANVAS_GET_CLASS(canvas)->draw_background)
-      (canvas, pixmap, xoffset, yoffset, width, height);
-
-    /* force a draw onto the pixmap */
-    (* GNOME_CANVAS_ITEM_GET_CLASS (canvas->root)->draw) 
-      (canvas->root, pixmap,xoffset, yoffset, width, height);
-
-    /* transfer to a pixbuf */
-    pixbuf = gdk_pixbuf_get_from_drawable (NULL,GDK_DRAWABLE(pixmap),NULL,0,0,0,0,-1,-1);
-    g_object_unref(pixmap); 
-  }
+  gdk_rgba_free(bg);
+  cairo_destroy(cr);
+  cairo_surface_destroy(surf);
 
   return pixbuf;
 }

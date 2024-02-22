@@ -31,6 +31,7 @@
 #include <gsl/gsl_multimin.h>
 #include "fads.h"
 #include "amitk_data_set_FLOAT_0D_SCALING.h"
+#include "amide.h"
 
 
 #define FINAL_MU 1e-07
@@ -61,14 +62,6 @@ gchar * fads_type_explanation[] = {
   
   N_("Standard 2 compartment model")
 
-};
-
-#include "../pixmaps/two_compartment.h"
-
-const guint8 * fads_type_icon[NUM_FADS_TYPES] = {
-  NULL,
-  NULL,
-  two_compartment
 };
 
 

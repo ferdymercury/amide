@@ -369,9 +369,8 @@ PKG_CHECK_MODULES(AMIDE_GTK,[
 	glib-2.0	>= 2.44.0
 	gio-2.0         >= 2.44.0
 	gobject-2.0	>= 2.44.0
-	gtk+-2.0	>= 2.16.0
+	gtk+-3.0	>= 3.21.5
 	libxml-2.0	>= 2.4.12
-	libgnomecanvas-2.0 >= 2.0.0
 ])
 
 GLIB_GSETTINGS
@@ -401,34 +400,17 @@ AC_SUBST(AMIDE_GTK_CFLAGS)
 dnl glib-genmarshal
 AC_PATH_PROG(GLIB_GENMARSHAL, glib-genmarshal)
 
-dnl This is installed from GTK+ 2.0's gdk-pixbuf
-AC_PATH_PROG(GDK_PIXBUF_CSOURCE, gdk-pixbuf-csource)
-test -z "$GDK_PIXBUF_CSOURCE" && AC_MSG_ERROR([
-*** You need the gdk-pixbuf-csource tool which is installed
-*** from GTK+ 2's gdk-pixbuf.
+dnl This is installed from GLib
+AC_PATH_PROG(GLIB_COMPILE_RESOURCES, glib-compile-resources)
+test -z "$GLIB_COMPILE_RESOURCES" && AC_MSG_ERROR([
+*** You need the glib-compile-resources tool which is installed
+*** from GLib.
 ***
-*** Either the location where you installed your GTK+ 2 is
+*** Either the location where you installed your GLib is
 *** not in your PATH or something is screwed up with your
-*** GTK+ 2 installation
+*** GLib installation
 ])
 
-
-dnl libgnomecanvas anti-aliasing has been buggy in the past. I originally thought
-dnl this never would be fixed. Was unclear if the issues were in libgnomecanvas
-dnl or libart. In any case, as of libgnomecanvas 2.30.3 things seem stable, 
-dnl so I'm re-enabling support for now
-dnl
-dnl record if our version of libgnomecanvas can handle anti-aliasing
-PKG_CHECK_MODULES(libgnomecanvas_greater_than_230, 
-		[libgnomecanvas-2.0 >= 2.3.0], 
-		enable_antialiasing=yes, enable_antialiasing=no)
-if test $enable_antialiasing = yes; then
-   echo "compiling with libgnomecanvas antialiasing support"
-   AC_DEFINE(AMIDE_LIBGNOMECANVAS_AA, 1, Define to compile AMIDE with an antialiased canvas)
-else
-   echo "compiling without libgnomecanvas antialiasing support"
-   AC_DEFINE(AMIDE_LIBGNOMECANVAS_AA, 0, Define to compile AMIDE with an antialiased canvas)
-fi
 
 
 ################################################################
@@ -474,6 +456,7 @@ AC_SUBST(LDFLAGS)
 
 AC_CONFIG_FILES([
 Makefile
+pixmaps/icons.xml
 pixmaps/Makefile
 src/Makefile
 win32/Makefile
