@@ -27,6 +27,7 @@
 
 
 #include "amide_gconf.h"
+#include "amide.h"
 
 
 

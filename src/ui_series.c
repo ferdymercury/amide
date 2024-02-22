@@ -72,8 +72,8 @@ typedef struct ui_series_t {
   GtkWidget * canvas;
   gint canvas_height;
   gint canvas_width;
-  GnomeCanvasItem ** images;
-  GnomeCanvasItem ** captions;
+  AmitkCanvasItem ** images;
+  AmitkCanvasItem ** captions;
   GList ** items;
   GtkWidget * thresholds_dialog;
   guint num_slices, rows, columns;
@@ -87,12 +87,7 @@ typedef struct ui_series_t {
   gboolean in_generation;
   gboolean quit_generation;
   gint roi_width;
-#ifdef AMIDE_LIBGNOMECANVAS_AA
   gdouble roi_transparency;
-#else
-  GdkLineStyle line_style;
-  gboolean fill_roi;
-#endif
   gint pixbuf_width;
   gint pixbuf_height;
 
@@ -119,14 +114,15 @@ typedef struct ui_series_t {
 
 
 
+static gboolean button_release_cb(GtkWidget * widget, GdkEvent * event, gpointer data);
 static void scroll_change_cb(GtkAdjustment* adjustment, gpointer data);
 static void canvas_size_change_cb(GtkWidget * widget, GtkAllocation * allocation, gpointer ui_series);
-static void export_cb(GtkAction * action, gpointer data);
+static void export_cb(GSimpleAction * action, GVariant * param, gpointer data);
 static void changed_cb(gpointer dummy, gpointer ui_series);
 static void color_table_changed_cb(gpointer dummy, AmitkViewMode view_mode, gpointer ui_series);
 static void data_set_invalidate_slice_cache(AmitkDataSet *ds, gpointer ui_series);
-static void threshold_cb(GtkAction * action, gpointer data);
-static void close_cb(GtkAction * action, gpointer data);
+static void threshold_cb(GSimpleAction * action, GVariant * param, gpointer data);
+static void close_cb(GSimpleAction * action, GVariant * param, gpointer data);
 static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data);
 
 
@@ -139,6 +135,17 @@ static void add_update(ui_series_t * ui_series);
 static gboolean update_immediate(gpointer ui_series);
 static void read_series_preferences(series_type_t * series_type, AmitkView * view);
 
+/* Compensate the lack of GTK_UPDATE_DISCONTINUOUS in GTK 3.  */
+static gboolean button_release_cb(GtkWidget * widget, GdkEvent * event, gpointer data) {
+
+  ui_series_t * ui_series = data;
+  GtkAdjustment * adjustment;
+
+  adjustment = gtk_range_get_adjustment(GTK_RANGE(widget));
+  scroll_change_cb(adjustment, ui_series);
+
+  return FALSE;
+}
 
 /* function called by the adjustment in charge for scrolling */
 static void scroll_change_cb(GtkAdjustment* adjustment, gpointer data) {
@@ -147,14 +154,14 @@ static void scroll_change_cb(GtkAdjustment* adjustment, gpointer data) {
 
   switch(ui_series->series_type) {
   case OVER_GATES:
-    ui_series->view_gate = adjustment->value;
+    ui_series->view_gate = gtk_adjustment_get_value(adjustment);
     break;
   case OVER_FRAMES:
-    ui_series->view_frame = adjustment->value;
+    ui_series->view_frame = gtk_adjustment_get_value(adjustment);
     break;
   case OVER_SPACE:
   default:
-    ui_series->z_point = adjustment->value-AMITK_VOLUME_Z_CORNER(ui_series->volume)/2.0;
+    ui_series->z_point = gtk_adjustment_get_value(adjustment)-AMITK_VOLUME_Z_CORNER(ui_series->volume)/2.0;
     break;
   }
   add_update(ui_series);
@@ -176,7 +183,7 @@ static void canvas_size_change_cb(GtkWidget * widget, GtkAllocation * allocation
 
 
 /* function to save the series as an image */
-static void export_cb(GtkAction * action, gpointer data) {
+static void export_cb(GSimpleAction * action, GVariant * param, gpointer data) {
   
   ui_series_t * ui_series = data;
   GList * objects;
@@ -188,8 +195,8 @@ static void export_cb(GtkAction * action, gpointer data) {
   file_chooser = gtk_file_chooser_dialog_new(_("Export to Image"),
 					     GTK_WINDOW(ui_series->window), /* parent window */
 					     GTK_FILE_CHOOSER_ACTION_SAVE,
-					     GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-					     GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+					     _("_Cancel"), GTK_RESPONSE_CANCEL,
+					     _("_Save"), GTK_RESPONSE_ACCEPT,
 					     NULL);
   gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(file_chooser), TRUE);
   gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(file_chooser), TRUE);
@@ -246,7 +253,7 @@ static void export_cb(GtkAction * action, gpointer data) {
 
   if (filename == NULL) return; /* inappropriate name or don't want to overwrite */
 
-  pixbuf = amitk_get_pixbuf_from_canvas(GNOME_CANVAS(ui_series->canvas),0,0,
+  pixbuf = amitk_get_pixbuf_from_canvas(AMITK_SIMPLE_CANVAS(ui_series->canvas),0,0,
 					ui_series->columns*(ui_series->pixbuf_width+UI_SERIES_R_MARGIN+UI_SERIES_L_MARGIN),
 					ui_series->rows*(ui_series->pixbuf_height+UI_SERIES_TOP_MARGIN+UI_SERIES_BOTTOM_MARGIN));
 
@@ -302,7 +309,7 @@ static gboolean thresholds_delete_event(GtkWidget* widget, GdkEvent * event, gpo
 }
 
 /* function called when we hit the threshold button */
-static void threshold_cb(GtkAction * action, gpointer data) {
+static void threshold_cb(GSimpleAction * action, GVariant * param, gpointer data) {
 
   ui_series_t * ui_series = data;
 
@@ -330,7 +337,7 @@ static void threshold_cb(GtkAction * action, gpointer data) {
 
 
 /* function ran when closing a series window */
-static void close_cb(GtkAction * action, gpointer data) {
+static void close_cb(GSimpleAction * action, GVariant * param, gpointer data) {
 
   ui_series_t * ui_series = data;
   GtkWindow * window = ui_series->window;
@@ -368,74 +375,69 @@ static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer da
 
 
 
-static const GtkActionEntry normal_items[] = {
-  /* Toplevel */
-  { "FileMenu", NULL, N_("_File") },
-  { "HelpMenu", NULL, N_("_Help") },
-  
-  /* File menu */
-  { "ExportSeries", NULL, N_("_Export Series"), NULL, N_("Export the series to a JPEG image file"), G_CALLBACK(export_cb)},
-  { "Close", GTK_STOCK_CLOSE, NULL, "<control>W", N_("Close the series dialog"), G_CALLBACK (close_cb)},
-  
-  /* Toolbar items */
-  { "Threshold", "amide_icon_thresholding", N_("Threshold"), NULL, N_("Set the thresholds and colormaps for the data sets in the series view"), G_CALLBACK(threshold_cb)}
+static const GActionEntry normal_items[] = {
+  { "export", export_cb },
+  { "close", close_cb },
+  { "threshold", threshold_cb }
 };
 
-static const char *ui_description =
-"<ui>"
-"  <menubar name='MainMenu'>"
-"    <menu action='FileMenu'>"
-"      <menuitem action='ExportSeries'/>"
-"      <separator/>"
-"      <menuitem action='Close'/>"
-"    </menu>"
-HELP_MENU_UI_DESCRIPTION
-"  </menubar>"
-"  <toolbar name='ToolBar'>"
-"    <toolitem action='Threshold'/>"
-"  </toolbar>"
-"</ui>";
 
 /* function to setup the menus for the series ui */
 static void menus_toolbar_create(ui_series_t * ui_series) {
 
+  GtkApplication *app;
   GtkWidget *menubar;
   GtkWidget *toolbar;
-  GtkActionGroup *action_group;
-  GtkUIManager *ui_manager;
-  GtkAccelGroup *accel_group;
-  GError *error;
+  GtkWidget *icon;
+  GtkBuilder *builder;
+  GtkToolItem *tool_item;
+  GSimpleActionGroup *action_group;
+  GMenuModel *model;
+  GMenu *menu;
+  const gchar *close[] = { "<Control>w", NULL };
+  const gchar *help[] = { "F1", NULL };
       
   /* sanity check */
   g_assert(ui_series!=NULL);
 
   /* create an action group with all the menu actions */
-  action_group = gtk_action_group_new ("MenuActions");
-  gtk_action_group_set_translation_domain(action_group, GETTEXT_PACKAGE);
-  gtk_action_group_add_actions(action_group, normal_items, G_N_ELEMENTS(normal_items),ui_series);
-  gtk_action_group_add_actions(action_group, ui_common_help_menu_items, G_N_ELEMENTS(ui_common_help_menu_items),ui_series);
+  app = gtk_window_get_application(ui_series->window);
+  action_group = g_simple_action_group_new ();
+  g_action_map_add_action_entries(G_ACTION_MAP(action_group),
+                                  normal_items, G_N_ELEMENTS(normal_items),
+                                  ui_series);
+  g_action_map_add_action_entries(G_ACTION_MAP(app), ui_common_help_menu_items,
+                                  G_N_ELEMENTS(ui_common_help_menu_items),
+                                  ui_series);
+  gtk_widget_insert_action_group(ui_series->window_vbox, "series",
+                                 G_ACTION_GROUP(action_group));
 
-  /* create the ui manager, and add the actions and accel's */
-  ui_manager = gtk_ui_manager_new ();
-  gtk_ui_manager_insert_action_group (ui_manager, action_group, 0);
-  accel_group = gtk_ui_manager_get_accel_group (ui_manager);
-  gtk_window_add_accel_group (ui_series->window, accel_group);
+  gtk_application_set_accels_for_action(app, "series.close", close);
+  gtk_application_set_accels_for_action(app, "app.manual", help);
 
   /* create the actual menu/toolbar ui */
-  error = NULL;
-  if (!gtk_ui_manager_add_ui_from_string (ui_manager, ui_description, -1, &error)) {
-    g_warning ("%s: building menus failed in %s: %s", PACKAGE, __FILE__, error->message);
-    g_error_free (error);
-    return;
-  }
+  builder = gtk_builder_new_from_resource("/com/github/ferdymercury/amide/series.ui");
+  gtk_builder_set_translation_domain(builder, GETTEXT_PACKAGE);
 
   /* pack in the menu and toolbar */
-  menubar = gtk_ui_manager_get_widget (ui_manager, "/MainMenu");
+  model = G_MENU_MODEL (gtk_builder_get_object (builder, "menubar"));
+  menu = gtk_application_get_menu_by_id (app, "help");
+  g_menu_append_submenu (G_MENU (model), _("_Help"), G_MENU_MODEL (menu));
+  menubar = gtk_menu_bar_new_from_model (model);
+  g_object_unref (builder);
   gtk_box_pack_start (GTK_BOX (ui_series->window_vbox), menubar, FALSE, FALSE, 0);
 
-  toolbar = gtk_ui_manager_get_widget (ui_manager, "/ToolBar");
+  toolbar = gtk_toolbar_new ();
   gtk_box_pack_start (GTK_BOX (ui_series->window_vbox), toolbar, FALSE, FALSE, 0);
   gtk_toolbar_set_style(GTK_TOOLBAR(toolbar), GTK_TOOLBAR_ICONS);
+
+  icon = gtk_image_new_from_icon_name("amide_icon_thresholding",
+                                      GTK_ICON_SIZE_LARGE_TOOLBAR);
+  tool_item = gtk_tool_button_new(icon, _("Threshold"));
+  gtk_tool_item_set_tooltip_text(tool_item,
+                                 _("Set the thresholds and colormaps for the data sets in the series view"));
+  gtk_actionable_set_action_name(GTK_ACTIONABLE(tool_item), "series.threshold");
+  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), tool_item, -1);
 			      
   return;
 
@@ -589,12 +591,7 @@ static ui_series_t * ui_series_init(GtkWindow * window, GtkWidget * window_vbox)
   ui_series->in_generation=FALSE;
   ui_series->quit_generation=FALSE;
   ui_series->roi_width = 1.0;
-#ifdef AMIDE_LIBGNOMECANVAS_AA
   ui_series->roi_transparency = 0.5;
-#else
-  ui_series->line_style = 0;
-  ui_series->fill_roi = TRUE;
-#endif
   ui_series->pixbuf_width = 0;
   ui_series->pixbuf_height = 0;
 
@@ -621,7 +618,7 @@ static ui_series_t * ui_series_init(GtkWindow * window, GtkWidget * window_vbox)
 static GtkAdjustment * ui_series_create_scroll_adjustment(ui_series_t * ui_series) { 
 
   amide_real_t thickness;
-  GtkObject * adjustment;
+  GtkAdjustment * adjustment;
 
   switch(ui_series->series_type) {
   case OVER_GATES:
@@ -674,7 +671,8 @@ static gboolean update_immediate(gpointer data) {
   gboolean can_continue=TRUE;
   gboolean return_val = TRUE;
   GList * objects;
-  GnomeCanvasItem * item;
+  AmitkCanvasItem * item;
+  AmitkCanvasItem * root;
   rgba_t outline_color;
   gint rows, columns;
 
@@ -686,18 +684,18 @@ static gboolean update_immediate(gpointer data) {
 
   /* allocate space for the following if this is the first time through */
   if (ui_series->images == NULL) {
-    if ((ui_series->images = g_try_new(GnomeCanvasItem *,ui_series->num_slices)) == NULL) {
-      g_warning(_("couldn't allocate memory space for pointers to image GnomeCanvasItem's"));
+    if ((ui_series->images = g_try_new(AmitkCanvasItem *,ui_series->num_slices)) == NULL) {
+      g_warning(_("couldn't allocate memory space for pointers to image AmitkCanvasItem's"));
       return_val = FALSE;
       goto exit_update;
     }
-    if ((ui_series->captions = g_try_new(GnomeCanvasItem *,ui_series->num_slices)) == NULL) {
-      g_warning(_("couldn't allocate memory space for pointers to caption GnomeCanvasItem's"));
+    if ((ui_series->captions = g_try_new(AmitkCanvasItem *,ui_series->num_slices)) == NULL) {
+      g_warning(_("couldn't allocate memory space for pointers to caption AmitkCanvasItem's"));
       return_val = FALSE;
       goto exit_update;
     }
     if ((ui_series->items = g_try_new(GList *,ui_series->num_slices)) == NULL) {
-      g_warning(_("couldn't allocate memory space for pointers to GnomeCanavasItem lists"));
+      g_warning(_("couldn't allocate memory space for pointers to AmitkCanvasItem lists"));
       return_val = FALSE;
       goto exit_update;
     }
@@ -729,24 +727,24 @@ static gboolean update_immediate(gpointer data) {
 
     for (i=0; i < ui_series->num_slices ; i++) {
       if (ui_series->images[i] != NULL) {
-	gtk_object_destroy(GTK_OBJECT(ui_series->images[i]));
+	amitk_canvas_item_remove(ui_series->images[i]);
 	ui_series->images[i] = NULL;
       }
       if (ui_series->captions[i] != NULL) {
-	gtk_object_destroy(GTK_OBJECT(ui_series->captions[i]));
+	amitk_canvas_item_remove(ui_series->captions[i]);
 	ui_series->captions[i] = NULL;
       }
       if (ui_series->items[i] != NULL) {
 	while (ui_series->items[i] != NULL) { 
 	  item = ui_series->items[i]->data;
 	  ui_series->items[i] = g_list_remove(ui_series->items[i], item);
-	  gtk_object_destroy(GTK_OBJECT(item));
+	  amitk_canvas_item_remove(item);
 	}
 	ui_series->items[i] = NULL;
       }
     }
 
-    gnome_canvas_set_scroll_region(GNOME_CANVAS(ui_series->canvas), 0.0, 0.0, 
+    amitk_simple_canvas_set_bounds(AMITK_SIMPLE_CANVAS(ui_series->canvas), 0.0, 0.0,
 				   (double) (ui_series->columns*image_width), 
 				   (double) (ui_series->rows*image_height));
   }
@@ -822,6 +820,7 @@ static gboolean update_immediate(gpointer data) {
     y = floor((i-start_i)/ui_series->columns)*image_height;
     x = (i-start_i-ui_series->columns*floor((i-start_i)/ui_series->columns))*image_width;
 
+    root = amitk_simple_canvas_get_root_item(AMITK_SIMPLE_CANVAS(ui_series->canvas));
     if (amitk_objects_has_type(ui_series->objects, AMITK_OBJECT_TYPE_DATA_SET, FALSE)) {
       pixbuf = image_from_data_sets(NULL,
 				    &(ui_series->slice_cache),
@@ -838,14 +837,10 @@ static gboolean update_immediate(gpointer data) {
     
       if (ui_series->images[i-start_i] == NULL) 
 	ui_series->images[i-start_i] = 
-	  gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(ui_series->canvas)),
-				gnome_canvas_pixbuf_get_type(),
-				"pixbuf", pixbuf,
-				"x", x+UI_SERIES_L_MARGIN,
-				"y", y+UI_SERIES_TOP_MARGIN,
-				NULL);
+          amitk_canvas_image_new(root, pixbuf, x+UI_SERIES_L_MARGIN,
+                               y+UI_SERIES_TOP_MARGIN, NULL);
       else
-	gnome_canvas_item_set(ui_series->images[i-start_i], "pixbuf", pixbuf, NULL);
+	g_object_set(ui_series->images[i-start_i], "pixbuf", pixbuf, NULL);
       g_object_unref(pixbuf);
     }
 
@@ -853,7 +848,7 @@ static gboolean update_immediate(gpointer data) {
     while (ui_series->items[i-start_i] != NULL) { /* first, delete the old objects */
       item = ui_series->items[i-start_i]->data;
       ui_series->items[i-start_i] = g_list_remove(ui_series->items[i-start_i], item);
-      gtk_object_destroy(GTK_OBJECT(item));
+      amitk_canvas_item_remove(item);
     }
 
     /* add the new item to the canvas */
@@ -866,7 +861,7 @@ static gboolean update_immediate(gpointer data) {
 	else
 	  outline_color = amitk_color_table_outline_color(AMITK_COLOR_TABLE_BW_LINEAR, TRUE);
 
-	item = amitk_canvas_object_draw(GNOME_CANVAS(ui_series->canvas), 
+	item = amitk_canvas_object_draw(AMITK_SIMPLE_CANVAS(ui_series->canvas),
 					view_volume, objects->data,
 					AMITK_VIEW_MODE_SINGLE, NULL,
 					ui_series->pixel_dim,
@@ -875,12 +870,7 @@ static gboolean update_immediate(gpointer data) {
 					x+UI_SERIES_L_MARGIN, y+UI_SERIES_TOP_MARGIN,
 					outline_color, 
 					ui_series->roi_width,
-#ifdef AMIDE_LIBGNOMECANVAS_AA
 					ui_series->roi_transparency
-#else
-					ui_series->line_style,
-					ui_series->fill_roi
-#endif
 					);
 	if (item != NULL)
 	  ui_series->items[i-start_i] = g_list_append(ui_series->items[i-start_i], item);
@@ -905,18 +895,13 @@ static gboolean update_immediate(gpointer data) {
 
     if (ui_series->captions[i-start_i] == NULL) 
       ui_series->captions[i-start_i] =
-	gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(ui_series->canvas)),
-			      gnome_canvas_text_get_type(),
-			      "justification", GTK_JUSTIFY_LEFT,
-			      "anchor", GTK_ANCHOR_NORTH_WEST,
-			      "text", temp_string,
-			      "x", x+UI_SERIES_L_MARGIN,
-			      "y", y+image_height-UI_SERIES_BOTTOM_MARGIN,
-			      "fill_color", "black", 
-			      "font_desc", amitk_fixed_font_desc, 
-			      NULL);
+        amitk_canvas_text_new(root, temp_string, x+UI_SERIES_L_MARGIN,
+                            y+image_height-UI_SERIES_BOTTOM_MARGIN, -1,
+                            AMITK_CANVAS_ANCHOR_NORTH_WEST,
+                            "fill-color", "black",
+                            "font-desc", amitk_fixed_font_desc, NULL);
     else
-      gnome_canvas_item_set(ui_series->captions[i-start_i],
+      g_object_set(ui_series->captions[i-start_i],
 			    "text", temp_string,
 			    NULL);
     g_free(temp_string);
@@ -963,6 +948,7 @@ void ui_series_create(AmitkStudy * study,
   GtkWidget * packing_table;
   GtkAdjustment * adjustment;
   GtkWidget * scale;
+  GdkRectangle geom;
   amide_time_t min_duration;
   GList * temp_objects;
   guint num_data_sets = 0;
@@ -979,25 +965,24 @@ void ui_series_create(AmitkStudy * study,
   title = g_strdup_printf(_("Series: %s (%s - %s)"), AMITK_OBJECT_NAME(study),
 			  amitk_view_get_name(view), _(series_names[series_type]));
   window = GTK_WINDOW(gtk_window_new(GTK_WINDOW_TOPLEVEL));
+  gtk_application_add_window(GTK_APPLICATION(g_application_get_default()),
+                             GTK_WINDOW(window));
   gtk_window_set_title(window, title);
   g_free(title);
   gtk_window_set_resizable(window, TRUE);
-  width = 0.5*gdk_screen_width();
-  height = 0.5*gdk_screen_height();
+  gdk_monitor_get_geometry(gdk_display_get_primary_monitor
+                           (gdk_display_get_default()), &geom);
+  width = 0.5*geom.width;
+  height = 0.5*geom.height;
   gtk_window_set_default_size(window, width, height);
 
-  window_vbox = gtk_vbox_new(FALSE,0);
+  window_vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
   gtk_container_add (GTK_CONTAINER (window), window_vbox);
 
   ui_series = ui_series_init(window, window_vbox);
   ui_series->preferences = g_object_ref(preferences);
   ui_series->series_type = series_type;
-#ifdef AMIDE_LIBGNOMECANVAS_AA
   ui_series->roi_transparency = AMITK_STUDY_CANVAS_ROI_TRANSPARENCY(study);
-#else
-  ui_series->line_style = AMITK_STUDY_CANVAS_LINE_STYLE(study);
-  ui_series->fill_roi = AMITK_STUDY_CANVAS_FILL_ROI(study);
-#endif
   ui_series->roi_width = AMITK_STUDY_CANVAS_ROI_WIDTH(study);
 
   ui_series->objects = amitk_objects_ref(selected_objects);
@@ -1267,34 +1252,28 @@ void ui_series_create(AmitkStudy * study,
   menus_toolbar_create(ui_series); /* setup the menu and toolbar */
 
   /* make the widgets for this dialog box */
-  packing_table = gtk_table_new(1,2,FALSE);
+  packing_table = gtk_grid_new();
+  gtk_grid_set_row_spacing(GTK_GRID(packing_table), Y_PADDING);
   gtk_box_pack_start (GTK_BOX (ui_series->window_vbox), packing_table, TRUE,TRUE, 0);
 
   /* setup the canvas */
-#ifdef AMIDE_LIBGNOMECANVAS_AA
-  ui_series->canvas = gnome_canvas_new_aa();
-#else
-  ui_series->canvas = gnome_canvas_new();
-#endif
+  ui_series->canvas = amitk_simple_canvas_new();
   g_signal_connect(G_OBJECT(ui_series->canvas), "size_allocate", 
 		   G_CALLBACK(canvas_size_change_cb), ui_series);
 
-  gtk_table_attach(GTK_TABLE(packing_table), 
-		   ui_series->canvas, 0,1,1,2,
-		   X_PACKING_OPTIONS | GTK_FILL,
-		   Y_PACKING_OPTIONS | GTK_FILL,
-		   X_PADDING, Y_PADDING);
+  gtk_widget_set_hexpand(ui_series->canvas, TRUE);
+  gtk_widget_set_vexpand(ui_series->canvas, TRUE);
+  gtk_grid_attach(GTK_GRID(packing_table), ui_series->canvas, 0, 1, 1, 1);
 
   /* make a nice scroll bar */
   adjustment = ui_series_create_scroll_adjustment(ui_series);
-  scale = gtk_hscale_new(adjustment);
+  scale = gtk_scale_new(GTK_ORIENTATION_HORIZONTAL, adjustment);
   if ((ui_series->series_type == OVER_FRAMES) || (ui_series->series_type == OVER_GATES))
     gtk_scale_set_digits(GTK_SCALE(scale), 0); /* want integer for frames */
-  gtk_range_set_update_policy(GTK_RANGE(scale), GTK_UPDATE_DISCONTINUOUS);
-  gtk_table_attach(GTK_TABLE(packing_table), 
-		   GTK_WIDGET(scale), 0,1,0,1,
-		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
-  g_signal_connect(G_OBJECT(adjustment), "value_changed", G_CALLBACK(scroll_change_cb), ui_series);
+  gtk_widget_set_hexpand(scale, TRUE);
+  gtk_grid_attach(GTK_GRID(packing_table), scale, 0, 0, 1, 1);
+  g_signal_connect(scale, "button-release-event",
+                   G_CALLBACK(button_release_cb), ui_series);
 
   /* show all our widgets */
   gtk_widget_show_all(GTK_WIDGET(ui_series->window));
@@ -1344,8 +1323,8 @@ GtkWidget * ui_series_init_dialog_create(AmitkStudy * study, GtkWindow * parent)
   temp_string = g_strdup_printf(_("%s: Series Initialization Dialog"), PACKAGE);
   dialog = gtk_dialog_new_with_buttons (temp_string,  parent,
 					GTK_DIALOG_DESTROY_WITH_PARENT,
-					GTK_STOCK_CANCEL, GTK_RESPONSE_CLOSE, 
-					GTK_STOCK_EXECUTE, AMITK_RESPONSE_EXECUTE,
+					_("_Cancel"), GTK_RESPONSE_CLOSE,
+					_("_Execute"), AMITK_RESPONSE_EXECUTE,
 					NULL);
   gtk_window_set_title(GTK_WINDOW(dialog), temp_string);
   g_free(temp_string);
@@ -1356,14 +1335,16 @@ GtkWidget * ui_series_init_dialog_create(AmitkStudy * study, GtkWindow * parent)
   gtk_container_set_border_width(GTK_CONTAINER(dialog), 10);
 
   /* start making the widgets for this dialog box */
-  table = gtk_table_new(7,3,FALSE);
+  table = gtk_grid_new();
+  gtk_grid_set_row_spacing(GTK_GRID(table), Y_PADDING);
+  gtk_grid_set_column_spacing(GTK_GRID(table), X_PADDING);
   table_row=0;
-  gtk_container_add(GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), table);
+  gtk_container_add(GTK_CONTAINER(gtk_dialog_get_content_area
+                                  (GTK_DIALOG(dialog))), table);
 
   /* what series type do we want */
   label = gtk_label_new(_("Series Type:"));
-  gtk_table_attach(GTK_TABLE(table), label, 0,1, 
-		   table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), label, 0, table_row, 1, 1);
 
   for (i_series_type = 0; i_series_type < NUM_SERIES_TYPES; i_series_type++) {
     if (i_series_type == 0) 
@@ -1375,8 +1356,8 @@ GtkWidget * ui_series_init_dialog_create(AmitkStudy * study, GtkWindow * parent)
 						    _(series_names[i_series_type]));
     gtk_widget_set_tooltip_text(radio_button[i_series_type], 
 				_(series_explanations[i_series_type]));
-    gtk_table_attach(GTK_TABLE(table), radio_button[i_series_type], 1, 2, 
-		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), radio_button[i_series_type],
+                    1, table_row, 1, 1);
     g_object_set_data(G_OBJECT(radio_button[i_series_type]), "series_type", 
 		      GINT_TO_POINTER(i_series_type));
     table_row++;
@@ -1387,15 +1368,13 @@ GtkWidget * ui_series_init_dialog_create(AmitkStudy * study, GtkWindow * parent)
     g_signal_connect(G_OBJECT(radio_button[i_series_type]), "clicked", G_CALLBACK(init_series_type_cb), NULL);
   }
 
-  hseparator = gtk_hseparator_new();
-  gtk_table_attach(GTK_TABLE(table), hseparator, 0,2,
-		   table_row, table_row+1,GTK_FILL, 0, X_PADDING, Y_PADDING);
+  hseparator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+  gtk_grid_attach(GTK_GRID(table), hseparator, 0, table_row, 2, 1);
   table_row++;
 
   /* what view type do we want */
   label = gtk_label_new(_("View Type:"));
-  gtk_table_attach(GTK_TABLE(table), label, 0,1, 
-		   table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), label, 0, table_row, 1, 1);
 
   for (i_view = 0; i_view < AMITK_VIEW_NUM; i_view++) {
     if (i_view == 0) 
@@ -1405,8 +1384,7 @@ GtkWidget * ui_series_init_dialog_create(AmitkStudy * study, GtkWindow * parent)
       radio_button[i_view] = 
 	gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(radio_button[0]), 
 						    amitk_view_get_name(i_view));
-    gtk_table_attach(GTK_TABLE(table), radio_button[i_view], 1, 2, 
-		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), radio_button[i_view], 1, table_row, 1, 1);
     g_object_set_data(G_OBJECT(radio_button[i_view]), "view",
 		      GINT_TO_POINTER(i_view));
     table_row++;
@@ -1428,10 +1406,8 @@ GtkWidget * ui_series_init_dialog_create(AmitkStudy * study, GtkWindow * parent)
   gtk_widget_set_size_request(scrolled,250,-1);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled), 
 				 GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-  gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolled), 
-					tree_view);
-  gtk_table_attach(GTK_TABLE(table), scrolled, 2,3,
-		   0, table_row,GTK_FILL, GTK_FILL | GTK_EXPAND, X_PADDING, Y_PADDING);
+  gtk_container_add(GTK_CONTAINER(scrolled), tree_view);
+  gtk_grid_attach(GTK_GRID(table), scrolled, 2, 0, 1, table_row);
 
   /* and show all our widgets */
   gtk_widget_show_all(dialog);

@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <menu id="menubar">
+    <submenu>
+      <attribute name="label" translatable="yes">_File</attribute>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_New Study</attribute>
+          <attribute name="action">win.new</attribute>
+          <attribute name="icon">document-new</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">_Open Study</attribute>
+          <attribute name="action">win.open</attribute>
+          <attribute name="icon">document-open</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">Save Study As</attribute>
+          <attribute name="action">win.save</attribute>
+          <attribute name="icon">document-save-as</attribute>
+        </item>
+      </section>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">Import File (guess)</attribute>
+          <attribute name="action">win.import</attribute>
+          <attribute name="target" type="(ii)">(0,0)</attribute>
+        </item>
+        <submenu id="import">
+          <attribute name="label" translatable="yes">Import File (_specify)</attribute>
+        </submenu>
+        <item>
+          <attribute name="label" translatable="yes">Import _Object from Study</attribute>
+          <attribute name="action">win.import-object</attribute>
+        </item>
+      </section>
+      <section>
+        <submenu>
+          <attribute name="label" translatable="yes">_Export View</attribute>
+          <section>
+            <item>
+              <attribute name="label" translatable="yes">_Transverse</attribute>
+              <attribute name="action">win.export-view</attribute>
+              <attribute name="target" type="i">0</attribute>
+            </item>
+            <item>
+              <attribute name="label" translatable="yes">_Coronal</attribute>
+              <attribute name="action">win.export-view</attribute>
+              <attribute name="target" type="i">1</attribute>
+            </item>
+            <item>
+              <attribute name="label" translatable="yes">_Sagittal</attribute>
+              <attribute name="action">win.export-view</attribute>
+              <attribute name="target" type="i">2</attribute>
+            </item>
+          </section>
+        </submenu>
+        <item>
+          <attribute name="label" translatable="yes">Export _Data Set</attribute>
+          <attribute name="action">win.export</attribute>
+        </item>
+      </section>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_Recover Study</attribute>
+          <attribute name="action">win.recover</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">Open XIF Directory</attribute>
+          <attribute name="action">win.open-dir</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">Save As XIF Drectory</attribute>
+          <attribute name="action">win.save-dir</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">Import from XIF Directory</attribute>
+          <attribute name="action">win.import-dir</attribute>
+        </item>
+      </section>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_Close</attribute>
+          <attribute name="action">win.close</attribute>
+          <attribute name="icon">window-close</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">_Quit</attribute>
+          <attribute name="action">win.quit</attribute>
+          <attribute name="icon">application-exit</attribute>
+        </item>
+      </section>
+    </submenu>
+    <submenu>
+      <attribute name="label" translatable="yes">_Edit</attribute>
+      <section>
+        <submenu id="roi">
+          <attribute name="label" translatable="yes">Add _ROI</attribute>
+        </submenu>
+        <item>
+          <attribute name="label" translatable="yes">Add _Fiducial Mark</attribute>
+          <attribute name="action">win.fiducial</attribute>
+        </item>
+      </section>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_Preferences</attribute>
+          <attribute name="action">win.preferences</attribute>
+          <attribute name="icon">preferences-system</attribute>
+        </item>
+      </section>
+    </submenu>
+    <submenu>
+      <attribute name="label" translatable="yes">_View</attribute>
+      <section id="view">
+        <item>
+          <attribute name="label" translatable="yes">_Series</attribute>
+          <attribute name="action">win.series</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">_Volume Rendering</attribute>
+          <attribute name="action">win.rendering</attribute>
+        </item>
+      </section>
+    </submenu>
+    <submenu>
+      <attribute name="label" translatable="yes">_Tools</attribute>
+      <section id="tools">
+        <item>
+          <attribute name="label" translatable="yes">_Alignment Wizard</attribute>
+          <attribute name="action">win.alignment</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">_Crop Active Data Set</attribute>
+          <attribute name="action">win.crop</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">Distance Measurements</attribute>
+          <attribute name="action">win.distance</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">_Factor Analysis</attribute>
+          <attribute name="action">win.fads</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">_Filter Active Data Set</attribute>
+          <attribute name="action">win.filter</attribute>
+        </item>
+        <submenu>
+          <attribute name="label" translatable="yes">Generate _Fly Through</attribute>
+          <section>
+            <item>
+              <attribute name="label" translatable="yes">_Transverse</attribute>
+              <attribute name="action">win.fly-through</attribute>
+              <attribute name="target" type="i">0</attribute>
+            </item>
+            <item>
+              <attribute name="label" translatable="yes">_Coronal</attribute>
+              <attribute name="action">win.fly-through</attribute>
+              <attribute name="target" type="i">1</attribute>
+            </item>
+            <item>
+              <attribute name="label" translatable="yes">_Sagittal</attribute>
+              <attribute name="action">win.fly-through</attribute>
+              <attribute name="target" type="i">2</attribute>
+            </item>
+          </section>
+        </submenu>
+        <item>
+          <attribute name="label" translatable="yes">Generate Line _Profile</attribute>
+          <attribute name="action">win.profile</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">Perform _Math on Data Set(s)</attribute>
+          <attribute name="action">win.math</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">Calculate _ROI Statistics</attribute>
+          <attribute name="action">win.roi</attribute>
+        </item>
+      </section>
+    </submenu>
+    <submenu id="help">
+      <attribute name="label" translatable="yes">_Help</attribute>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_Contents</attribute>
+          <attribute name="action">app.manual</attribute>
+          <attribute name="icon">help-browser</attribute>
+        </item>
+      </section>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_About</attribute>
+          <attribute name="action">app.about</attribute>
+          <attribute name="icon">help-about</attribute>
+        </item>
+      </section>
+    </submenu>
+  </menu>
+</interface>

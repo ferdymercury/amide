@@ -48,12 +48,7 @@ N_("These preferences are used only for new data sets.  \n"
 
 static void update_roi_sample_item(ui_study_t * ui_study);
 static void roi_width_cb(GtkWidget * widget, gpointer data);
-#ifdef AMIDE_LIBGNOMECANVAS_AA
 static void roi_transparency_cb(GtkWidget * widget, gpointer data);
-#else
-static void line_style_cb(GtkWidget * widget, gpointer data);
-static void fill_roi_cb(GtkWidget * widget, gpointer data);
-#endif
 static void layout_cb(GtkWidget * widget, gpointer data);
 static void panel_layout_cb(GtkWidget * widget, gpointer data);
 static void maintain_size_cb(GtkWidget * widget, gpointer data);
@@ -70,16 +65,12 @@ static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer pr
 
 /* function called to update the roi sampe item */
 static void update_roi_sample_item(ui_study_t * ui_study) {
-  GnomeCanvasItem * roi_item;
+  AmitkCanvasItem * roi_item;
 
   roi_item = g_object_get_data(G_OBJECT(ui_study->preferences->dialog), "roi_item");
   ui_common_update_sample_roi_item(roi_item,
 				   AMITK_PREFERENCES_CANVAS_ROI_WIDTH(ui_study->preferences),
-#ifdef AMIDE_LIBGNOMECANVAS_AA
 				   AMITK_PREFERENCES_CANVAS_ROI_TRANSPARENCY(ui_study->preferences)
-#else
-				   AMITK_PREFERENCES_CANVAS_LINE_STYLE(ui_study->preferences)
-#endif
 				   );
 
   return;
@@ -101,7 +92,6 @@ static void roi_width_cb(GtkWidget * widget, gpointer data) {
 }
 
 
-#ifdef AMIDE_LIBGNOMECANVAS_AA
 /* function to change the roi internal transparency */
 static void roi_transparency_cb(GtkWidget * widget, gpointer data) {
 
@@ -116,34 +106,6 @@ static void roi_transparency_cb(GtkWidget * widget, gpointer data) {
 
   return;
 }
-
-#else
-/* function to change the line style */
-static void line_style_cb(GtkWidget * widget, gpointer data) {
-
-  ui_study_t * ui_study=data;
-  GdkLineStyle new_line_style;
-  GnomeCanvasItem * roi_item;
-
-  g_return_if_fail(ui_study->study != NULL);
-
-  /* figure out which menu item called me */
-  new_line_style = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
-  amitk_preferences_set_canvas_line_style(ui_study->preferences, new_line_style);
-  update_roi_sample_item(ui_study);
-
-  return;
-}
-
-static void fill_roi_cb(GtkWidget * widget, gpointer data) {
-
-  ui_study_t * ui_study = data;
-  amitk_preferences_set_canvas_fill_roi(ui_study->preferences, 
-					gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
-
-  return;
-}
-#endif
 
 /* function called to change the layout */
 static void layout_cb(GtkWidget * widget, gpointer data) {
@@ -295,12 +257,7 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
   GtkWidget * maintain_size_button;
   GtkWidget * roi_width_spin;
   GtkWidget * target_size_spin;
-#ifdef AMIDE_LIBGNOMECANVAS_AA
   GtkWidget * roi_transparency_spin;
-#else
-  GtkWidget * line_style_menu;
-  GtkWidget * fill_roi_button;
-#endif
   GtkWidget * layout_button1;
   GtkWidget * layout_button2;
   GtkWidget * panel_layout_button1;
@@ -313,7 +270,7 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
   GtkWidget * entry;
   AmitkModality i_modality;
   AmitkWhichDefaultDirectory i_which_default_directory;
-  GnomeCanvasItem * roi_item;
+  AmitkCanvasItem * roi_item;
   AmitkThresholdStyle i_threshold_style;
   GtkWidget * style_buttons[AMITK_THRESHOLD_STYLE_NUM];
   GtkWidget * hbox;
@@ -331,8 +288,8 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
   temp_string = g_strdup_printf(_("%s: Preferences Dialog"), PACKAGE);
   dialog = gtk_dialog_new_with_buttons (temp_string,  ui_study->window,
 					GTK_DIALOG_DESTROY_WITH_PARENT,
-					GTK_STOCK_HELP, GTK_RESPONSE_HELP,
-					GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE,
+					_("_Help"), GTK_RESPONSE_HELP,
+					_("_Close"), GTK_RESPONSE_CLOSE,
 					NULL);
   gtk_window_set_title(GTK_WINDOW(dialog), temp_string);
   g_free(temp_string);
@@ -343,7 +300,8 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
   g_signal_connect(G_OBJECT(dialog), "delete_event", G_CALLBACK(delete_event_cb), ui_study->preferences);
 
   notebook = gtk_notebook_new();
-  gtk_container_add (GTK_CONTAINER (GTK_DIALOG(dialog)->vbox), notebook);
+  gtk_container_add (GTK_CONTAINER (gtk_dialog_get_content_area
+                                    (GTK_DIALOG(dialog))), notebook);
 
   
 
@@ -353,7 +311,9 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
 
 
   /* start making the widgets for this dialog box */
-  packing_table = gtk_table_new(4,5,FALSE);
+  packing_table = gtk_grid_new();
+  gtk_grid_set_row_spacing(GTK_GRID(packing_table), Y_PADDING);
+  gtk_grid_set_column_spacing(GTK_GRID(packing_table), X_PADDING);
   label = gtk_label_new(_("ROI/View Preferences"));
   table_row=0;
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook), packing_table, label);
@@ -361,25 +321,17 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
 
   /* warn that these preferences are only for new stuff */
   label = gtk_label_new(study_preference_text);
-  gtk_table_attach(GTK_TABLE(packing_table), label, 
-		   0,3, table_row, table_row+1,
-		   0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 3, 1);
   table_row++;
 
-  hseparator = gtk_hseparator_new();
-  gtk_table_attach(GTK_TABLE(packing_table), hseparator, 
-		   0, 3, table_row, table_row+1,
-		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  hseparator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+  gtk_grid_attach(GTK_GRID(packing_table), hseparator, 0, table_row, 3, 1);
   table_row++;
 
 
   ui_common_study_preferences_widgets(packing_table, table_row,
 				      &roi_width_spin, &roi_item, 
-#ifdef AMIDE_LIBGNOMECANVAS_AA
 				      &roi_transparency_spin,
-#else
-				      &line_style_menu, &fill_roi_button,
-#endif
 				      &layout_button1, &layout_button2, 
 				      &panel_layout_button1,&panel_layout_button2,&panel_layout_button3,
 				      &maintain_size_button,
@@ -394,20 +346,9 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
   g_object_set_data(G_OBJECT(dialog), "roi_item", roi_item);
   update_roi_sample_item(ui_study);
 
-#ifdef AMIDE_LIBGNOMECANVAS_AA
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(roi_transparency_spin),
 			    AMITK_PREFERENCES_CANVAS_ROI_TRANSPARENCY(ui_study->preferences));
   g_signal_connect(G_OBJECT(roi_transparency_spin), "value_changed",  G_CALLBACK(roi_transparency_cb), ui_study);
-#else
-  gtk_combo_box_set_active(GTK_COMBO_BOX(line_style_menu),
-			   AMITK_PREFERENCES_CANVAS_LINE_STYLE(ui_study->preferences));
-  g_signal_connect(G_OBJECT(line_style_menu), "changed", G_CALLBACK(line_style_cb), ui_study);
-
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(fill_roi_button), 
-			       AMITK_PREFERENCES_CANVAS_FILL_ROI(ui_study->preferences));
-  g_signal_connect(G_OBJECT(fill_roi_button), "toggled", G_CALLBACK(fill_roi_cb), ui_study);
-#endif
-
 
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(layout_button1), 
 			       (AMITK_PREFERENCES_CANVAS_LAYOUT(ui_study->preferences) == AMITK_LAYOUT_LINEAR));
@@ -444,37 +385,33 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
      Threshold Windows
      ---------------------- */
 
-  packing_table = gtk_table_new(4,2,FALSE);
+  packing_table = gtk_grid_new();
+  gtk_grid_set_row_spacing(GTK_GRID(packing_table), Y_PADDING);
+  gtk_grid_set_column_spacing(GTK_GRID(packing_table), X_PADDING);
   label = gtk_label_new(_("Thresholding"));
   table_row=0;
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook), packing_table, label);
 
   /* warn that these preferences are only for new stuff */
   label = gtk_label_new(data_set_preference_text);
-  gtk_table_attach(GTK_TABLE(packing_table), label, 
-		   0,3, table_row, table_row+1,
-		   0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 3, 1);
   gtk_widget_show(label);
   table_row++;
 
-  hseparator = gtk_hseparator_new();
-  gtk_table_attach(GTK_TABLE(packing_table), hseparator, 
-		   0, 3, table_row, table_row+1,
-		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  hseparator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+  gtk_grid_attach(GTK_GRID(packing_table), hseparator, 0, table_row, 3, 1);
   gtk_widget_show(hseparator);
   table_row++;
 
   
   /* threshold type selection */
   label = gtk_label_new(_("Threshold Style"));
-  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1, table_row,table_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
   gtk_widget_show(label);
     
-  hbox = gtk_hbox_new(FALSE, 0);
+  hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
   amitk_threshold_style_widgets(style_buttons, hbox);
-  gtk_table_attach(GTK_TABLE(packing_table), hbox, 1,2, table_row,table_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), hbox, 1, table_row, 1, 1);
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(style_buttons[AMITK_PREFERENCES_THRESHOLD_STYLE(ui_study->preferences)]),
 			       TRUE);
   for (i_threshold_style = 0; i_threshold_style < AMITK_THRESHOLD_STYLE_NUM; i_threshold_style++) 
@@ -494,11 +431,12 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
 
 
   windows_widget = amitk_window_edit_new(NULL, ui_study->preferences);
-  gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolled), windows_widget);
+  gtk_container_add(GTK_CONTAINER(scrolled), windows_widget);
   gtk_widget_show(windows_widget);
 
-  gtk_table_attach(GTK_TABLE(packing_table), scrolled, 0,2, table_row,table_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL, GTK_FILL|GTK_EXPAND, X_PADDING, Y_PADDING);
+  gtk_widget_set_hexpand(scrolled, TRUE);
+  gtk_widget_set_vexpand(scrolled, TRUE);
+  gtk_grid_attach(GTK_GRID(packing_table), scrolled, 0, table_row, 2, 1);
   gtk_widget_show(scrolled);
 
   gtk_widget_show(packing_table);
@@ -508,7 +446,9 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
   /* ----------------------
      Default color tables 
      ---------------------- */
-  packing_table = gtk_table_new(4,2,FALSE);
+  packing_table = gtk_grid_new();
+  gtk_grid_set_row_spacing(GTK_GRID(packing_table), Y_PADDING);
+  gtk_grid_set_column_spacing(GTK_GRID(packing_table), X_PADDING);
   label = gtk_label_new(_("Default Color Tables"));
   table_row=0;
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook), packing_table, label);
@@ -520,13 +460,13 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
 				  amitk_modality_get_name(i_modality));
     label = gtk_label_new(temp_string);
     g_free(temp_string);
-    gtk_table_attach(GTK_TABLE(packing_table), label, 0,1, table_row,table_row+1,
-		     X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_widget_set_hexpand(label, TRUE);
+    gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
     gtk_widget_show(label);
 
     menu = amitk_color_table_menu_new();
-    gtk_table_attach(GTK_TABLE(packing_table), menu, 1,2, table_row,table_row+1,
-		     X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_widget_set_hexpand(menu, TRUE);
+    gtk_grid_attach(GTK_GRID(packing_table), menu, 1, table_row, 1, 1);
     gtk_combo_box_set_active(GTK_COMBO_BOX(menu),
 			     AMITK_PREFERENCES_COLOR_TABLE(ui_study->preferences, i_modality));
     g_object_set_data(G_OBJECT(menu), "modality", GINT_TO_POINTER(i_modality));
@@ -545,71 +485,59 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
 
 
   /* start making the widgets for this dialog box */
-  packing_table = gtk_table_new(4,5,FALSE);
+  packing_table = gtk_grid_new();
+  gtk_grid_set_row_spacing(GTK_GRID(packing_table), Y_PADDING);
+  gtk_grid_set_column_spacing(GTK_GRID(packing_table), X_PADDING);
   label = gtk_label_new(_("Miscellaneous"));
   table_row=0;
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook), packing_table, label);
 
   label = gtk_label_new(_("Send Warning Messages to Console:"));
-  gtk_table_attach(GTK_TABLE(packing_table), label, 
-		   0,1, table_row, table_row+1,
-		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
 
   check_button = gtk_check_button_new();
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), 
 			       AMITK_PREFERENCES_WARNINGS_TO_CONSOLE(ui_study->preferences));
   g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(warnings_to_console_cb), ui_study);
-  gtk_table_attach(GTK_TABLE(packing_table), check_button, 
-		   1,2, table_row, table_row+1,
-		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), check_button, 1, table_row, 1, 1);
   table_row++;
 
 
   label = gtk_label_new(_("Prompt for \"Save Changes\" on Exit:"));
-  gtk_table_attach(GTK_TABLE(packing_table), label, 
-		   0,1, table_row, table_row+1,
-		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
 
   check_button = gtk_check_button_new();
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), 
 			       AMITK_PREFERENCES_PROMPT_FOR_SAVE_ON_EXIT(ui_study->preferences));
   g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(save_on_exit_cb), ui_study);
-  gtk_table_attach(GTK_TABLE(packing_table), check_button, 
-		   1,2, table_row, table_row+1,
-		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), check_button, 1, table_row, 1, 1);
   table_row++;
 
 
   label = gtk_label_new(_("Which Default Directory:"));
-  gtk_table_attach(GTK_TABLE(packing_table), label, 
-		   0,1, table_row, table_row+1,
-		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
 
-  menu = gtk_combo_box_new_text();
+  menu = gtk_combo_box_text_new();
   for (i_which_default_directory=0; i_which_default_directory < AMITK_WHICH_DEFAULT_DIRECTORY_NUM; i_which_default_directory++)
-    gtk_combo_box_append_text(GTK_COMBO_BOX(menu),
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(menu),
 			      amitk_which_default_directory_names[i_which_default_directory]);
   gtk_combo_box_set_active(GTK_COMBO_BOX(menu),
 			   AMITK_PREFERENCES_WHICH_DEFAULT_DIRECTORY(ui_study->preferences));
   g_signal_connect(G_OBJECT(menu), "changed", G_CALLBACK(which_default_directory_cb), ui_study);
-  gtk_table_attach(GTK_TABLE(packing_table), menu, 
-		   1,2, table_row, table_row+1,
-		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_widget_set_hexpand(menu, TRUE);
+  gtk_grid_attach(GTK_GRID(packing_table), menu, 1, table_row, 1, 1);
   table_row++;
 
 
   label = gtk_label_new(_("Specified Directory:"));
-  gtk_table_attach(GTK_TABLE(packing_table), label, 
-		   0,1, table_row, table_row+1,
-		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
 
   entry =  gtk_file_chooser_button_new(_("Default Directory:"),
   				       GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER);
   amitk_preferences_set_file_chooser_directory(ui_study->preferences, entry); /* set the default directory if applicable */
   g_signal_connect(G_OBJECT(entry), "current-folder-changed", G_CALLBACK(default_directory_cb), ui_study);
-  gtk_table_attach(GTK_TABLE(packing_table), entry, 
-		   1,2, table_row, table_row+1,
-		   GTK_FILL|GTK_EXPAND, 0, X_PADDING, Y_PADDING);
+  gtk_widget_set_hexpand(entry, TRUE);
+  gtk_grid_attach(GTK_GRID(packing_table), entry, 1, table_row, 1, 1);
 
   /* make sure what's being shown in the above widget is consistent with what we have,
      this only comes up if we've never set a default directory before */

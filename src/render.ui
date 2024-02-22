@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <menu id="menubar">
+    <submenu>
+      <attribute name="label" translatable="yes">_File</attribute>
+      <section id="file">
+        <item>
+          <attribute name="label" translatable="yes">_Export Rendering</attribute>
+          <attribute name="action">render.export</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">_Create Movie</attribute>
+          <attribute name="action">render.movie</attribute>
+        </item>
+      </section>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_Close</attribute>
+          <attribute name="action">render.close</attribute>
+          <attribute name="icon">window-close</attribute>
+        </item>
+      </section>
+    </submenu>
+    <submenu>
+      <attribute name="label" translatable="yes">_Edit</attribute>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_Rendering Parameters</attribute>
+          <attribute name="action">render.parameters</attribute>
+        </item>
+      </section>
+    </submenu>
+  </menu>
+</interface>

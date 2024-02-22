@@ -533,7 +533,9 @@ static GtkWidget * create_operation_page(tb_math_t * tb_math) {
   GtkTreeViewColumn *column;
   GtkTreeSelection *selection;
 
-  table = gtk_table_new(3,2,FALSE);
+  table = gtk_grid_new();
+  gtk_grid_set_row_spacing(GTK_GRID(table), Y_PADDING);
+  gtk_grid_set_column_spacing(GTK_GRID(table), X_PADDING);
     
   store = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_INT);
   tb_math->list_operation = gtk_tree_view_new_with_model (GTK_TREE_MODEL (store));
@@ -548,8 +550,9 @@ static GtkWidget * create_operation_page(tb_math_t * tb_math) {
   gtk_tree_selection_set_mode (selection, GTK_SELECTION_SINGLE);
   g_signal_connect(G_OBJECT(selection), "changed",
 		   G_CALLBACK(operation_selection_changed_cb), tb_math);
-  gtk_table_attach(GTK_TABLE(table),tb_math->list_operation, 0,1,0,1,
-		   GTK_FILL|GTK_EXPAND, GTK_FILL | GTK_EXPAND,X_PADDING, Y_PADDING);
+  gtk_widget_set_hexpand(tb_math->list_operation, TRUE);
+  gtk_widget_set_vexpand(tb_math->list_operation, TRUE);
+  gtk_grid_attach(GTK_GRID(table), tb_math->list_operation, 0, 0, 1, 1);
 
   return table;
 }
@@ -563,7 +566,9 @@ static GtkWidget * create_data_sets_page(tb_math_t * tb_math) {
   GtkTreeViewColumn *column;
   GtkTreeSelection *selection;
 
-  table = gtk_table_new(3,3,FALSE);
+  table = gtk_grid_new();
+  gtk_grid_set_row_spacing(GTK_GRID(table), Y_PADDING);
+  gtk_grid_set_column_spacing(GTK_GRID(table), X_PADDING);
     
   /* the first data set */
   store = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_POINTER);
@@ -585,12 +590,13 @@ static GtkWidget * create_data_sets_page(tb_math_t * tb_math) {
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(tb_math->scrolled_ds1), 
 				 GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
   gtk_container_add(GTK_CONTAINER(tb_math->scrolled_ds1), tb_math->list_ds1);
-  gtk_table_attach(GTK_TABLE(table),tb_math->scrolled_ds1, 0,1,0,1,
-		   GTK_FILL|GTK_EXPAND, GTK_FILL | GTK_EXPAND,X_PADDING, Y_PADDING);
+  gtk_widget_set_hexpand(tb_math->scrolled_ds1, TRUE);
+  gtk_widget_set_vexpand(tb_math->scrolled_ds1, TRUE);
+  gtk_grid_attach(GTK_GRID(table), tb_math->scrolled_ds1, 0, 0, 1, 1);
 
 
-  vseparator = gtk_vseparator_new();
-  gtk_table_attach(GTK_TABLE(table), vseparator, 1,2,0,2, 0, GTK_FILL, X_PADDING, Y_PADDING);
+  vseparator = gtk_separator_new(GTK_ORIENTATION_VERTICAL);
+  gtk_grid_attach(GTK_GRID(table), vseparator, 1, 0, 1, 2);
   
   /* the second data set */
   store = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_POINTER);
@@ -612,8 +618,9 @@ static GtkWidget * create_data_sets_page(tb_math_t * tb_math) {
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(tb_math->scrolled_ds2), 
 				 GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
   gtk_container_add(GTK_CONTAINER(tb_math->scrolled_ds2), tb_math->list_ds2);
-  gtk_table_attach(GTK_TABLE(table),tb_math->scrolled_ds2, 2,3,0,1,
-		   GTK_FILL|GTK_EXPAND, GTK_FILL | GTK_EXPAND,X_PADDING, Y_PADDING);
+  gtk_widget_set_hexpand(tb_math->scrolled_ds2, TRUE);
+  gtk_widget_set_vexpand(tb_math->scrolled_ds2, TRUE);
+  gtk_grid_attach(GTK_GRID(table), tb_math->scrolled_ds2, 2, 0, 1, 1);
 
   return table;
 }
@@ -624,12 +631,14 @@ static GtkWidget * create_parameters_page(tb_math_t * tb_math) {
   GtkWidget * table;
   gint table_row = 0;
 
-  table = gtk_table_new(3,2,FALSE);
+  table = gtk_grid_new();
+  gtk_grid_set_row_spacing(GTK_GRID(table), Y_PADDING);
+  gtk_grid_set_column_spacing(GTK_GRID(table), X_PADDING);
 
 
   tb_math->parameter0_label = gtk_label_new(NULL); /* label set in parameter_page_update function */
-  gtk_table_attach(GTK_TABLE(table), tb_math->parameter0_label, 0,1, table_row,table_row+1,
-		   FALSE, FALSE, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), tb_math->parameter0_label,
+                  0, table_row, 1, 1);
     
   tb_math->parameter0_spin = gtk_spin_button_new_with_range(-G_MAXDOUBLE, G_MAXDOUBLE, 1.0);
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(tb_math->parameter0_spin), FALSE);
@@ -639,13 +648,13 @@ static GtkWidget * create_parameters_page(tb_math_t * tb_math) {
 		   G_CALLBACK(parameter0_spinner_cb), tb_math);
   g_signal_connect(G_OBJECT(tb_math->parameter0_spin), "output",
 		   G_CALLBACK(amitk_spin_button_scientific_output), NULL);
-  gtk_table_attach(GTK_TABLE(table), tb_math->parameter0_spin, 1,2, table_row,table_row+1,
-		   FALSE,FALSE, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), tb_math->parameter0_spin,
+                  1, table_row, 1, 1);
   table_row++;
 
   tb_math->parameter1_label = gtk_label_new(NULL); /* label set in parameter_page_update function */
-  gtk_table_attach(GTK_TABLE(table), tb_math->parameter1_label, 0,1, table_row,table_row+1,
-		   FALSE, FALSE, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), tb_math->parameter1_label,
+                  0, table_row, 1, 1);
     
   tb_math->parameter1_spin = gtk_spin_button_new_with_range(-G_MAXDOUBLE, G_MAXDOUBLE, 1.0);
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(tb_math->parameter1_spin), FALSE);
@@ -655,24 +664,24 @@ static GtkWidget * create_parameters_page(tb_math_t * tb_math) {
 		   G_CALLBACK(parameter1_spinner_cb), tb_math);
   g_signal_connect(G_OBJECT(tb_math->parameter1_spin), "output",
 		   G_CALLBACK(amitk_spin_button_scientific_output), NULL);
-  gtk_table_attach(GTK_TABLE(table), tb_math->parameter1_spin, 1,2, table_row,table_row+1,
-		   FALSE,FALSE, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), tb_math->parameter1_spin,
+                  1, table_row, 1, 1);
   table_row++;
 
   tb_math->by_frames_check_button = 
     gtk_check_button_new_with_label (_("Do binary operation frame-by-frame (default is by time)"));
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tb_math->by_frames_check_button), tb_math->by_frames);
   g_signal_connect(G_OBJECT(tb_math->by_frames_check_button), "toggled", G_CALLBACK(by_frames_cb),tb_math);
-  gtk_table_attach(GTK_TABLE(table), tb_math->by_frames_check_button,0,2,table_row,table_row+1,
-		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), tb_math->by_frames_check_button,
+                  0, table_row, 2, 1);
   table_row++;
 
   tb_math->maintain_ds1_dim_check_button = 
     gtk_check_button_new_with_label(_("Maintain data set 1 dimensions (default is superset of both data sets)"));
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tb_math->maintain_ds1_dim_check_button), tb_math->maintain_ds1_dim);
   g_signal_connect(G_OBJECT(tb_math->maintain_ds1_dim_check_button), "toggled", G_CALLBACK(maintain_ds1_dim_cb),tb_math);
-  gtk_table_attach(GTK_TABLE(table), tb_math->maintain_ds1_dim_check_button,0,2,table_row,table_row+1,
-		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), tb_math->maintain_ds1_dim_check_button,
+                  0, table_row, 2, 1);
   table_row++;
 
   return table;
@@ -685,7 +694,6 @@ static GtkWidget * create_parameters_page(tb_math_t * tb_math) {
 void tb_math(AmitkStudy * study, GtkWindow * parent) {
 
   tb_math_t * tb_math;
-  GdkPixbuf * logo;
   GList * data_sets;
   gint i;
   
@@ -753,12 +761,9 @@ void tb_math(AmitkStudy * study, GtkWindow * parent) {
 			      GTK_ASSISTANT_PAGE_CONFIRM);
   gtk_assistant_set_page_complete(GTK_ASSISTANT(tb_math->dialog), tb_math->page[CONCLUSION_PAGE], TRUE); /* always set to complete here */
 
-  logo = gtk_widget_render_icon(GTK_WIDGET(tb_math->dialog), "amide_icon_logo", GTK_ICON_SIZE_DIALOG, 0);
   for (i=0; i<NUM_PAGES; i++) {
-    gtk_assistant_set_page_header_image(GTK_ASSISTANT(tb_math->dialog), tb_math->page[i], logo);
     g_object_set_data(G_OBJECT(tb_math->page[i]),"which_page", GINT_TO_POINTER(i));
   }
-  g_object_unref(logo);
 
   gtk_widget_show_all(tb_math->dialog);
   return;

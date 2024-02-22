@@ -352,22 +352,21 @@ static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
   g_free(temp_string);
 
   raw_data_info->ok_button = gtk_dialog_add_button(GTK_DIALOG(dialog), 
-						   GTK_STOCK_OK, GTK_RESPONSE_YES);
+						   _("_OK"), GTK_RESPONSE_YES);
   gtk_dialog_add_button(GTK_DIALOG(dialog),
-			GTK_STOCK_CANCEL, GTK_RESPONSE_CLOSE);
+			_("_Cancel"), GTK_RESPONSE_CLOSE);
 
   /* make the packing table */
-  packing_table = gtk_table_new(10,6,FALSE);
-  gtk_container_add(GTK_CONTAINER(GTK_DIALOG(dialog)->vbox),packing_table);
+  packing_table = gtk_grid_new();
+  gtk_grid_set_row_spacing(GTK_GRID(packing_table), Y_PADDING);
+  gtk_grid_set_column_spacing(GTK_GRID(packing_table), X_PADDING);
+  gtk_container_add(GTK_CONTAINER(gtk_dialog_get_content_area
+                                  (GTK_DIALOG(dialog))), packing_table);
 
   /* widgets to change the roi's name */
   label = gtk_label_new(_("name:"));
-  gtk_misc_set_alignment(GTK_MISC(label), 1.0, 0.5);
-  gtk_table_attach(GTK_TABLE(packing_table),
-		   GTK_WIDGET(label), 0,1,
-		   table_row, table_row+1,
- 		   GTK_FILL|GTK_EXPAND, 0,
-		   X_PADDING, Y_PADDING);
+  gtk_label_set_xalign(GTK_LABEL(label), 1.0);
+  gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
 
   /* figure out an initial name for the data */
   temp_string = g_path_get_basename(raw_data_info->filename);
@@ -387,11 +386,7 @@ static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
 
   gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
   g_signal_connect(G_OBJECT(entry), "changed", G_CALLBACK(change_name_cb), raw_data_info);
-  gtk_table_attach(GTK_TABLE(packing_table),
- 		   GTK_WIDGET(entry),1,3,
-		   table_row, table_row+1,
- 		   GTK_FILL | GTK_EXPAND, 0,
-		   X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), entry, 1, table_row, 2, 1);
  
   table_row++;
 
@@ -400,70 +395,52 @@ static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
 
   /* widgets to change the object's modality */
   label = gtk_label_new(_("modality:"));
-   gtk_misc_set_alignment(GTK_MISC(label), 1.0, 0.5);
-  gtk_table_attach(GTK_TABLE(packing_table),
-  		   GTK_WIDGET(label), 0,1,
-  		   table_row, table_row+1,
-   		   GTK_FILL|GTK_EXPAND, 0,
-  		   X_PADDING, Y_PADDING);
+  gtk_label_set_xalign(GTK_LABEL(label), 1.0);
+  gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
 
 
-  menu = gtk_combo_box_new_text();
+  menu = gtk_combo_box_text_new();
   for (i_modality=0; i_modality<AMITK_MODALITY_NUM; i_modality++) 
-    gtk_combo_box_append_text(GTK_COMBO_BOX(menu),
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(menu),
 			      amitk_modality_get_name(i_modality));
   gtk_combo_box_set_active(GTK_COMBO_BOX(menu), raw_data_info->modality);
   g_signal_connect(G_OBJECT(menu), "changed", G_CALLBACK(change_modality_cb), raw_data_info);
-  gtk_table_attach(GTK_TABLE(packing_table), 
-		   GTK_WIDGET(menu), 1,3, 
-		   table_row,table_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL, 0, 
-		   X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), menu, 1, table_row, 2, 1);
   table_row++;
 
 
   /* widgets to change the raw data file's  data format */
   label = gtk_label_new(_("data format:"));
-  gtk_misc_set_alignment(GTK_MISC(label), 1.0, 0.5);
-  gtk_table_attach(GTK_TABLE(packing_table),
-		   GTK_WIDGET(label), 0,1,
-		   table_row, table_row+1,
- 		   GTK_FILL|GTK_EXPAND, 0,
-		   X_PADDING, Y_PADDING);
-  menu = gtk_combo_box_new_text();
+  gtk_label_set_xalign(GTK_LABEL(label), 1.0);
+  gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
+  menu = gtk_combo_box_text_new();
   for (i_raw_format=0; i_raw_format<AMITK_RAW_FORMAT_NUM; i_raw_format++) 
-    gtk_combo_box_append_text(GTK_COMBO_BOX(menu),
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(menu),
 			      amitk_raw_format_names[i_raw_format]);
   gtk_combo_box_set_active(GTK_COMBO_BOX(menu), raw_data_info->raw_format);
   g_signal_connect(G_OBJECT(menu), "changed", 
 		   G_CALLBACK(change_raw_format_cb), raw_data_info);
-  gtk_table_attach(GTK_TABLE(packing_table), 
-		   GTK_WIDGET(menu), 1,3, 
-		   table_row,table_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL, 0, 
-		   X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), menu, 1, table_row, 2, 1);
 
   /* how many bytes we can read from the file */
   label = gtk_label_new(_("file size (bytes):"));
-  gtk_misc_set_alignment(GTK_MISC(label), 1.0, 0.5);
-  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 3,5,
- 		   table_row, table_row+1, GTK_FILL | GTK_EXPAND, 0, X_PADDING, Y_PADDING);
+  gtk_label_set_xalign(GTK_LABEL(label), 1.0);
+  gtk_grid_attach(GTK_GRID(packing_table), label, 3, table_row, 2, 1);
   /* how many bytes we're currently reading from the file */
   temp_string = g_strdup_printf("%lu", raw_data_info->total_file_size);
   label = gtk_label_new(temp_string);
-  gtk_misc_set_alignment(GTK_MISC(label), 0.0, 0.5);
+  gtk_label_set_xalign(GTK_LABEL(label), 0.0);
   g_free(temp_string);
-  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 5,6,
-		   table_row, table_row+1, GTK_FILL | GTK_EXPAND, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), label, 5, table_row, 1, 1);
   table_row++;
 
 
   /* what offset in the raw_data file we should start reading at */
   raw_data_info->read_offset_label = gtk_label_new("");
-  gtk_misc_set_alignment(GTK_MISC(raw_data_info->read_offset_label), 1.0, 0.5);
+  gtk_label_set_xalign(GTK_LABEL(raw_data_info->read_offset_label), 1.0);
   update_offset_label(raw_data_info);
-  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(raw_data_info->read_offset_label), 0,1,
- 		   table_row, table_row+1, GTK_FILL | GTK_EXPAND, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), raw_data_info->read_offset_label,
+                  0, table_row, 1, 1);
 
   entry = gtk_entry_new();
   temp_string = g_strdup_printf("%d", raw_data_info->offset);
@@ -472,19 +449,18 @@ static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
   gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
   g_object_set_data(G_OBJECT(entry), "type", GINT_TO_POINTER(AMITK_DIM_NUM+AMITK_AXIS_NUM));
   g_signal_connect(G_OBJECT(entry), "changed", G_CALLBACK(change_entry_cb),  raw_data_info);
-  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(entry),1,3,
- 		   table_row, table_row+1, GTK_FILL | GTK_EXPAND, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), entry, 1, table_row, 2, 1);
 
 
   /* how many bytes we're currently reading from the file */
   raw_data_info->num_bytes_label1 = gtk_label_new("");
   raw_data_info->num_bytes_label2 = gtk_label_new("");
-  gtk_misc_set_alignment(GTK_MISC(raw_data_info->num_bytes_label1), 1.0, 0.5);
-  gtk_misc_set_alignment(GTK_MISC(raw_data_info->num_bytes_label2), 0.0, 0.5);
-  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(raw_data_info->num_bytes_label1), 
- 		   3,5, table_row, table_row+1, GTK_FILL|GTK_EXPAND, 0, X_PADDING, Y_PADDING);
-  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(raw_data_info->num_bytes_label2), 
- 		   5,6, table_row, table_row+1, GTK_FILL|GTK_EXPAND, 0, X_PADDING, Y_PADDING);
+  gtk_label_set_xalign(GTK_LABEL(raw_data_info->num_bytes_label1), 1.0);
+  gtk_label_set_xalign(GTK_LABEL(raw_data_info->num_bytes_label2), 0.0);
+  gtk_grid_attach(GTK_GRID(packing_table), raw_data_info->num_bytes_label1,
+                  3, table_row, 2, 1);
+  gtk_grid_attach(GTK_GRID(packing_table), raw_data_info->num_bytes_label2,
+                  5, table_row, 1, 1);
   update_num_bytes(raw_data_info); /* put something sensible into the label */
   table_row++;
 
@@ -492,28 +468,22 @@ static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
 
   /* labels for the x, y, and z components */
   label = gtk_label_new(_("x"));
-  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 1,2,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), label, 1, table_row, 1, 1);
   label = gtk_label_new(_("y"));
-  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 2,3,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), label, 2, table_row, 1, 1);
   label = gtk_label_new(_("z"));
-  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 3,4,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), label, 3, table_row, 1, 1);
   label = gtk_label_new(_("gates"));
-  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 4,5,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), label, 4, table_row, 1, 1);
   label = gtk_label_new(_("frames"));
-  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 5,6,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), label, 5, table_row, 1, 1);
   table_row++;
 
 
   /* widgets to change the dimensions of the data set */
   label = gtk_label_new(_("dimensions (# voxels)"));
-  gtk_misc_set_alignment(GTK_MISC(label), 1.0, 0.5);
-  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 0,1,
- 		   table_row, table_row+1, GTK_FILL|GTK_EXPAND, 0, X_PADDING, Y_PADDING);
+  gtk_label_set_xalign(GTK_LABEL(label), 1.0);
+  gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
 
 
   for (i_dim=0; i_dim<AMITK_DIM_NUM; i_dim++) {
@@ -525,16 +495,14 @@ static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
     gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
     g_object_set_data(G_OBJECT(entry), "type", GINT_TO_POINTER(i_dim));
     g_signal_connect(G_OBJECT(entry), "changed", G_CALLBACK(change_entry_cb), raw_data_info);
-    gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(entry),i_dim+1,i_dim+2,
-		     table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), entry, i_dim+1, table_row, 1, 1);
   }
   table_row++;
 
   /* widgets to change the voxel size of the data set */
   label = gtk_label_new(_("voxel size (mm)"));
-  gtk_misc_set_alignment(GTK_MISC(label), 1.0, 0.5);
-  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 0,1,
- 		   table_row, table_row+1, GTK_FILL|GTK_EXPAND, 0, X_PADDING, Y_PADDING);
+  gtk_label_set_xalign(GTK_LABEL(label), 1.0);
+  gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
 
 
   for (i_axis=0; i_axis<AMITK_AXIS_NUM; i_axis++) {
@@ -547,17 +515,15 @@ static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
     g_object_set_data(G_OBJECT(entry), "type", GINT_TO_POINTER(i_axis+AMITK_DIM_NUM));
     g_signal_connect(G_OBJECT(entry), "changed", G_CALLBACK(change_entry_cb), 
 		       raw_data_info);
-    gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(entry),i_axis+1,i_axis+2,
-		     table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), entry, i_axis+1, table_row, 1, 1);
   }
   table_row++;
 
 
   /* scale factor to apply to the data */
   label = gtk_label_new(_("scale factor"));
-  gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
-  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 0,1,
- 		   table_row, table_row+1, GTK_FILL|GTK_EXPAND, 0, X_PADDING, Y_PADDING);
+  gtk_label_set_xalign(GTK_LABEL(label), 1.0);
+  gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
 
 
   entry = gtk_entry_new();
@@ -567,8 +533,7 @@ static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
   g_free(temp_string);
   gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
   g_signal_connect(G_OBJECT(entry), "changed", G_CALLBACK(change_scaling_cb), raw_data_info);
-  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(entry),1,2,
-		   table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), entry, 1, table_row, 1, 1);
   table_row++;
 
   gtk_widget_show_all(dialog);

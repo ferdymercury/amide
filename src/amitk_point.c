@@ -28,6 +28,7 @@
 #include "amitk_point.h"
 #include "amitk_marshal.h"
 #include "amitk_type_builtins.h"
+#include "amide.h"
 
 
 const AmitkAxes base_axes =

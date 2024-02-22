@@ -31,6 +31,7 @@
 #include "amitk_data_set.h"
 #include "amitk_data_set_DOUBLE_0D_SCALING.h"
 #include "vistaio_interface.h"
+#include "amide.h"
 #include <vistaio.h>
 #include <string.h>
 #include <locale.h>

@@ -29,7 +29,7 @@
 /* header files that are always needed with this file */
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include "amitk_study.h"
-#include <libgnomecanvas/libgnomecanvas.h>
+#include "amitk_canvas_compat.h"
 
 #define AMIDE_LIMIT_ZOOM_UPPER 10.0
 #define AMIDE_LIMIT_ZOOM_LOWER 0.2
@@ -65,12 +65,12 @@ typedef struct ui_study_t {
   GtkWidget * thickness_spin;
   GtkWidget * zoom_spin;
   GtkWidget * fov_spin;
-  GtkAction * interpolation_action[AMITK_INTERPOLATION_NUM];
+  GAction * interpolation_action;
   GtkWidget * rendering_menu;
-  GtkAction * canvas_target_action;
-  GtkAction * canvas_visible_action[AMITK_VIEW_NUM];
-  GtkAction * view_mode_action[AMITK_VIEW_MODE_NUM];
-  GtkAction * fuse_type_action[AMITK_FUSE_TYPE_NUM];
+  GAction * canvas_target_action;
+  GAction * canvas_visible_action[AMITK_VIEW_NUM];
+  GAction * view_mode_action;
+  GAction * fuse_type_action;
   GtkWidget * tree_view; /* the tree showing the study data structure info */
   GtkWidget * gate_dialog;
   GtkWidget * gate_button;
@@ -84,15 +84,14 @@ typedef struct ui_study_t {
   /* canvas specific info */
   GtkWidget * center_table;
   GtkWidget * canvas_table[AMITK_VIEW_MODE_NUM];
-  GtkWidget * canvas_handle[AMITK_VIEW_MODE_NUM];
   GtkWidget * canvas[AMITK_VIEW_MODE_NUM][AMITK_VIEW_NUM];
   AmitkPanelLayout panel_layout;
   AmitkLayout  canvas_layout;
 
   /* help canvas info */
-  GnomeCanvas * help_info;
-  GnomeCanvasItem * help_legend[NUM_HELP_INFO_LINES];
-  GnomeCanvasItem * help_line[NUM_HELP_INFO_LINES];
+  AmitkSimpleCanvas * help_info;
+  AmitkCanvasItem * help_legend[NUM_HELP_INFO_LINES];
+  AmitkCanvasItem * help_line[NUM_HELP_INFO_LINES];
 
   /* preferences */
   AmitkPreferences * preferences;

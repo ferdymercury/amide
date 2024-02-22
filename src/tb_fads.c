@@ -183,11 +183,13 @@ static void set_text(tb_fads_t * tb_fads) {
     gtk_text_buffer_set_text (tb_fads->explanation_buffer, 
 			      _(fads_type_explanation[tb_fads->fads_type]), -1);
 
-    if (fads_type_icon[tb_fads->fads_type] != NULL) {
+    if (tb_fads->fads_type == FADS_TYPE_TWO_COMPARTMENT) {
       gtk_text_buffer_get_end_iter(tb_fads->explanation_buffer, &iter);
       gtk_text_buffer_insert(tb_fads->explanation_buffer, &iter, "\n", -1);
 
-      pixbuf = gdk_pixbuf_new_from_inline(-1,fads_type_icon[tb_fads->fads_type] , FALSE, NULL);
+      pixbuf = gtk_icon_theme_load_icon(gtk_icon_theme_get_default(),
+                                        "amide_icon_two_compartment",
+                                        151, 0, NULL);
       gtk_text_buffer_get_end_iter(tb_fads->explanation_buffer, &iter);
       gtk_text_buffer_insert_pixbuf(tb_fads->explanation_buffer, &iter, pixbuf);
       g_object_unref(pixbuf);
@@ -250,8 +252,8 @@ static gchar * get_filename(tb_fads_t * tb_fads) {
   file_chooser = gtk_file_chooser_dialog_new (_("Filename for Factor Data"),
 					      GTK_WINDOW(tb_fads->dialog), /* parent window */
 					      GTK_FILE_CHOOSER_ACTION_SAVE,
-					      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-					      GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+					      _("_Cancel"), GTK_RESPONSE_CANCEL,
+					      _("_Save"), GTK_RESPONSE_ACCEPT,
 					      NULL);
   gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(file_chooser), TRUE);
   gtk_file_chooser_set_do_overwrite_confirmation (GTK_FILE_CHOOSER (file_chooser), TRUE);
@@ -433,8 +435,8 @@ static void add_curve_pressed_cb(GtkButton * button, gpointer data) {
   file_chooser = gtk_file_chooser_dialog_new (_("Import Curve File"),
 					      GTK_WINDOW(tb_fads->dialog), /* parent window */
 					      GTK_FILE_CHOOSER_ACTION_OPEN,
-					      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-					      GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+					      _("_Cancel"), GTK_RESPONSE_CANCEL,
+					      _("_Open"), GTK_RESPONSE_ACCEPT,
 					      NULL);
   gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(file_chooser), TRUE);
   amitk_preferences_set_file_chooser_directory(tb_fads->preferences, file_chooser); 
@@ -826,7 +828,9 @@ static GtkWidget * create_page(tb_fads_t * tb_fads, which_page_t i_page) {
   GtkWidget * hseparator;
   GtkTextBuffer *buffer;
 
-  table = gtk_table_new(8,6,FALSE);
+  table = gtk_grid_new();
+  gtk_grid_set_row_spacing(GTK_GRID(table), Y_PADDING);
+  gtk_grid_set_column_spacing(GTK_GRID(table), X_PADDING);
   table_row=0;
       
   switch(i_page) {
@@ -834,21 +838,19 @@ static GtkWidget * create_page(tb_fads_t * tb_fads, which_page_t i_page) {
     view = gtk_text_view_new ();
     buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (view));
     gtk_text_buffer_set_text (buffer, _(svd_page_text), -1);
-    gtk_table_attach(GTK_TABLE(table), view, 0,1, table_row,table_row+2,
-		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), view, 0, table_row, 1, 2);
     gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(view), GTK_WRAP_WORD);
     gtk_text_view_set_editable(GTK_TEXT_VIEW(view), FALSE);
     gtk_widget_set_size_request(view,300,-1);
     
     /* a separator for clarity */
-    vseparator = gtk_vseparator_new();
-    gtk_table_attach(GTK_TABLE(table), vseparator, 1,2,table_row, table_row+2,0, GTK_FILL, X_PADDING, Y_PADDING);
+    vseparator = gtk_separator_new(GTK_ORIENTATION_VERTICAL);
+    gtk_grid_attach(GTK_GRID(table), vseparator, 1, table_row, 1, 2);
 
     /* do I need to compute factors? */
     button = gtk_button_new_with_label(_("Compute Singular Values?"));
     g_signal_connect(G_OBJECT(button), "pressed", G_CALLBACK(svd_pressed_cb), tb_fads);
-    gtk_table_attach(GTK_TABLE(table), button, 2,3, table_row,table_row+1,
-		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), button, 2, table_row, 1, 1);
     table_row++;
     
     /* the scroll widget which the list will go into */
@@ -857,8 +859,9 @@ static GtkWidget * create_page(tb_fads_t * tb_fads, which_page_t i_page) {
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled),
 				   GTK_POLICY_AUTOMATIC,
 				   GTK_POLICY_AUTOMATIC);
-    gtk_table_attach(GTK_TABLE(table), scrolled, 2, 3, table_row, table_row+1, 
-		     X_PACKING_OPTIONS | GTK_FILL, Y_PACKING_OPTIONS | GTK_FILL, X_PADDING, Y_PADDING);
+    gtk_widget_set_hexpand(scrolled, TRUE);
+    gtk_widget_set_vexpand(scrolled, TRUE);
+    gtk_grid_attach(GTK_GRID(table), scrolled, 2, table_row, 1, 1);
     
     /* the table itself */
     store = gtk_list_store_new(2, G_TYPE_INT, G_TYPE_DOUBLE);
@@ -882,22 +885,19 @@ static GtkWidget * create_page(tb_fads_t * tb_fads, which_page_t i_page) {
   case FACTOR_CHOICE_PAGE:
     /* ask for the fads method to use */
     label = gtk_label_new(_("FADS Method:"));
-    gtk_table_attach(GTK_TABLE(table), label, 0,1, table_row,table_row+1,
-		     FALSE,FALSE, X_PADDING, Y_PADDING);
-    menu = gtk_combo_box_new_text();
+    gtk_grid_attach(GTK_GRID(table), label, 0, table_row, 1, 1);
+    menu = gtk_combo_box_text_new();
     
     for (i_fads_type = 0; i_fads_type < NUM_FADS_TYPES; i_fads_type++) 
-      gtk_combo_box_append_text(GTK_COMBO_BOX(menu), _(fads_type_name[i_fads_type]));
+      gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(menu), _(fads_type_name[i_fads_type]));
     gtk_combo_box_set_active(GTK_COMBO_BOX(menu), tb_fads->fads_type);
     g_signal_connect(G_OBJECT(menu), "changed", G_CALLBACK(fads_type_cb), tb_fads);
-    gtk_table_attach(GTK_TABLE(table), menu, 1,2, table_row,table_row+1,
-		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), menu, 1, table_row, 1, 1);
     table_row++;
     
     
-    hseparator = gtk_hseparator_new();
-    gtk_table_attach(GTK_TABLE(table), hseparator, 0,2,table_row, table_row+1,
-		     GTK_FILL, 0, X_PADDING, Y_PADDING);
+    hseparator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+    gtk_grid_attach(GTK_GRID(table), hseparator, 0, table_row, 2, 1);
     table_row++;
 
     /* the explanation */
@@ -905,8 +905,7 @@ static GtkWidget * create_page(tb_fads_t * tb_fads, which_page_t i_page) {
     tb_fads->explanation_buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (view));
     gtk_text_buffer_set_text (tb_fads->explanation_buffer, 
 			      _(fads_type_explanation[tb_fads->fads_type]), -1);
-    gtk_table_attach(GTK_TABLE(table), view, 0,2, table_row,table_row+1,
-		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), view, 0, table_row, 2, 1);
     gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(view), GTK_WRAP_WORD);
     gtk_text_view_set_editable(GTK_TEXT_VIEW(view), FALSE);
     gtk_widget_set_size_request(view,300,-1);
@@ -916,23 +915,21 @@ static GtkWidget * create_page(tb_fads_t * tb_fads, which_page_t i_page) {
   case PARAMETERS_PAGE:
     /* ask for the minimizer algorithm to use */
     label = gtk_label_new(_("Minimization Algorithm:"));
-    gtk_table_attach(GTK_TABLE(table), label, 0,1, table_row,table_row+1,
-		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), label, 0, table_row, 1, 1);
     
-    tb_fads->algorithm_menu = gtk_combo_box_new_text();
+    tb_fads->algorithm_menu = gtk_combo_box_text_new();
     for (i_algorithm = 0; i_algorithm < NUM_FADS_MINIMIZERS; i_algorithm++) 
-      gtk_combo_box_append_text(GTK_COMBO_BOX(tb_fads->algorithm_menu), 
+      gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(tb_fads->algorithm_menu),
 				_(fads_minimizer_algorithm_name[i_algorithm]));
     gtk_combo_box_set_active(GTK_COMBO_BOX(tb_fads->algorithm_menu), tb_fads->algorithm);
     g_signal_connect(G_OBJECT(tb_fads->algorithm_menu), "changed", G_CALLBACK(algorithm_cb), tb_fads);
-    gtk_table_attach(GTK_TABLE(table), tb_fads->algorithm_menu, 1,2, table_row,table_row+1,
-		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), tb_fads->algorithm_menu,
+                    1, table_row, 1, 1);
     table_row++;
 
     /* max # of iterations */
     label = gtk_label_new(_("Max. # of iterations:"));
-    gtk_table_attach(GTK_TABLE(table), label, 0,1, table_row,table_row+1,
-		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), label, 0, table_row, 1, 1);
     
     tb_fads->num_iterations_spin =  gtk_spin_button_new_with_range(1, MAX_ITERATIONS, 1);
     gtk_spin_button_set_digits(GTK_SPIN_BUTTON(tb_fads->num_iterations_spin),0);
@@ -940,14 +937,13 @@ static GtkWidget * create_page(tb_fads_t * tb_fads, which_page_t i_page) {
     gtk_widget_set_size_request(tb_fads->num_iterations_spin, SPIN_BUTTON_X_SIZE, -1);
     g_signal_connect(G_OBJECT(tb_fads->num_iterations_spin), "value_changed",  
 		     G_CALLBACK(max_iterations_spinner_cb), tb_fads);
-    gtk_table_attach(GTK_TABLE(table), tb_fads->num_iterations_spin, 1,2, table_row,table_row+1,
-		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), tb_fads->num_iterations_spin,
+                    1, table_row, 1, 1);
     table_row++;
     
     /* stopping criteria */
     label = gtk_label_new(_("Stopping Criteria:"));
-    gtk_table_attach(GTK_TABLE(table), label, 0,1, table_row,table_row+1,
-		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), label, 0, table_row, 1, 1);
     
     tb_fads->stopping_criteria_spin = gtk_spin_button_new_with_range(EPSILON, 1.0, tb_fads->stopping_criteria);
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(tb_fads->stopping_criteria_spin), FALSE);
@@ -957,29 +953,27 @@ static GtkWidget * create_page(tb_fads_t * tb_fads, which_page_t i_page) {
 		     G_CALLBACK(stopping_criteria_spinner_cb), tb_fads);
     g_signal_connect(G_OBJECT(tb_fads->stopping_criteria_spin), "output",
 		     G_CALLBACK(amitk_spin_button_scientific_output), NULL);
-    gtk_table_attach(GTK_TABLE(table), tb_fads->stopping_criteria_spin, 1,2, table_row,table_row+1,
-		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), tb_fads->stopping_criteria_spin,
+                    1, table_row, 1, 1);
     table_row++;
 
     /* whether to force sum of factors to equal one */
     label = gtk_label_new(_("Constrain sum of factors = 1:"));
-    gtk_table_attach(GTK_TABLE(table), label, 0,1, table_row,table_row+1,
-		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), label, 0, table_row, 1, 1);
     
     tb_fads->sum_factors_equal_one_button =  gtk_check_button_new();
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tb_fads->sum_factors_equal_one_button),
 				 tb_fads->sum_factors_equal_one);
     g_signal_connect(G_OBJECT(tb_fads->sum_factors_equal_one_button), "toggled",  
 		     G_CALLBACK(sum_factors_equal_one_toggle_cb), tb_fads);
-    gtk_table_attach(GTK_TABLE(table), tb_fads->sum_factors_equal_one_button, 1,2, table_row,table_row+1,
-		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), tb_fads->sum_factors_equal_one_button,
+                    1, table_row, 1, 1);
     table_row++;
 
     
     /* stopping criteria */
     label = gtk_label_new(_("Beta:"));
-    gtk_table_attach(GTK_TABLE(table), label, 0,1, table_row,table_row+1,
-		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), label, 0, table_row, 1, 1);
     
     tb_fads->beta_spin = gtk_spin_button_new_with_range(0.0, 1.0, 0.01);
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(tb_fads->beta_spin), FALSE);
@@ -987,14 +981,12 @@ static GtkWidget * create_page(tb_fads_t * tb_fads, which_page_t i_page) {
     gtk_widget_set_size_request(tb_fads->beta_spin, SPIN_BUTTON_X_SIZE, -1);
     g_signal_connect(G_OBJECT(tb_fads->beta_spin), "value_changed",  
 		     G_CALLBACK(beta_spinner_cb), tb_fads);
-    gtk_table_attach(GTK_TABLE(table), tb_fads->beta_spin, 1,2, table_row,table_row+1,
-		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), tb_fads->beta_spin, 1, table_row, 1, 1);
     table_row++;
     
     /* how many factors to solve for? */
     label = gtk_label_new(_("# of Factors to use"));
-    gtk_table_attach(GTK_TABLE(table), label, 0,1, table_row,table_row+1,
-		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), label, 0, table_row, 1, 1);
     
     tb_fads->num_factors_spin =  gtk_spin_button_new_with_range(1, AMITK_DATA_SET_NUM_FRAMES(tb_fads->data_set), 1);
     gtk_spin_button_set_digits(GTK_SPIN_BUTTON(tb_fads->num_factors_spin),0);
@@ -1002,14 +994,13 @@ static GtkWidget * create_page(tb_fads_t * tb_fads, which_page_t i_page) {
     gtk_widget_set_size_request(tb_fads->num_factors_spin, SPIN_BUTTON_X_SIZE, -1);
     g_signal_connect(G_OBJECT(tb_fads->num_factors_spin), "value_changed",  
 		     G_CALLBACK(num_factors_spinner_cb), tb_fads);
-    gtk_table_attach(GTK_TABLE(table), tb_fads->num_factors_spin, 1,2, table_row,table_row+1,
-		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), tb_fads->num_factors_spin,
+                    1, table_row, 1, 1);
     table_row++;
     
     /* k12 criteria */
     label = gtk_label_new(_("initial k12 (1/s):"));
-    gtk_table_attach(GTK_TABLE(table), label, 0,1, table_row,table_row+1,
-		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), label, 0, table_row, 1, 1);
     
     tb_fads->k12_spin = gtk_spin_button_new_with_range(0.0, G_MAXDOUBLE, 0.01);
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(tb_fads->k12_spin), FALSE);
@@ -1019,14 +1010,12 @@ static GtkWidget * create_page(tb_fads_t * tb_fads, which_page_t i_page) {
 		     G_CALLBACK(k12_spinner_cb), tb_fads);
     g_signal_connect(G_OBJECT(tb_fads->k12_spin), "output",
 		     G_CALLBACK(amitk_spin_button_scientific_output), NULL);
-    gtk_table_attach(GTK_TABLE(table), tb_fads->k12_spin, 1,2, table_row,table_row+1,
-		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), tb_fads->k12_spin, 1, table_row, 1, 1);
     table_row++;
     
     /* k21 criteria */
     label = gtk_label_new(_("initial K21 (1/s):"));
-    gtk_table_attach(GTK_TABLE(table), label, 0,1, table_row,table_row+1,
-		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), label, 0, table_row, 1, 1);
     
     tb_fads->k21_spin = gtk_spin_button_new_with_range(0.0, G_MAXDOUBLE, 0.01);
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(tb_fads->k21_spin), FALSE);
@@ -1036,21 +1025,20 @@ static GtkWidget * create_page(tb_fads_t * tb_fads, which_page_t i_page) {
 		     G_CALLBACK(k21_spinner_cb), tb_fads);
     g_signal_connect(G_OBJECT(tb_fads->k21_spin), "output",
 		     G_CALLBACK(amitk_spin_button_scientific_output), NULL);
-    gtk_table_attach(GTK_TABLE(table), tb_fads->k21_spin, 1,2, table_row,table_row+1,
-		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), tb_fads->k21_spin, 1, table_row, 1, 1);
     // table_row++;
 
     table_row = 0;
     /* a separator for clarity */
-    vseparator = gtk_vseparator_new();
-    gtk_table_attach(GTK_TABLE(table), vseparator, 2,3,table_row, table_row+6, 0, GTK_FILL, X_PADDING, Y_PADDING);
+    vseparator = gtk_separator_new(GTK_ORIENTATION_VERTICAL);
+    gtk_grid_attach(GTK_GRID(table), vseparator, 2, table_row, 1, 6);
     
     /* A table to add blood sample measurements */
     tb_fads->blood_add_button = gtk_button_new_with_label(_("Add Blood Sample"));
     g_signal_connect(G_OBJECT(tb_fads->blood_add_button), "pressed", 
 		     G_CALLBACK(add_blood_pressed_cb), tb_fads);
-    gtk_table_attach(GTK_TABLE(table), tb_fads->blood_add_button, 3,4, table_row,table_row+1,
-		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), tb_fads->blood_add_button,
+                    3, table_row, 1, 1);
     table_row++;
     
     /* the scroll widget which the list will go into */
@@ -1059,8 +1047,9 @@ static GtkWidget * create_page(tb_fads_t * tb_fads, which_page_t i_page) {
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled),
 				   GTK_POLICY_AUTOMATIC,
 				   GTK_POLICY_AUTOMATIC);
-    gtk_table_attach(GTK_TABLE(table), scrolled, 3, 4, table_row, table_row+4, 
-		     X_PACKING_OPTIONS | GTK_FILL, Y_PACKING_OPTIONS | GTK_FILL, X_PADDING, Y_PADDING);
+    gtk_widget_set_hexpand(scrolled, TRUE);
+    gtk_widget_set_vexpand(scrolled, TRUE);
+    gtk_grid_attach(GTK_GRID(table), scrolled, 3, table_row, 1, 4);
     table_row+=4;
     
     /* the table itself */
@@ -1089,8 +1078,8 @@ static GtkWidget * create_page(tb_fads_t * tb_fads, which_page_t i_page) {
     tb_fads->blood_remove_button = gtk_button_new_with_label(_("Remove Blood Sample"));
     g_signal_connect(G_OBJECT(tb_fads->blood_remove_button), "pressed", 
 		     G_CALLBACK(remove_blood_pressed_cb), tb_fads);
-    gtk_table_attach(GTK_TABLE(table), tb_fads->blood_remove_button, 3,4, table_row,table_row+1,
-		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), tb_fads->blood_remove_button,
+                    3, table_row, 1, 1);
 
     break;
   case CURVES_PAGE:
@@ -1098,8 +1087,8 @@ static GtkWidget * create_page(tb_fads_t * tb_fads, which_page_t i_page) {
     tb_fads->curve_add_button = gtk_button_new_with_label(_("Add Initial Curves"));
     g_signal_connect(G_OBJECT(tb_fads->curve_add_button), "pressed", 
 		     G_CALLBACK(add_curve_pressed_cb), tb_fads);
-    gtk_table_attach(GTK_TABLE(table), tb_fads->curve_add_button, 0,1, table_row,table_row+1,
-		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), tb_fads->curve_add_button,
+                    0, table_row, 1, 1);
     table_row++;
 
     /* the scroll widget which the list will go into */
@@ -1108,14 +1097,15 @@ static GtkWidget * create_page(tb_fads_t * tb_fads, which_page_t i_page) {
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled),
 				   GTK_POLICY_AUTOMATIC,
 				   GTK_POLICY_AUTOMATIC);
-    gtk_table_attach(GTK_TABLE(table), scrolled, 0, 1, table_row, table_row+4,
-		     X_PACKING_OPTIONS | GTK_FILL, Y_PACKING_OPTIONS | GTK_FILL, X_PADDING, Y_PADDING);
+    gtk_widget_set_hexpand(scrolled, TRUE);
+    gtk_widget_set_vexpand(scrolled, TRUE);
+    gtk_grid_attach(GTK_GRID(table), scrolled, 0, table_row, 1, 4);
     table_row+=4;
     
     /* the curve text area */
     tb_fads->curve_view = gtk_text_view_new();
     tb_fads->curve_text = gtk_text_view_get_buffer(GTK_TEXT_VIEW(tb_fads->curve_view));
-    gtk_widget_modify_font(tb_fads->curve_view, amitk_fixed_font_desc);
+    gtk_text_view_set_monospace(GTK_TEXT_VIEW(tb_fads->curve_view), TRUE);
 
     gtk_text_view_set_editable(GTK_TEXT_VIEW(tb_fads->curve_view), FALSE);
     gtk_container_add(GTK_CONTAINER(scrolled),tb_fads->curve_view);
@@ -1123,8 +1113,8 @@ static GtkWidget * create_page(tb_fads_t * tb_fads, which_page_t i_page) {
     tb_fads->curve_remove_button = gtk_button_new_with_label(_("Remove Initial Curves"));
     g_signal_connect(G_OBJECT(tb_fads->curve_remove_button), "pressed", 
 		     G_CALLBACK(remove_curve_pressed_cb), tb_fads);
-    gtk_table_attach(GTK_TABLE(table), tb_fads->curve_remove_button, 0,1, table_row,table_row+1,
-		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), tb_fads->curve_remove_button,
+                    0, table_row, 1, 1);
     table_row++;
 
 
@@ -1142,7 +1132,6 @@ static GtkWidget * create_page(tb_fads_t * tb_fads, which_page_t i_page) {
 void tb_fads(AmitkDataSet * active_ds, AmitkPreferences * preferences, GtkWindow * parent) {
 
   tb_fads_t * tb_fads;
-  GdkPixbuf * logo;
   which_page_t i_page;
 
 
@@ -1195,13 +1184,10 @@ void tb_fads(AmitkDataSet * active_ds, AmitkPreferences * preferences, GtkWindow
 
 
 
-  logo = gtk_widget_render_icon(GTK_WIDGET(tb_fads->dialog), "amide_icon_logo", GTK_ICON_SIZE_DIALOG, 0);
   for (i_page=0; i_page<NUM_PAGES; i_page++) {
-    gtk_assistant_set_page_header_image(GTK_ASSISTANT(tb_fads->dialog), tb_fads->page[i_page], logo);
     gtk_assistant_set_page_title(GTK_ASSISTANT(tb_fads->dialog), tb_fads->page[i_page], _(wizard_name));
     g_object_set_data(G_OBJECT(tb_fads->page[i_page]),"which_page", GINT_TO_POINTER(i_page));
   }
-  g_object_unref(logo);
 
   gtk_widget_show_all(tb_fads->dialog);
 

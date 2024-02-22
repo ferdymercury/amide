@@ -32,6 +32,7 @@
 #include "render.h"
 #include "amitk_roi.h"
 #include "amitk_data_set_DOUBLE_0D_SCALING.h"
+#include "amide.h"
 
 #include <sys/time.h>
 #include <time.h>

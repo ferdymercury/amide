@@ -33,6 +33,7 @@
 #include <math.h>
 #include "amide_intl.h"
 #include "mpeg_encode.h"
+#include "amide.h"
 
 /* note, this is identifical to fame_yuv_t */
 typedef struct __yuv_t_ {

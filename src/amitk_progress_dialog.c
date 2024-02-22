@@ -81,18 +81,16 @@ static void dialog_class_init (AmitkProgressDialogClass *klass)
 static void dialog_init (AmitkProgressDialog * dialog)
 {
 
-  gtk_dialog_set_has_separator(GTK_DIALOG(dialog), FALSE);
-
   dialog->can_continue = TRUE;
 
   dialog->message_label = gtk_label_new(NULL);
-  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), dialog->message_label, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))),
+                     dialog->message_label, FALSE, FALSE, 0);
 
   dialog->progress_bar = gtk_progress_bar_new();
   gtk_progress_bar_set_pulse_step(GTK_PROGRESS_BAR(dialog->progress_bar), 0.01);
-  gtk_progress_bar_set_orientation(GTK_PROGRESS_BAR(dialog->progress_bar), 
-				   GTK_PROGRESS_LEFT_TO_RIGHT);
-  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), dialog->progress_bar, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))),
+                     dialog->progress_bar, FALSE, FALSE, 0);
 
   return;
 }
@@ -132,18 +130,18 @@ void amitk_progress_dialog_set_text(AmitkProgressDialog * dialog, gchar * messag
 gboolean amitk_progress_dialog_set_fraction(AmitkProgressDialog * dialog, gdouble fraction) {
 
   if (fraction > 1.0) {
-    if (GTK_WIDGET_VISIBLE(dialog))
-      gtk_widget_hide_all(GTK_WIDGET(dialog));
+    if (gtk_widget_is_visible(GTK_WIDGET(dialog)))
+      gtk_widget_hide(GTK_WIDGET(dialog));
 
   } else if (fraction >= 0.0) {
-    if (!GTK_WIDGET_VISIBLE(dialog)) {
+    if (!gtk_widget_is_visible(GTK_WIDGET(dialog))) {
       gtk_widget_show_all(GTK_WIDGET(dialog));
       dialog->can_continue = TRUE;
     }
     gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(dialog->progress_bar), fraction);
 
   } else if (fraction < -0.5) {
-    if (!GTK_WIDGET_VISIBLE(dialog)) {
+    if (!gtk_widget_is_visible(GTK_WIDGET(dialog))) {
       gtk_widget_show_all(GTK_WIDGET(dialog));
       dialog->can_continue = TRUE;
     }
@@ -165,7 +163,7 @@ GtkWidget* amitk_progress_dialog_new (GtkWindow * parent)
   gtk_window_set_title (GTK_WINDOW (dialog), _("Progress Dialog"));
   gtk_window_set_transient_for(GTK_WINDOW (dialog), parent);
   gtk_window_set_destroy_with_parent(GTK_WINDOW (dialog), TRUE);
-  gtk_dialog_add_button(GTK_DIALOG(dialog), GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL);
+  gtk_dialog_add_button(GTK_DIALOG(dialog), _("_Cancel"), GTK_RESPONSE_CANCEL);
 
   return GTK_WIDGET (dialog);
 }
