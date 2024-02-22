@@ -366,37 +366,15 @@ fi
 ##############################
 
 PKG_CHECK_MODULES(AMIDE_GTK,[
-	glib-2.0	>= 2.16.0
-	gobject-2.0	>= 2.16.0
+	glib-2.0	>= 2.44.0
+	gio-2.0         >= 2.44.0
+	gobject-2.0	>= 2.44.0
 	gtk+-2.0	>= 2.16.0
 	libxml-2.0	>= 2.4.12
 	libgnomecanvas-2.0 >= 2.0.0
 ])
 
-## add in gconf if not on win32 or macos x 
-## gconf stuff is encapsulated in amide_gconf.c
-
-
-
-if (test $native_win32 = no) && (test $enable_native_gtk_osx = no); then
-   AC_ARG_ENABLE(
-	gconf, 
-	[  --enable-gconf  Compile with gconf support [default=yes]], 
-	enable_gconf="$enableval", 
-	enable_gconf=yes)
-
-   if test "x$enable_gconf" = "xyes" ; then  
-	PKG_CHECK_MODULES(AMIDE_GTK_EXTRA_GCONF,[
-		gconf-2.0	>= 2.14.0
-   	], [AC_DEFINE(AMIDE_USE_GCONF, 1, Use gconf for storing configutation)
-            AMIDE_GTK_LIBS="$AMIDE_GTK_LIBS $AMIDE_GTK_EXTRA_GCONF_LIBS"
-   	    AMIDE_GTK_CFLAGS="$AMIDE_GTK_CFLAGS $AMIDE_GTK_EXTRA_GCONF_CFLAGS"
-   	])
-   	
-   else 
-        echo "Don't use gconf"
-   fi	
-fi
+GLIB_GSETTINGS
 
 ## add in gnome-vfs if not on win32 or gtk-osx
 ## gnome-vfs is only used by amide_gnome.c and only on unix

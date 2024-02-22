@@ -33,11 +33,11 @@
 #include "amitk_type_builtins.h"
 #include "amitk_data_set.h"
 
-#define GCONF_AMIDE_ROI "ROI"
-#define GCONF_AMIDE_CANVAS "CANVAS"
-#define GCONF_AMIDE_MISC "MISC"
-#define GCONF_AMIDE_DATASETS "DATASETS"
-#define GCONF_AMIDE_WINDOWS "WINDOWS"
+#define GCONF_AMIDE_ROI "roi"
+#define GCONF_AMIDE_CANVAS "canvas"
+#define GCONF_AMIDE_MISC "misc"
+#define GCONF_AMIDE_DATASETS "datasets"
+#define GCONF_AMIDE_WINDOWS "windows"
 
 enum {
   DATA_SET_PREFERENCES_CHANGED,
@@ -48,6 +48,7 @@ enum {
 
 static void preferences_class_init          (AmitkPreferencesClass *klass);
 static void preferences_init                (AmitkPreferences      *object);
+static void preferences_dispose             (GObject           *object);
 static void preferences_finalize            (GObject           *object);
 static GObjectClass * parent_class;
 static guint     preferences_signals[LAST_SIGNAL];
@@ -93,6 +94,7 @@ static void preferences_class_init (AmitkPreferencesClass * class) {
 
   parent_class = g_type_class_peek_parent(class);
   
+  gobject_class->dispose = preferences_dispose;
   gobject_class->finalize = preferences_finalize;
 
   preferences_signals[DATA_SET_PREFERENCES_CHANGED] =
@@ -128,11 +130,11 @@ static void preferences_init (AmitkPreferences * preferences) {
 
   /* load in saved preferences */
   preferences->canvas_roi_width = 
-    amide_gconf_get_int_with_default(GCONF_AMIDE_ROI,"Width", AMITK_PREFERENCES_DEFAULT_CANVAS_ROI_WIDTH);
+    amide_gconf_get_int_with_default(GCONF_AMIDE_ROI,"width", AMITK_PREFERENCES_DEFAULT_CANVAS_ROI_WIDTH);
 
 #ifdef AMIDE_LIBGNOMECANVAS_AA
   preferences->canvas_roi_transparency = 
-    amide_gconf_get_float_with_default(GCONF_AMIDE_ROI,"Transparency", AMITK_PREFERENCES_DEFAULT_CANVAS_ROI_TRANSPARENCY);
+    amide_gconf_get_float_with_default(GCONF_AMIDE_ROI,"transparency", AMITK_PREFERENCES_DEFAULT_CANVAS_ROI_TRANSPARENCY);
 
 #else
   preferences->canvas_line_style = 
@@ -143,31 +145,31 @@ static void preferences_init (AmitkPreferences * preferences) {
 #endif
 
   preferences->canvas_layout = 
-    amide_gconf_get_int_with_default(GCONF_AMIDE_CANVAS,"Layout", AMITK_PREFERENCES_DEFAULT_CANVAS_LAYOUT);
+    amide_gconf_get_int_with_default(GCONF_AMIDE_CANVAS,"layout", AMITK_PREFERENCES_DEFAULT_CANVAS_LAYOUT);
 
   preferences->canvas_maintain_size = 
-    amide_gconf_get_bool_with_default(GCONF_AMIDE_CANVAS,"MaintainSize", AMITK_PREFERENCES_DEFAULT_CANVAS_MAINTAIN_SIZE);
+    amide_gconf_get_bool_with_default(GCONF_AMIDE_CANVAS,"maintain-size", AMITK_PREFERENCES_DEFAULT_CANVAS_MAINTAIN_SIZE);
 
   preferences->canvas_target_empty_area = 
-    amide_gconf_get_int_with_default(GCONF_AMIDE_CANVAS,"TargetEmptyArea", AMITK_PREFERENCES_DEFAULT_CANVAS_TARGET_EMPTY_AREA);
+    amide_gconf_get_int_with_default(GCONF_AMIDE_CANVAS,"target-empty-area", AMITK_PREFERENCES_DEFAULT_CANVAS_TARGET_EMPTY_AREA);
 
   preferences->panel_layout = 
-    amide_gconf_get_int_with_default(GCONF_AMIDE_CANVAS,"PanelLayout", AMITK_PREFERENCES_DEFAULT_PANEL_LAYOUT);
+    amide_gconf_get_int_with_default(GCONF_AMIDE_CANVAS,"panel-layout", AMITK_PREFERENCES_DEFAULT_PANEL_LAYOUT);
 
   preferences->warnings_to_console = 
-    amide_gconf_get_bool_with_default(GCONF_AMIDE_MISC,"WarningsToConsole", AMITK_PREFERENCES_DEFAULT_WARNINGS_TO_CONSOLE);
+    amide_gconf_get_bool_with_default(GCONF_AMIDE_MISC,"warnings-to-console", AMITK_PREFERENCES_DEFAULT_WARNINGS_TO_CONSOLE);
 
   preferences->prompt_for_save_on_exit = 
-    amide_gconf_get_bool_with_default(GCONF_AMIDE_MISC,"PromptForSaveOnExit", AMITK_PREFERENCES_DEFAULT_PROMPT_FOR_SAVE_ON_EXIT);
+    amide_gconf_get_bool_with_default(GCONF_AMIDE_MISC,"prompt-for-save-on-exit", AMITK_PREFERENCES_DEFAULT_PROMPT_FOR_SAVE_ON_EXIT);
 
   preferences->which_default_directory = 
-    amide_gconf_get_int_with_default(GCONF_AMIDE_MISC,"WhichDefaultDirectory", AMITK_PREFERENCES_DEFAULT_WHICH_DEFAULT_DIRECTORY);
+    amide_gconf_get_int_with_default(GCONF_AMIDE_MISC,"which-default-directory", AMITK_PREFERENCES_DEFAULT_WHICH_DEFAULT_DIRECTORY);
 
   preferences->default_directory = 
-    amide_gconf_get_string_with_default(GCONF_AMIDE_MISC,"DefaultDirectory", AMITK_PREFERENCES_DEFAULT_DEFAULT_DIRECTORY);
+    amide_gconf_get_string_with_default(GCONF_AMIDE_MISC,"default-directory", AMITK_PREFERENCES_DEFAULT_DEFAULT_DIRECTORY);
 
   for (i_modality=0; i_modality<AMITK_MODALITY_NUM; i_modality++) {
-    temp_str = g_strdup_printf("DefaultColorTable%s", amitk_modality_get_name(i_modality));
+    temp_str = g_strdup_printf("default-color-table-%s", amitk_modality_get_name(i_modality));
     preferences->color_table[i_modality] = 
       amide_gconf_get_int_with_default(GCONF_AMIDE_DATASETS,temp_str, amitk_modality_default_color_table[i_modality]);
     g_free(temp_str);
@@ -178,16 +180,26 @@ static void preferences_init (AmitkPreferences * preferences) {
       temp_str = g_strdup_printf("%s-%s", amitk_window_get_name(i_window), amitk_limit_get_name(i_limit));
       preferences->window[i_window][i_limit] =
 	amide_gconf_get_float_with_default(GCONF_AMIDE_WINDOWS,temp_str, amitk_window_default[i_window][i_limit]);
+      g_free(temp_str);
     }
 
   preferences->threshold_style = 
-    amide_gconf_get_int_with_default(GCONF_AMIDE_DATASETS,"ThresholdStyle", AMITK_PREFERENCES_DEFAULT_THRESHOLD_STYLE);
+    amide_gconf_get_int_with_default(GCONF_AMIDE_DATASETS,"threshold-style", AMITK_PREFERENCES_DEFAULT_THRESHOLD_STYLE);
 
   preferences->dialog = NULL;
 
   return;
 }
 
+static void preferences_dispose (GObject *object) {
+
+    AmitkPreferences * preferences = AMITK_PREFERENCES(object);
+
+    if (preferences->default_directory)
+      g_free(preferences->default_directory);
+
+    G_OBJECT_CLASS (parent_class)->dispose (object);
+}
 
 static void preferences_finalize (GObject *object) {
 
@@ -217,7 +229,7 @@ void amitk_preferences_set_canvas_roi_width(AmitkPreferences * preferences,
 
   if (AMITK_PREFERENCES_CANVAS_ROI_WIDTH(preferences) != roi_width) {
     preferences->canvas_roi_width = roi_width;
-    amide_gconf_set_int(GCONF_AMIDE_ROI,"Width", roi_width);
+    amide_gconf_set_int(GCONF_AMIDE_ROI,"width", roi_width);
     g_signal_emit(G_OBJECT(preferences), preferences_signals[STUDY_PREFERENCES_CHANGED], 0);
   }
 
@@ -235,7 +247,7 @@ void amitk_preferences_set_canvas_roi_transparency(AmitkPreferences * preference
 
   if (AMITK_PREFERENCES_CANVAS_ROI_TRANSPARENCY(preferences) != roi_transparency) {
     preferences->canvas_roi_transparency = roi_transparency;
-    amide_gconf_set_float(GCONF_AMIDE_ROI,"Transparency", roi_transparency);
+    amide_gconf_set_float(GCONF_AMIDE_ROI,"transparency", roi_transparency);
     g_signal_emit(G_OBJECT(preferences), preferences_signals[STUDY_PREFERENCES_CHANGED], 0);
   }
 
@@ -278,7 +290,7 @@ void amitk_preferences_set_canvas_layout(AmitkPreferences * preferences,
 
   if (AMITK_PREFERENCES_CANVAS_LAYOUT(preferences) != layout) {
     preferences->canvas_layout = layout;
-    amide_gconf_set_int(GCONF_AMIDE_CANVAS,"Layout", layout);
+    amide_gconf_set_int(GCONF_AMIDE_CANVAS,"layout", layout);
     g_signal_emit(G_OBJECT(preferences), preferences_signals[STUDY_PREFERENCES_CHANGED], 0);
   }
 
@@ -292,7 +304,7 @@ void amitk_preferences_set_canvas_maintain_size(AmitkPreferences * preferences,
 
   if (AMITK_PREFERENCES_CANVAS_MAINTAIN_SIZE(preferences) != maintain_size) {
     preferences->canvas_maintain_size = maintain_size;
-    amide_gconf_set_bool(GCONF_AMIDE_CANVAS,"MaintainSize",maintain_size);
+    amide_gconf_set_bool(GCONF_AMIDE_CANVAS,"maintain-size",maintain_size);
     g_signal_emit(G_OBJECT(preferences), preferences_signals[STUDY_PREFERENCES_CHANGED], 0);
   }
 
@@ -313,7 +325,7 @@ void amitk_preferences_set_canvas_target_empty_area(AmitkPreferences * preferenc
 
 if (AMITK_PREFERENCES_CANVAS_TARGET_EMPTY_AREA(preferences) != target_empty_area) {
     preferences->canvas_target_empty_area = target_empty_area;
-    amide_gconf_set_int(GCONF_AMIDE_CANVAS,"TargetEmptyArea", target_empty_area);
+    amide_gconf_set_int(GCONF_AMIDE_CANVAS,"target-empty-area", target_empty_area);
     g_signal_emit(G_OBJECT(preferences), preferences_signals[STUDY_PREFERENCES_CHANGED], 0);
   }
 
@@ -328,7 +340,7 @@ void amitk_preferences_set_panel_layout(AmitkPreferences * preferences,
 
   if (AMITK_PREFERENCES_PANEL_LAYOUT(preferences) != panel_layout) {
     preferences->panel_layout = panel_layout;
-    amide_gconf_set_int(GCONF_AMIDE_CANVAS,"PanelLayout", panel_layout);
+    amide_gconf_set_int(GCONF_AMIDE_CANVAS,"panel-layout", panel_layout);
     g_signal_emit(G_OBJECT(preferences), preferences_signals[STUDY_PREFERENCES_CHANGED], 0);
   }
 
@@ -343,7 +355,7 @@ void amitk_preferences_set_warnings_to_console(AmitkPreferences * preferences, g
 
   if (AMITK_PREFERENCES_WARNINGS_TO_CONSOLE(preferences) != new_value) {
     preferences->warnings_to_console = new_value;
-    amide_gconf_set_bool(GCONF_AMIDE_MISC,"WarningsToConsole",new_value);
+    amide_gconf_set_bool(GCONF_AMIDE_MISC,"warnings-to-console",new_value);
     g_signal_emit(G_OBJECT(preferences), preferences_signals[MISC_PREFERENCES_CHANGED], 0);
   }
   return;
@@ -355,7 +367,7 @@ void amitk_preferences_set_prompt_for_save_on_exit(AmitkPreferences * preference
 
   if (AMITK_PREFERENCES_PROMPT_FOR_SAVE_ON_EXIT(preferences) != new_value) {
     preferences->prompt_for_save_on_exit = new_value;
-    amide_gconf_set_bool(GCONF_AMIDE_MISC,"PromptForSaveOnExit",new_value);
+    amide_gconf_set_bool(GCONF_AMIDE_MISC,"prompt-for-save-on-exit",new_value);
     g_signal_emit(G_OBJECT(preferences), preferences_signals[MISC_PREFERENCES_CHANGED], 0);
   }
   return;
@@ -367,7 +379,7 @@ void amitk_preferences_set_which_default_directory(AmitkPreferences * preference
 
   if (AMITK_PREFERENCES_WHICH_DEFAULT_DIRECTORY(preferences) != new_value) {
     preferences->which_default_directory = new_value;
-    amide_gconf_set_int(GCONF_AMIDE_MISC,"WhichDefaultDirectory",new_value);
+    amide_gconf_set_int(GCONF_AMIDE_MISC,"which-default-directory",new_value);
     g_signal_emit(G_OBJECT(preferences), preferences_signals[MISC_PREFERENCES_CHANGED], 0);
   }
   return;
@@ -380,10 +392,7 @@ void amitk_preferences_set_default_directory(AmitkPreferences * preferences, con
   gboolean different=FALSE;
   g_return_if_fail(AMITK_IS_PREFERENCES(preferences));
 
-  if (((AMITK_PREFERENCES_DEFAULT_DIRECTORY(preferences) == NULL) && (new_directory != NULL)) ||
-      ((AMITK_PREFERENCES_DEFAULT_DIRECTORY(preferences) != NULL) && (new_directory == NULL)))
-    different=TRUE;
-  else if ((AMITK_PREFERENCES_DEFAULT_DIRECTORY(preferences) != NULL) && (new_directory != NULL))
+  if ((AMITK_PREFERENCES_DEFAULT_DIRECTORY(preferences) != NULL) && (new_directory != NULL))
     if (strcmp(AMITK_PREFERENCES_DEFAULT_DIRECTORY(preferences), new_directory) != 0)
       different=TRUE;
 
@@ -392,7 +401,7 @@ void amitk_preferences_set_default_directory(AmitkPreferences * preferences, con
       g_free(preferences->default_directory);
     if (new_directory != NULL)
       preferences->default_directory = g_strdup(new_directory);
-    amide_gconf_set_string(GCONF_AMIDE_MISC,"DefaultDirectory", new_directory);
+    amide_gconf_set_string(GCONF_AMIDE_MISC,"default-directory", new_directory);
     g_signal_emit(G_OBJECT(preferences), preferences_signals[MISC_PREFERENCES_CHANGED], 0);
   }
   return;
@@ -410,7 +419,7 @@ void amitk_preferences_set_color_table(AmitkPreferences * preferences,
   if (AMITK_PREFERENCES_COLOR_TABLE(preferences,modality) != color_table) {
     preferences->color_table[modality] = color_table;
 
-    temp_string = g_strdup_printf("DefaultColorTable%s", 
+    temp_string = g_strdup_printf("default-color-table-%s",
 				  amitk_modality_get_name(modality));
     amide_gconf_set_int(GCONF_AMIDE_DATASETS,temp_string, color_table);
     g_free(temp_string);
@@ -451,7 +460,7 @@ void amitk_preferences_set_threshold_style(AmitkPreferences * preferences,
 
   if (AMITK_PREFERENCES_THRESHOLD_STYLE(preferences) != threshold_style) {
     preferences->threshold_style = threshold_style;
-    amide_gconf_set_int(GCONF_AMIDE_DATASETS,"ThresholdStyle", threshold_style);
+    amide_gconf_set_int(GCONF_AMIDE_DATASETS,"threshold-style", threshold_style);
     g_signal_emit(G_OBJECT(preferences), preferences_signals[DATA_SET_PREFERENCES_CHANGED], 0);
   }
 }

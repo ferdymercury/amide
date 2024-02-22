@@ -647,11 +647,11 @@ static void read_render_preferences(gboolean * strip_highs, gboolean * optimize_
 				    gboolean * initially_no_gradient_opacity) {
 
   *strip_highs = 
-    amide_gconf_get_bool(GCONF_AMIDE_RENDERING,"StripHighs");
+    amide_gconf_get_bool(GCONF_AMIDE_RENDERING,"strip-highs");
   *optimize_renderings = 
-    amide_gconf_get_bool(GCONF_AMIDE_RENDERING,"OptimizeRendering");
+    amide_gconf_get_bool(GCONF_AMIDE_RENDERING,"optimize-rendering");
   *initially_no_gradient_opacity = 
-    amide_gconf_get_bool(GCONF_AMIDE_RENDERING,"InitiallyNoGradientOpacity");
+    amide_gconf_get_bool(GCONF_AMIDE_RENDERING,"initially-no-gradient-opacity");
 
   return;
 }
@@ -713,15 +713,15 @@ static ui_render_t * ui_render_init(GtkWindow * window,
 
   /* load in saved render preferences */
   ui_render->update_without_release = 
-    amide_gconf_get_bool(GCONF_AMIDE_RENDERING,"UpdateWithoutRelease");
+    amide_gconf_get_bool(GCONF_AMIDE_RENDERING,"update-without-release");
 
   ui_render->stereo_eye_width = 
-    amide_gconf_get_int(GCONF_AMIDE_RENDERING,"EyeWidth");
+    amide_gconf_get_int(GCONF_AMIDE_RENDERING,"eye-width");
   if (ui_render->stereo_eye_width == 0)  /* if no config file, put in sane value */
     ui_render->stereo_eye_width = 50*gdk_screen_width()/gdk_screen_width_mm(); /* in pixels */
 
   ui_render->stereo_eye_angle = 
-    amide_gconf_get_float(GCONF_AMIDE_RENDERING,"EyeAngle");
+    amide_gconf_get_float(GCONF_AMIDE_RENDERING,"eye-angle");
   if ((ui_render->stereo_eye_angle <= 0.1) || (ui_render->stereo_eye_angle > 45.0))
     ui_render->stereo_eye_angle = 5.0; /* degrees */
 
@@ -1005,19 +1005,19 @@ static void init_no_gradient_opacity_cb(GtkWidget * widget, gpointer data);
 
 
 static void init_strip_highs_cb(GtkWidget * widget, gpointer data) {
-  amide_gconf_set_bool(GCONF_AMIDE_RENDERING,"StripHighs", 
+  amide_gconf_set_bool(GCONF_AMIDE_RENDERING,"strip-highs",
 		       gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
   return;
 }
 
 static void init_optimize_rendering_cb(GtkWidget * widget, gpointer data) {
-  amide_gconf_set_bool(GCONF_AMIDE_RENDERING,"OptimizeRendering", 
+  amide_gconf_set_bool(GCONF_AMIDE_RENDERING,"optimize-rendering",
 		       gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
   return;
 }
 
 static void init_no_gradient_opacity_cb(GtkWidget * widget, gpointer data) {
-  amide_gconf_set_bool(GCONF_AMIDE_RENDERING,"InitiallyNoGradientOpacity", 
+  amide_gconf_set_bool(GCONF_AMIDE_RENDERING,"initially-no-gradient-opacity",
 		       gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
   return;
 }

@@ -33,7 +33,7 @@
 #include "render.h"
 #include "amitk_study.h"
 
-#define GCONF_AMIDE_RENDERING "RENDERING"
+#define GCONF_AMIDE_RENDERING "rendering"
 
 /* defines */
 #define UI_RENDER_BLANK_WIDTH 200
