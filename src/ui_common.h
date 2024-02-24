@@ -86,6 +86,7 @@ void ui_common_init_dialog_response_cb (GtkDialog * dialog, gint response_id, gp
 GList * ui_common_init_dialog_selected_objects(GtkWidget * dialog);
 void ui_common_toolbar_insert_widget(GtkWidget * toolbar, GtkWidget * widget, const gchar * tooltip, gint position);
 void ui_common_toolbar_append_widget(GtkWidget * toolbar, GtkWidget * widget, const gchar * tooltip);
+void ui_common_toolbar_append_widget_full(GtkWidget * toolbar, GtkWidget * widget, const gchar * label, const gchar * tooltip, GCallback cb, gpointer data);
 void ui_common_toolbar_append_separator(GtkWidget * toolbar);
 
 void amide_call_help(const gchar * link_id);
