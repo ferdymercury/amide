@@ -540,7 +540,7 @@ static void menus_toolbar_create(ui_study_t * ui_study) {
   toolbar = gtk_toolbar_new();
   gtk_box_pack_start (GTK_BOX (ui_study->window_vbox), toolbar, FALSE, FALSE, 0);
   gtk_toolbar_set_style(GTK_TOOLBAR(toolbar), GTK_TOOLBAR_ICONS);
-  gtk_toolbar_set_show_arrow(GTK_TOOLBAR(toolbar), FALSE);
+  gtk_widget_set_hexpand(toolbar, FALSE);
 
   tool_item = gtk_radio_tool_button_new(NULL);
   gtk_tool_button_set_label(GTK_TOOL_BUTTON(tool_item), _("Near."));
@@ -568,9 +568,8 @@ static void menus_toolbar_create(ui_study_t * ui_study) {
   for (i_rendering = 0; i_rendering < AMITK_RENDERING_NUM; i_rendering++) 
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(ui_study->rendering_menu), amitk_rendering_get_name(i_rendering));
   g_signal_connect(G_OBJECT(ui_study->rendering_menu), "changed", G_CALLBACK(ui_study_cb_rendering), ui_study);
-  ui_common_toolbar_insert_widget(toolbar, ui_study->rendering_menu,
-                                  _(amitk_rendering_explanation),
-                                  gtk_toolbar_get_n_items(GTK_TOOLBAR(toolbar)));
+  ui_common_toolbar_append_widget(toolbar, ui_study->rendering_menu,
+                                  _(amitk_rendering_explanation));
 
   ui_common_toolbar_append_separator(toolbar);
 
@@ -672,7 +671,7 @@ static void menus_toolbar_create(ui_study_t * ui_study) {
 
   icon = gtk_image_new_from_icon_name("amide_icon_thresholding",
                                       GTK_ICON_SIZE_LARGE_TOOLBAR);
-  tool_item = gtk_tool_button_new(icon, _("_Threshold"));
+  tool_item = gtk_tool_button_new(icon, _("Threshold"));
   gtk_tool_item_set_tooltip_text(tool_item,
                                  _("Set the thresholds and colormaps for the active data set"));
   gtk_actionable_set_action_name(GTK_ACTIONABLE(tool_item), "win.thresholding");
@@ -697,7 +696,10 @@ static void menus_toolbar_create(ui_study_t * ui_study) {
   g_signal_connect(G_OBJECT(ui_study->zoom_spin), "output", G_CALLBACK(amitk_spin_button_scientific_output), NULL);
   g_signal_connect(G_OBJECT(ui_study->zoom_spin), "button_press_event",
 		   G_CALLBACK(amitk_spin_button_discard_double_or_triple_click), NULL);
-  ui_common_toolbar_append_widget(toolbar,ui_study->zoom_spin,_("specify how much to magnify the images"));
+  ui_common_toolbar_append_widget_full(toolbar, ui_study->zoom_spin,
+                                       _("Zoom"),
+                                       _("specify how much to magnify the images"),
+                                       NULL, NULL);
 
   /* a separator for clarity */
   ui_common_toolbar_append_separator(toolbar);
@@ -716,7 +718,10 @@ static void menus_toolbar_create(ui_study_t * ui_study) {
   g_signal_connect(G_OBJECT(ui_study->fov_spin), "value_changed", G_CALLBACK(ui_study_cb_fov), ui_study);
   g_signal_connect(G_OBJECT(ui_study->fov_spin), "button_press_event",
 		   G_CALLBACK(amitk_spin_button_discard_double_or_triple_click), NULL);
-  ui_common_toolbar_append_widget(toolbar,ui_study->fov_spin,_("specify how much of the image field of view to display"));
+  ui_common_toolbar_append_widget_full(toolbar, ui_study->fov_spin,
+                                       _("Field of view"),
+                                       _("specify how much of the image field of view to display"),
+                                       NULL, NULL);
 
   /* a separator for clarity */
   ui_common_toolbar_append_separator(toolbar);
@@ -736,7 +741,10 @@ static void menus_toolbar_create(ui_study_t * ui_study) {
   g_signal_connect(G_OBJECT(ui_study->thickness_spin), "output", G_CALLBACK(amitk_spin_button_scientific_output), NULL);
   g_signal_connect(G_OBJECT(ui_study->thickness_spin), "button_press_event",
 		   G_CALLBACK(amitk_spin_button_discard_double_or_triple_click), NULL);
-  ui_common_toolbar_append_widget(toolbar,ui_study->thickness_spin,_("specify how thick to make the slices (mm)"));
+  ui_common_toolbar_append_widget_full(toolbar, ui_study->thickness_spin,
+                                       _("Thickness"),
+                                       _("specify how thick to make the slices (mm)"),
+                                       NULL, NULL);
 
   /* a separator for clarity */
   ui_common_toolbar_append_separator(toolbar);
@@ -749,9 +757,10 @@ static void menus_toolbar_create(ui_study_t * ui_study) {
 
   ui_study->gate_button = gtk_button_new_with_label("?");
   g_signal_connect(G_OBJECT(ui_study->gate_button), "clicked", G_CALLBACK(ui_study_cb_gate), ui_study);
-  ui_common_toolbar_append_widget(toolbar, ui_study->gate_button,
-				  _("the gate range over which to view the data"));
-
+  ui_common_toolbar_append_widget_full(toolbar, ui_study->gate_button,
+                                       _("Gate"),
+                                       _("the gate range over which to view the data"),
+                                       G_CALLBACK(ui_study_cb_gate), ui_study);
 
   /* a separator for clarity */
   ui_common_toolbar_append_separator(toolbar);
@@ -762,8 +771,10 @@ static void menus_toolbar_create(ui_study_t * ui_study) {
 
   ui_study->time_button = gtk_button_new_with_label("?"); 
   g_signal_connect(G_OBJECT(ui_study->time_button), "clicked", G_CALLBACK(ui_study_cb_time), ui_study);
-  ui_common_toolbar_append_widget(toolbar, ui_study->time_button,
-				  _("the time range over which to view the data (s)"));
+  ui_common_toolbar_append_widget_full(toolbar, ui_study->time_button,
+                                       _("Time"),
+                                       _("the time range over which to view the data (s)"),
+                                       G_CALLBACK(ui_study_cb_time), ui_study);
 
   return;
 }
@@ -1540,13 +1551,22 @@ void ui_study_update_layout(ui_study_t * ui_study) {
 void ui_study_setup_widgets(ui_study_t * ui_study) {
 
   GtkWidget * scrolled;
+  GtkWidget * scrld;
   GtkWidget * left_vbox;
   GtkWidget * hbox;
 
 
   /* the hbox that'll contain everything in the ui besides the menu and toolbar */
   hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,0);
-  gtk_box_pack_start (GTK_BOX (ui_study->window_vbox), hbox, TRUE, TRUE, 0);
+  scrld = gtk_scrolled_window_new(NULL, NULL);
+  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrld),
+                                 GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+  gtk_scrolled_window_set_propagate_natural_width(GTK_SCROLLED_WINDOW(scrld),
+                                                  TRUE);
+  gtk_scrolled_window_set_propagate_natural_height(GTK_SCROLLED_WINDOW(scrld),
+                                                   TRUE);
+  gtk_container_add(GTK_CONTAINER(scrld), hbox);
+  gtk_box_pack_start (GTK_BOX (ui_study->window_vbox), scrld, TRUE, TRUE, 0);
 
   /* make and add the left packing table */
   left_vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
@@ -1637,9 +1657,6 @@ GtkWidget * ui_study_create(AmitkStudy * study, AmitkPreferences * preferences) 
   gtk_window_set_icon(ui_study->window, pixbuf);
   gtk_window_set_default_icon(pixbuf); /* sets it as the default for all additional windows */
   g_object_unref(pixbuf);
-
-  /* disable user resizability, allows the window to autoshrink */  
-  gtk_window_set_resizable(ui_study->window, FALSE); 
 
   /* setup the callbacks for the window */
   g_signal_connect(G_OBJECT(ui_study->window), "delete_event",  

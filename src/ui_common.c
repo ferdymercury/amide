@@ -821,6 +821,25 @@ void ui_common_toolbar_append_widget(GtkWidget * toolbar, GtkWidget * widget, co
   return;
 }
 
+void ui_common_toolbar_append_widget_full(GtkWidget * toolbar, GtkWidget * widget, const gchar * label, const gchar * tooltip, GCallback cb, gpointer data) {
+
+  GtkToolItem * toolbar_item;
+  GtkWidget * menu_item;
+
+  toolbar_item = gtk_tool_item_new();
+  gtk_container_add(GTK_CONTAINER(toolbar_item), widget);
+  if (tooltip != NULL)
+    gtk_widget_set_tooltip_text(widget, tooltip);
+  if (label != NULL) {
+    menu_item = gtk_menu_item_new_with_label(label);
+    gtk_tool_item_set_proxy_menu_item(toolbar_item, label, menu_item);
+    if (cb != NULL)
+      g_signal_connect(menu_item, "activate", cb, data);
+  }
+  gtk_tool_item_set_homogeneous(toolbar_item, FALSE);
+  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), toolbar_item, -1);
+}
+
 void ui_common_toolbar_append_separator(GtkWidget * toolbar) {
   GtkToolItem * toolbar_item;
   toolbar_item =  gtk_separator_tool_item_new();
