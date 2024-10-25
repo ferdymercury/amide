@@ -1,6 +1,6 @@
 project('amide', ['c', 'cpp'],
 	version: '1.0.7',
-	meson_version: '>= 0.61.2',
+	meson_version: '>= 1.3.2',
 	default_options: [ 'warning_level=2', 'werror=false', 'c_std=gnu17', 'cpp_std=c++17' ],
 )
 
@@ -12,13 +12,22 @@ config_h = configuration_data()
 config_h.set_quoted('VERSION', meson.project_version())
 config_h.set_quoted('GETTEXT_PACKAGE', 'amide')
 config_h.set_quoted('PACKAGE', meson.project_name())
+config_h.set_quoted('PACKAGE_BUGREPORT', 'https://github.com/desiderantes/amide/issues')
 config_h.set_quoted('AMIDE_DATADIR', get_option('datadir') / meson.project_name())
 config_h.set10('AMIDE_DEBUG', get_option('buildtype').startswith('debug'))
 config_h.set_quoted('LOCALEDIR', get_option('prefix') / get_option('localedir'))
 config_h.set10('ENABLE_NLS', true)
 add_project_arguments(['-I' + meson.project_build_root()], language: 'cpp')
 
-project_c_args = []
+project_c_args = [
+	#Force getters and setters
+	'-DGSEAL_ENABLE',
+	#Force proper gtk headers
+	'-DGTK_DISABLE_SINGLE_INCLUDES',
+	#Disable deprecated symbols
+	'-DGDK_DISABLE_DEPRECATED',
+	'-DGTK_DISABLE_DEPRECATED',
+]
 test_c_args = [
 	'-Wcast-align',
 	'-Wdeclaration-after-statement',
@@ -99,7 +108,6 @@ if os == 'windows'
 elif os == 'darwin'
 	subdir('macos')
 else
-	subdir('linux')
 	gnome.post_install(
 		glib_compile_schemas: true,
 		gtk_update_icon_cache: true,
