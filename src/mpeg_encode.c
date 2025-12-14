@@ -164,7 +164,7 @@ static encode_t * encode_free(encode_t * encode) {
     return encode;
 
   if (encode->context != NULL) {
-    avcodec_close(encode->context);
+    avcodec_free_context(&encode->context);
     av_free(encode->context);
     encode->context = NULL;
   }
