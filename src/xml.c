@@ -29,6 +29,7 @@
 #include <errno.h>
 #include <string.h>
 #include <locale.h>
+#include <inttypes.h>
 #include "amitk_common.h"
 
 #define BOOLEAN_STRING_MAX_LENGTH 10 /* when we stop checking */
@@ -443,15 +444,7 @@ void xml_get_location_and_size(xmlNodePtr nodes, const gchar * descriptor,
   temp_str = xml_get_string(nodes, descriptor);
 
   if (temp_str != NULL) {
-#if (SIZEOF_LONG == 8)
-    error = sscanf(temp_str, "0x%lx 0x%lx", location, size);
-#else
-#if (SIZEOF_LONG_LONG == 8)
-    error = sscanf(temp_str, "0x%llx 0x%llx", location, size);
-#else
-#error "Either LONG or LONG_LONG needs to by 8 bytes long"
-#endif
-#endif
+    error = sscanf(temp_str, "0x%" SCNx64 " 0x%" SCNx64, location, size);
     g_free(temp_str);
   } 
 

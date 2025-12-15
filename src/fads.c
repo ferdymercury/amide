@@ -50,7 +50,7 @@ gchar * fads_type_name[] = {
 };
 
 gchar * fads_type_explanation[] = {
-  N_("Priniciple Component Analysis based on singular value "
+  N_("Principle Component Analysis based on singular value "
      "decomposition."),
 
   N_("Principle component analysis with positivity constraints "
@@ -63,12 +63,13 @@ gchar * fads_type_explanation[] = {
 
 };
 
-#include "../pixmaps/two_compartment.h"
+#include <gio/gio.h>
+#include "pixmaps.h"
 
 const guint8 * fads_type_icon[NUM_FADS_TYPES] = {
   NULL,
   NULL,
-  two_compartment
+  AMIDE_ICON_GRESOURCE_PREFIX "two_compartment",
 };
 
 

@@ -29,10 +29,10 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <glib.h>
-#include "amitk_roi_`'m4_Variable_Type`'.h"
+#include "amitk_roi_@VARIABLE_TYPE@.h"
 
 
-#define ROI_TYPE_`'m4_Variable_Type`'
+#define ROI_TYPE_@VARIABLE_TYPE@
 
 
 
@@ -76,7 +76,7 @@ static GSList * prepend_intersection_point(GSList * points_list, AmitkPoint new_
 /* returns a singly linked list of intersection points between the roi
    and the given canvas slice.  returned points are in the canvas's coordinate space.
 */
-GSList * amitk_roi_`'m4_Variable_Type`'_get_intersection_line(const AmitkRoi * roi, 
+GSList * amitk_roi_@VARIABLE_TYPE@_get_intersection_line(const AmitkRoi * roi, 
 							      const AmitkVolume * canvas_slice,
 							      const amide_real_t pixel_dim) {
 
@@ -276,7 +276,7 @@ static amitk_format_UBYTE_t map_roi_edge(AmitkRawData * map_roi_ds, AmitkVoxel v
 #define FAST_INTERSECTION_SLICE 1
 
 /* intersection data is returned in the form of a volume slice */
-AmitkDataSet * amitk_roi_`'m4_Variable_Type`'_get_intersection_slice(const AmitkRoi * roi,
+AmitkDataSet * amitk_roi_@VARIABLE_TYPE@_get_intersection_slice(const AmitkRoi * roi,
 								     const AmitkVolume * canvas_slice,
 								     const amide_real_t pixel_dim
 #ifndef AMIDE_LIBGNOMECANVAS_AA
@@ -547,7 +547,7 @@ static void isocontour_consider(const AmitkDataSet * ds,
 
 
 
-void amitk_roi_`'m4_Variable_Type`'_set_isocontour(AmitkRoi * roi, AmitkDataSet * ds, 
+void amitk_roi_@VARIABLE_TYPE@_set_isocontour(AmitkRoi * roi, AmitkDataSet * ds, 
 						   AmitkVoxel iso_voxel,
 						   amide_data_t iso_min_value,
 						   amide_data_t iso_max_value,
@@ -558,7 +558,7 @@ void amitk_roi_`'m4_Variable_Type`'_set_isocontour(AmitkRoi * roi, AmitkDataSet 
   AmitkVoxel min_voxel, max_voxel, i_voxel;
   amide_data_t temp_min_value, temp_max_value;
 
-  g_return_if_fail(roi->type == AMITK_ROI_TYPE_`'m4_Variable_Type`');
+  g_return_if_fail(roi->type == AMITK_ROI_TYPE_@VARIABLE_TYPE@);
 
   /* what we're setting the isocontour too */
   roi->isocontour_min_value = iso_min_value; 
@@ -656,7 +656,7 @@ void amitk_roi_`'m4_Variable_Type`'_set_isocontour(AmitkRoi * roi, AmitkDataSet 
 
 
 
-void amitk_roi_`'m4_Variable_Type`'_manipulate_area(AmitkRoi * roi, gboolean erase, AmitkVoxel voxel, gint area_size) {
+void amitk_roi_@VARIABLE_TYPE@_manipulate_area(AmitkRoi * roi, gboolean erase, AmitkVoxel voxel, gint area_size) {
 
   AmitkVoxel i_voxel, j_voxel;
   AmitkVoxel new_dim;
@@ -776,7 +776,7 @@ if (dim_changed) {
 }
 
 
-void amitk_roi_`'m4_Variable_Type`'_calc_center_of_mass(AmitkRoi * roi) {
+void amitk_roi_@VARIABLE_TYPE@_calc_center_of_mass(AmitkRoi * roi) {
 
   AmitkVoxel i_voxel;
   guint voxels=0;
@@ -815,7 +815,7 @@ void amitk_roi_`'m4_Variable_Type`'_calc_center_of_mass(AmitkRoi * roi) {
    and performs the specified calculation function for those points */
 /* calulation should be a function taking the following arguments:
    calculation(AmitkVoxel dataset_voxel, amide_data_t value, amide_real_t voxel_fraction, gpointer data) */
-void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set_fast(const AmitkRoi * roi,  
+void amitk_roi_@VARIABLE_TYPE@_calculate_on_data_set_fast(const AmitkRoi * roi,  
 							       const AmitkDataSet * ds, 
 							       const guint frame,
 							       const guint gate,
@@ -1064,7 +1064,7 @@ void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set_fast(const AmitkRoi * 
    and performs the specified calculation function for those points */
 /* calulation should be a function taking the following arguments:
    calculation(AmitkVoxel dataset_voxel, amide_data_t value, amide_real_t voxel_fraction, gpointer data) */
-void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set_accurate(const AmitkRoi * roi,  
+void amitk_roi_@VARIABLE_TYPE@_calculate_on_data_set_accurate(const AmitkRoi * roi,  
 								   const AmitkDataSet * ds, 
 								   const guint frame,
 								   const guint gate,
