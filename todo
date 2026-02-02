@@ -134,14 +134,8 @@ longer range things
 libgnomecanvas/pixbuf issues
 ---------------------
 
-These problems will probably never be rectified, as libgnomecanvas is
-now deprecated. More likely course of action will be likely to rewrite
-the parts that use libgnomecanvas to use a new canvas system.  A new
-canvas system has not yet been agreed on for gtk (as of 3.0 at
-least). Goocanvas would have seemed to be the obvious choice, as it's
-similar to libgnomecanvas but with cairo as the backend rather than
-libart, but development of this seems to have stalled. May need to go
-directly to cairo as the canvas.
+These problems were noticed with libgnomecanvas.
+With the new cairo drawing backend they might be fixed:
 
 
 * antialiased canvases have been unstable in the past, due to
