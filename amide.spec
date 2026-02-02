@@ -14,15 +14,13 @@ Requires:	gsl
 Requires:	volpack
 Requires:	ffmpeg-libs >= 0.4.9
 Requires:	dcmtk >= 3.6.0
-Requires:       gtk2 >= 2.16
+Requires:       gtk3
 Requires:	gnome-vfs2
-Requires:	libgnomecanvas
 
 BuildRequires:  xmedcon-devel
 BuildRequires:  volpack-devel 
 BuildRequires:  libxml2-devel 
 BuildRequires:  gnome-doc-utils
-BuildRequires:  libgnomecanvas-devel 
 BuildRequires:  ffmpeg-devel >= 0.4.9
 BuildRequires:  gsl-devel
 BuildRequires:  dcmtk-devel

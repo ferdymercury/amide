@@ -4029,16 +4029,16 @@ msgid "Slicing for series"
 msgstr "用於系列檢視的切片"
 
 #: ../src/ui_series.c:681
-msgid "couldn't allocate memory space for pointers to image GnomeCanvasItem's"
-msgstr "無法配置記憶體空間給影像 GnomeCanvasItem 的指標"
+msgid "couldn't allocate memory space for pointers to image AmitkCanvasItem's"
+msgstr "無法配置記憶體空間給影像 AmitkCanvasItem 的指標"
 
 #: ../src/ui_series.c:686
-msgid "couldn't allocate memory space for pointers to caption GnomeCanvasItem's"
-msgstr "無法配置記憶體空間給題要 GnomeCanvasItem 的指標"
+msgid "couldn't allocate memory space for pointers to caption AmitkCanvasItem's"
+msgstr "無法配置記憶體空間給題要 AmitkCanvasItem 的指標"
 
 #: ../src/ui_series.c:691
-msgid "couldn't allocate memory space for pointers to GnomeCanavasItem lists"
-msgstr "無法配置記憶體空間給 GnomeCanavasItem 清單的指標"
+msgid "couldn't allocate memory space for pointers to AmitkCanvasItem lists"
+msgstr "無法配置記憶體空間給 AmitkCanavasItem 清單的指標"
 
 #: ../src/ui_series.c:965
 #, c-format
