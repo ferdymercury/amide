@@ -4009,18 +4009,18 @@ msgstr ""
 
 #: ../src/ui_series.c:700
 #, fuzzy
-msgid "couldn't allocate memory space for pointers to image GnomeCanvasItem's"
+msgid "couldn't allocate memory space for pointers to image AmitkCanvasItem's"
 msgstr "无法为时间数据分配空间"
 
 #: ../src/ui_series.c:705
 #, fuzzy
 msgid ""
-"couldn't allocate memory space for pointers to caption GnomeCanvasItem's"
+"couldn't allocate memory space for pointers to caption AmitkCanvasItem's"
 msgstr "无法为时间数据分配空间"
 
 #: ../src/ui_series.c:710
 #, fuzzy
-msgid "couldn't allocate memory space for pointers to GnomeCanavasItem lists"
+msgid "couldn't allocate memory space for pointers to AmitkCanavasItem lists"
 msgstr "无法为时间数据分配空间"
 
 #: ../src/ui_series.c:990

@@ -147,10 +147,6 @@ With the new cairo drawing backend they might be fixed:
 	support for antialiased canvases. To disable antialiasing, disable
 	these lines again.
 
-	last tested versions:
-		libart_lgpl-2.3.21
-		libgnomecanvas-2.30.3
-
 	-make sure to check that lines in tb_crop are placed correctly
 	-need to check that the export jpeg functions work, they have not been tested
 

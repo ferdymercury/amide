@@ -1175,7 +1175,6 @@ static gboolean canvas_event_cb(AmitkCanvasItem * item, AmitkCanvasItem * target
   AmitkPoint base_point, canvas_point, diff_point;
   AmitkCanvasPoint canvas_cpoint, diff_cpoint;
   rgba_t outline_color;
-  //  GnomeCanvasPoints * points;
   canvas_event_t canvas_event_type;
   AmitkObject * object=NULL;
   AmitkCanvasPoint temp_cpoint[2];
