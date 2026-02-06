@@ -755,7 +755,7 @@ void amitk_roi_calculate_on_data_set(const AmitkRoi * roi,
 				     const guint gate,
 				     const gboolean inverse,
 				     const gboolean accurate,
-				     void (*calculation)(),
+				     void (*calculation)(AmitkVoxel, amide_data_t, amide_real_t, gpointer),
 				     gpointer data) {
 
   g_return_if_fail(AMITK_IS_ROI(roi));

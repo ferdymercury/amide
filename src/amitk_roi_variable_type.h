@@ -64,14 +64,14 @@ void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set_fast(const AmitkRoi * 
 							       const guint frame,
 							       const guint gate,
 							       const gboolean inverse,
-							       void (*calculation)(),
+							       void (*calculation)(AmitkVoxel, amide_data_t, amide_real_t, gpointer),
 							       gpointer data);
 void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set_accurate(const AmitkRoi * roi,  
 								   const AmitkDataSet * ds, 
 								   const guint frame,
 								   const guint gate,
 								   const gboolean inverse,
-								   void (*calculation)(),
+								   void (*calculation)(AmitkVoxel, amide_data_t, amide_real_t, gpointer),
 								   gpointer data);
 
 

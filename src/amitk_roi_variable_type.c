@@ -820,7 +820,7 @@ void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set_fast(const AmitkRoi * 
 							       const guint frame,
 							       const guint gate,
 							       const gboolean inverse,
-							       void (* calculation)(),
+							       void (* calculation)(AmitkVoxel, amide_data_t, amide_real_t, gpointer),
 							       gpointer data) {
 
   AmitkPoint roi_pt_corner, roi_pt_center, fine_roi_pt;
@@ -1069,7 +1069,7 @@ void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set_accurate(const AmitkRo
 								   const guint frame,
 								   const guint gate,
 								   const gboolean inverse,
-								   void (* calculation)(),
+								   void (* calculation)(AmitkVoxel, amide_data_t, amide_real_t, gpointer),
 								   gpointer data) {
 
   AmitkPoint fine_roi_pt, fine_ds_pt;
