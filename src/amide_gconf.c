@@ -429,10 +429,10 @@ gboolean amide_gconf_set_float(const gchar * group, const char *key, gdouble val
 gboolean amide_gconf_set_bool(const gchar * group, const gchar *key, gboolean val) {
   gchar * real_key;
   gboolean return_val;
-  guchar bool = val ? 1 : 0;
+  guchar bool_char = val ? 1 : 0;
 
   real_key = g_strdup_printf("%s/%s",group,key);
-  return_val = go_conf_win32_set (root, real_key, REG_BINARY, (guchar *) &bool, sizeof (bool));
+  return_val = go_conf_win32_set (root, real_key, REG_BINARY, (guchar *) &bool_char, sizeof (bool));
   g_free(real_key);
 
   return return_val;
