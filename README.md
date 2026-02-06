@@ -17,13 +17,13 @@ Quick Linux instructions
 	cd /tmp/
 	git clone --depth=1 https://github.com/ferdymercury/amide
 	# If Ubuntu 22:
-	sudo apt install libgnomecanvas2-dev libgconf2-dev libmdc2-dev libvolpack1-dev libavcodec-dev gtk-doc-tools intltool libxml2-dev libgsl-dev libdcmtk-dev
+	sudo apt install libgconf2-dev libmdc2-dev libvolpack1-dev libavcodec-dev gtk-doc-tools intltool libxml2-dev libgsl-dev libdcmtk-dev
 	# ElseIf Ubuntu 20:
-	sudo apt install libgnomecanvas2-dev libgconf2-dev libmdc2-dev libvolpack1-dev libavcodec-dev gtk-doc-tools intltool libxml2-dev python-libxml2 libgsl-dev libdcmtk-dev
+	sudo apt install libgconf2-dev libmdc2-dev libvolpack1-dev libavcodec-dev gtk-doc-tools intltool libxml2-dev python-libxml2 libgsl-dev libdcmtk-dev
 	wget http://launchpadlibrarian.net/402991440/gnome-doc-utils_0.20.10-5_all.deb
 	sudo dpkg -i gnome-doc-utils_0.20.10-5_all.deb
 	# ElseIf Ubuntu 18:
-	sudo apt install libgnomecanvas2-dev libgconf2-dev libgnomevfs2-dev gnome-doc-utils libmdc2-dev libvolpack1-dev libavcodec-dev gtk-doc-tools intltool libxml2-dev python-libxml2 libgsl-dev libdcmtk-dev
+	sudo apt install libgconf2-dev libgnomevfs2-dev gnome-doc-utils libmdc2-dev libvolpack1-dev libavcodec-dev gtk-doc-tools intltool libxml2-dev python-libxml2 libgsl-dev libdcmtk-dev
 	# EndIf	
 
 	cd amide
@@ -78,9 +78,7 @@ Scrollkeeper is required for generating the help documentation.  If
 you don't care about that, it's not needed.
 
 3) Additional libraries:
-   libgnomecanvas
    libxml-2
-   libgnomeui-2 (not needed on win32)
 
 These are various other libraries are needed for installation, most of
 which you will most likely already have installed if you have GTK+.

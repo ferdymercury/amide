@@ -31,6 +31,7 @@
 #include "amitk_raw_data.h"
 #include "amitk_marshal.h"
 #include "amitk_type_builtins.h"
+#include "amide.h"
 
 #define DATA_CONTENT(data, dim, voxel) ((data)[(voxel).x + (dim).x*(voxel).y])
 

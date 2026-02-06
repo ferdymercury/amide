@@ -27,6 +27,7 @@
 #include <math.h>
 #include "amitk_filter.h"
 #include "amitk_type_builtins.h"
+#include "amide.h"
 #ifdef AMIDE_LIBGSL_SUPPORT
 #include <gsl/gsl_complex_math.h>
 #endif

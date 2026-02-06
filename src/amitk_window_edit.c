@@ -33,12 +33,12 @@
 
 static void window_edit_class_init (AmitkWindowEditClass *class);
 static void window_edit_init (AmitkWindowEdit *window_edit);
-static void window_edit_destroy(GtkObject * object);
+static void window_edit_destroy(GtkWidget * object);
 static void window_spin_cb(GtkWidget * widget, gpointer window_edit);
 static void insert_window_level_cb  (GtkWidget * widget, gpointer window_edit);
 static void window_edit_update_entries(AmitkWindowEdit * window_edit);
 
-static GtkVBoxClass *parent_class;
+static GtkBoxClass *parent_class;
 
 GType amitk_window_edit_get_type (void) {
 
@@ -60,7 +60,7 @@ GType amitk_window_edit_get_type (void) {
 	NULL /* value table */
       };
 
-      window_edit_type = g_type_register_static(GTK_TYPE_VBOX, "AmitkWindowEdit", &window_edit_info, 0);
+      window_edit_type = g_type_register_static(GTK_TYPE_BOX, "AmitkWindowEdit", &window_edit_info, 0);
     }
 
   return window_edit_type;
@@ -68,7 +68,7 @@ GType amitk_window_edit_get_type (void) {
 
 static void window_edit_class_init (AmitkWindowEditClass *class)
 {
-  GtkObjectClass *gtkobject_class = GTK_OBJECT_CLASS(class);
+  GtkWidgetClass *gtkobject_class = GTK_WIDGET_CLASS(class);
 
   parent_class = g_type_class_peek_parent(class);
 
@@ -86,26 +86,29 @@ static void window_edit_init (AmitkWindowEdit *window_edit)
 
   guint table_row=0;
 
+  gtk_orientable_set_orientation(GTK_ORIENTABLE(window_edit),
+                                 GTK_ORIENTATION_VERTICAL);
 
   /* initialize some critical stuff */
   window_edit->data_set = NULL;
   window_edit->preferences = NULL;
 
-  table = gtk_table_new(11,4, FALSE);
+  table = gtk_grid_new();
+  gtk_grid_set_row_spacing(GTK_GRID(table), Y_PADDING);
+  gtk_grid_set_column_spacing(GTK_GRID(table), X_PADDING);
   gtk_container_add(GTK_CONTAINER(window_edit), table);
 
   for (i_limit = 0; i_limit < AMITK_LIMIT_NUM; i_limit++) {
     window_edit->limit_label[i_limit]  = gtk_label_new(NULL);
-    gtk_table_attach(GTK_TABLE(table), window_edit->limit_label[i_limit], 1+i_limit,2+i_limit, 
-		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), window_edit->limit_label[i_limit],
+                             1+i_limit, table_row, 1, 1);
     gtk_widget_show(window_edit->limit_label[i_limit]);
   }
   table_row++;
 
   for (i_window = 0; i_window < AMITK_WINDOW_NUM; i_window++) {
     label = gtk_label_new(_(amitk_window_names[i_window]));
-    gtk_table_attach(GTK_TABLE(table), label, 0,1, 
-		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), label, 0, table_row, 1, 1);
     gtk_widget_show(label);
       
     for (i_limit = 0; i_limit < AMITK_LIMIT_NUM; i_limit++) {
@@ -117,14 +120,14 @@ static void window_edit_init (AmitkWindowEdit *window_edit)
 		       G_CALLBACK(amitk_spin_button_scientific_output), NULL);
       g_signal_connect(G_OBJECT(window_edit->window_spin[i_window][i_limit]), "value_changed",
 		       G_CALLBACK(window_spin_cb), window_edit);
-      gtk_table_attach(GTK_TABLE(table), window_edit->window_spin[i_window][i_limit], 1+i_limit,2+i_limit, 
-		       table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(table), window_edit->window_spin[i_window][i_limit],
+                      1+i_limit, table_row, 1, 1);
       gtk_widget_show(window_edit->window_spin[i_window][i_limit]);
     }
 
     window_edit->insert_button[i_window] = gtk_button_new_with_label("Insert Current Thresholds");
-    gtk_table_attach(GTK_TABLE(table), window_edit->insert_button[i_window], 3,4,
-		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), window_edit->insert_button[i_window],
+                    3, table_row, 1, 1);
     g_object_set_data(G_OBJECT(window_edit->insert_button[i_window]), 
 		      "which_window", GINT_TO_POINTER(i_window));
     g_signal_connect(G_OBJECT(window_edit->insert_button[i_window]), "clicked", 
@@ -137,7 +140,7 @@ static void window_edit_init (AmitkWindowEdit *window_edit)
 
 }
 
-static void window_edit_destroy (GtkObject * gtkobject) {
+static void window_edit_destroy (GtkWidget * gtkobject) {
 
   AmitkWindowEdit * window_edit;
 
@@ -160,8 +163,8 @@ static void window_edit_destroy (GtkObject * gtkobject) {
     window_edit->preferences = NULL;
   }
 
-  if (GTK_OBJECT_CLASS (parent_class)->destroy)
-    (* GTK_OBJECT_CLASS (parent_class)->destroy) (gtkobject);
+  if (GTK_WIDGET_CLASS (parent_class)->destroy)
+    (* GTK_WIDGET_CLASS (parent_class)->destroy) (gtkobject);
 }
 
 

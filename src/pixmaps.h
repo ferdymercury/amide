@@ -26,5 +26,3 @@
 /* header files that are always needed with this file */
 
 extern const gchar * windowing_icons[];
-
-void pixmaps_initialize_icons();

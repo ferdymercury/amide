@@ -31,6 +31,7 @@
 #include <gsl/gsl_linalg.h>
 #include "alignment_procrustes.h"
 #include "amitk_fiducial_mark.h"
+#include "amide.h"
 
 /* convient functions that gsl doesn't supply */
 static gsl_matrix * matrix_mult(gsl_matrix * matrix1, gsl_matrix * matrix2) {

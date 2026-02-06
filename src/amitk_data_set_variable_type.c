@@ -26,6 +26,7 @@
 #include "amide_config.h"
 #include "amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'.h"
 #include "amitk_data_set_FLOAT_0D_SCALING.h"
+#include "amide.h"
 
 #ifdef AMIDE_DEBUG
 #include <stdlib.h>

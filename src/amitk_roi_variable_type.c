@@ -30,6 +30,7 @@
 #include <sys/time.h>
 #include <glib.h>
 #include "amitk_roi_`'m4_Variable_Type`'.h"
+#include "amide.h"
 
 
 #define ROI_TYPE_`'m4_Variable_Type`'
@@ -279,9 +280,6 @@ static amitk_format_UBYTE_t map_roi_edge(AmitkRawData * map_roi_ds, AmitkVoxel v
 AmitkDataSet * amitk_roi_`'m4_Variable_Type`'_get_intersection_slice(const AmitkRoi * roi,
 								     const AmitkVolume * canvas_slice,
 								     const amide_real_t pixel_dim
-#ifndef AMIDE_LIBGNOMECANVAS_AA
-								     ,const gboolean fill_map_roi
-#endif
 								     ) {
 
 
@@ -370,13 +368,8 @@ AmitkDataSet * amitk_roi_`'m4_Variable_Type`'_get_intersection_slice(const Amitk
 	  AMITK_RAW_DATA_UBYTE_SET_CONTENT(intersection->raw_data, i_voxel) = 1;
 #else /* ISOCONTOUR_3D or FREEHAND_3D */
 
-#ifdef AMIDE_LIBGNOMECANVAS_AA
         if (value > 0)
 	  AMITK_RAW_DATA_UBYTE_SET_CONTENT(intersection->raw_data, i_voxel) = value;
-#else
-	if ((value == 1) || ((value > 0) && fill_map_roi))
-	  AMITK_RAW_DATA_UBYTE_SET_CONTENT(intersection->raw_data, i_voxel) = 1;
-#endif
 #endif
       }
 #if FAST_INTERSECTION_SLICE
@@ -394,9 +387,6 @@ AmitkDataSet * amitk_roi_`'m4_Variable_Type`'_get_intersection_slice(const Amitk
   }
 
 #if defined(ROI_TYPE_ISOCONTOUR_2D) || defined(ROI_TYPE_FREEHAND_2D)
-#ifndef AMIDE_LIBGNOMECANVAS_AA
-  if (!fill_map_roi) 
-#endif
     {
       /* mark the edges as such on the 2D isocontour or freehand slices */
       i_voxel.z = i_voxel.g = i_voxel.t = 0;

@@ -27,6 +27,7 @@
 
 
 #include "amide_gconf.h"
+#include "amide.h"
 
 
 
@@ -449,7 +450,7 @@ gboolean amide_gconf_set_string (const gchar * group, const char *key, const gch
   return return_val;
 }
 
-#elif defined(AMIDE_NATIVE_GTK_OSX) || !defined(AMIDE_USE_GCONF)
+#elif defined(AMIDE_NATIVE_GTK_OSX)
 
 /* --------------------- flatfile version ----------------- */
 
@@ -628,147 +629,137 @@ gboolean amide_gconf_set_string (const gchar * group, const char *key, const gch
 
 /* ------------------- gconf version ---------------------- */
 
-#include <gconf/gconf-client.h>
-#include <errno.h>
+#include <gio/gio.h>
 
 /* internal variables */
-static GConfClient * client=NULL;
+static GSettings * settings=NULL;
 
+const gchar * enum_keys[] = {
+  "layout",
+  "panel-layout",
+  "which-default-directory",
+  "threshold-style",
+  "last-modality",
+  "last-raw-format",
+  "method",
+  "calculation-type",
+  "type",
+  "view",
+  NULL
+};
 
 void amide_gconf_init(void) {
-  client = gconf_client_get_default();
+  settings = g_settings_new("com.github.ferdymercury.amide");
   return;
 }
 
 void amide_gconf_shutdown(void) {
-  g_object_unref(client); 
+  g_object_unref(settings);
   return;
 }
 
 gint amide_gconf_get_int(const gchar * group, const gchar * key) {
-  gchar * real_key;
+  GSettings * child;
   gint return_val;
 
-  real_key = g_strdup_printf("/apps/%s/%s/%s",PACKAGE,group,key);
-  return_val = gconf_client_get_int(client,real_key,NULL);
-  g_free(real_key);
+  child = g_settings_get_child(settings,group);
+  if (g_strv_contains(enum_keys,key))
+    return_val = g_settings_get_enum(child,key);
+  else
+    return_val = g_settings_get_int(child,key);
+  g_object_unref(child);
   return return_val;
 }
 
 gdouble amide_gconf_get_float(const gchar * group, const gchar * key) {
-  gchar * real_key;
+  GSettings * child;
   gdouble return_val;
 
-  real_key = g_strdup_printf("/apps/%s/%s/%s",PACKAGE,group,key);
-  return_val = gconf_client_get_float(client,real_key,NULL);
-  g_free(real_key);
+  child = g_settings_get_child(settings,group);
+  return_val = g_settings_get_double(child,key);
+  g_object_unref(child);
   return return_val;
 }
 
 gboolean amide_gconf_get_bool(const gchar * group, const gchar * key) {
-  gchar * real_key;
+  GSettings * child;
   gboolean return_val;
 
-  real_key = g_strdup_printf("/apps/%s/%s/%s",PACKAGE,group,key);
-  return_val = gconf_client_get_bool(client,real_key,NULL);
-  g_free(real_key);
+  child = g_settings_get_child(settings,group);
+  return_val = g_settings_get_boolean(child,key);
+  g_object_unref(child);
   return return_val;
 }
 
 gchar * amide_gconf_get_string(const gchar * group, const gchar * key) {
-  gchar * real_key;
+  GSettings * child;
   gchar * return_val;
 
-  real_key = g_strdup_printf("/apps/%s/%s/%s",PACKAGE,group,key);
-  return_val = gconf_client_get_string(client,real_key,NULL);
-  g_free(real_key);
+  child = g_settings_get_child(settings,group);
+  return_val = g_settings_get_string(child,key);
+  g_object_unref(child);
   return return_val;
 }
 
 gboolean amide_gconf_set_int(const gchar * group, const gchar * key, gint val) {
-  gchar * real_key;
+  GSettings * child;
   gboolean return_val;
 
-  real_key = g_strdup_printf("/apps/%s/%s/%s",PACKAGE,group,key);
-  return_val = gconf_client_set_int(client,real_key,val,NULL);
-  g_free(real_key);
+  child = g_settings_get_child(settings,group);
+  if (g_strv_contains(enum_keys,key))
+    return_val = g_settings_set_enum(child,key,val);
+  else
+    return_val = g_settings_set_int(child,key,val);
+  g_object_unref(child);
   return return_val;
 }
 
 gboolean amide_gconf_set_float(const gchar * group, const gchar * key, gdouble val) {
-  gchar * real_key;
+  GSettings * child;
   gboolean return_val;
 
-  real_key = g_strdup_printf("/apps/%s/%s/%s",PACKAGE,group,key);
-  return_val = gconf_client_set_float(client,real_key,val,NULL);
-  g_free(real_key);
+  child = g_settings_get_child(settings,group);
+  return_val = g_settings_set_double(child,key,val);
+  g_object_unref(child);
   return return_val;
 }
 
 gboolean amide_gconf_set_bool(const gchar * group, const gchar * key, gboolean val) {
-  gchar * real_key;
+  GSettings * child;
   gboolean return_val;
 
-  real_key = g_strdup_printf("/apps/%s/%s/%s",PACKAGE,group,key);
-  return_val = gconf_client_set_bool(client,real_key,val,NULL);
-  g_free(real_key);
+  child = g_settings_get_child(settings,group);
+  return_val = g_settings_set_boolean(child,key,val);
+  g_object_unref(child);
   return return_val;
 }
 
 gboolean amide_gconf_set_string(const gchar * group, const gchar * key, const gchar * val) {
-  gchar * real_key;
+  GSettings * child;
   gboolean return_val;
 
-  real_key = g_strdup_printf("/apps/%s/%s/%s",PACKAGE,group, key);
-  return_val = gconf_client_set_string(client,real_key,val,NULL);
-  g_free(real_key);
+  child = g_settings_get_child(settings,group);
+  return_val = g_settings_set_string(child,key,val);
+  g_object_unref(child);
   return return_val;
 }
 
-/* it's pretty retarded that gconf doesn't have a function that can do this more easily */
-static gboolean amide_gconf_has_value(const gchar * group, const gchar *key) {
-  GConfValue * temp_val;
-  gchar * real_key;
-
-  real_key = g_strdup_printf("/apps/%s/%s/%s",PACKAGE,group,key);
-  temp_val = gconf_client_get(client, real_key, NULL);
-  g_free(real_key);
-
-  if (temp_val == NULL) return FALSE;
-  gconf_value_free(temp_val);
-  return TRUE;
-}
-
-
 /* some helper functions */
 gint amide_gconf_get_int_with_default(const gchar * group, const gchar * key, const gint default_int) {
-
-  if (amide_gconf_has_value(group, key)) 
-    return amide_gconf_get_int(group, key);
-  else
-    return default_int;
+  return amide_gconf_get_int(group, key);
 }
 
 gdouble amide_gconf_get_float_with_default(const gchar * group, const gchar * key, const gdouble default_float) {
-  if (amide_gconf_has_value(group, key)) 
-    return amide_gconf_get_float(group, key);
-  else
-    return default_float;
+  return amide_gconf_get_float(group, key);
 }
 
 gboolean amide_gconf_get_bool_with_default(const gchar * group, const gchar * key, const gboolean default_bool) {
-  if (amide_gconf_has_value(group, key)) 
-    return amide_gconf_get_bool(group, key);
-  else
-    return default_bool;
+  return amide_gconf_get_bool(group, key);
 }
 
 /* returns an allocated string that'll need to be free'd */
 gchar * amide_gconf_get_string_with_default(const gchar * group, const gchar * key, const gchar * default_str) {
-  if (amide_gconf_has_value(group, key)) 
-    return amide_gconf_get_string(group, key);
-  else
-    return g_strdup(default_str);
+  return amide_gconf_get_string(group, key);
 }
 
 #endif

@@ -3,8 +3,8 @@ Version: @VERSION@
 Revision: 1
 Source: http://osdn.dl.sourceforge.net/sourceforge/amide/%n-%v.tgz
 Source-MD5:
-Depends: volpack, xmedcon (>= 0.10.5), libavcodec1-shlibs, libxml2-shlibs, gsl-shlibs, libgnomecanvas2, atk1-shlibs, linc1-shlibs, yelp, dcmtk (>= 3.6.0), gnome-vfs2, gtk+2-shlibs (>= 2.16)
-BuildDepends: gtk-doc, libgnomecanvas2-dev, gconf2-dev, gnome-vfs2-dev, libart2, libjpeg, gsl, linc1, atk1, libxml2, libavcodec1-dev, dcmtk, gnome-vfs2-dev, gtk+2-dev (>=2.16)
+Depends: volpack, xmedcon (>= 0.10.5), libavcodec1-shlibs, libxml2-shlibs, gsl-shlibs, atk1-shlibs, linc1-shlibs, yelp, dcmtk (>= 3.6.0), gnome-vfs2, gtk+3-shlibs
+BuildDepends: gtk-doc, gconf2-dev, gnome-vfs2-dev, libjpeg, gsl, linc1, atk1, libxml2, libavcodec1-dev, dcmtk, gnome-vfs2-dev, gtk+3-dev
 #Patch: %f.patch
 InstallScript: make install PREFIX=%p DESTDIR=%d
 ConfigureParams: --enable-gtk-doc=yes --enable-libecat=no --enable-amide-debug=no PKG_CONFIG_PATH=/sw/lib/pkgconfig

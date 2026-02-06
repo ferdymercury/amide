@@ -59,12 +59,7 @@ G_BEGIN_DECLS
 #define AMITK_STUDY_CANVAS_TARGET(stu)            (AMITK_STUDY(stu)->canvas_target)
 
 #define AMITK_STUDY_CANVAS_ROI_WIDTH(stu)         (AMITK_STUDY(stu)->canvas_roi_width)
-#ifdef AMIDE_LIBGNOMECANVAS_AA
 #define AMITK_STUDY_CANVAS_ROI_TRANSPARENCY(stu)  (AMITK_STUDY(stu)->canvas_roi_transparency)
-#else
-#define AMITK_STUDY_CANVAS_LINE_STYLE(stu)        (AMITK_STUDY(stu)->canvas_line_style)
-#define AMITK_STUDY_CANVAS_FILL_ROI(stu)          (AMITK_STUDY(stu)->canvas_fill_roi)
-#endif
 #define AMITK_STUDY_CANVAS_LAYOUT(stu)            (AMITK_STUDY(stu)->canvas_layout)
 #define AMITK_STUDY_CANVAS_MAINTAIN_SIZE(stu)     (AMITK_STUDY(stu)->canvas_maintain_size)
 #define AMITK_STUDY_CANVAS_TARGET_EMPTY_AREA(stu) (AMITK_STUDY(stu)->canvas_target_empty_area)
@@ -104,12 +99,7 @@ struct _AmitkStudy
 
   /* canvas preferences */
   gint canvas_roi_width;
-#ifdef AMIDE_LIBGNOMECANVAS_AA
   gdouble canvas_roi_transparency;
-#else
-  GdkLineStyle canvas_line_style;
-  gboolean canvas_fill_roi;
-#endif
   AmitkLayout canvas_layout;
   gboolean canvas_maintain_size;
   gint canvas_target_empty_area; /* in pixels */
@@ -170,7 +160,7 @@ void            amitk_study_set_fuse_type           (AmitkStudy * study,
 						     const AmitkFuseType new_fuse_type);
 void            amitk_study_set_view_mode           (AmitkStudy * study,
 						     const AmitkViewMode new_view_mode);
-void            amitk_study_set_canvas_visible      (AmitkStudy * study,
+gboolean        amitk_study_set_canvas_visible      (AmitkStudy * study,
 						     const AmitkView view,
 						     const gboolean visible);
 void            amitk_study_set_zoom                (AmitkStudy * study,
@@ -181,15 +171,8 @@ void            amitk_study_set_canvas_target       (AmitkStudy * study,
 						     const gboolean always_on);
 void            amitk_study_set_canvas_roi_width    (AmitkStudy * study,
 						     gint roi_width);
-#ifdef AMIDE_LIBGNOMECANVAS_AA
 void            amitk_study_set_canvas_roi_transparency(AmitkStudy * study,
 							const gdouble transparency);
-#else
-void            amitk_study_set_canvas_line_style   (AmitkStudy * study,
-						     const GdkLineStyle line_style);
-void            amitk_study_set_canvas_fill_roi     (AmitkStudy * study,
-						     const gboolean fill_roi);
-#endif
 void            amitk_study_set_canvas_layout       (AmitkStudy * study,
 						     const AmitkLayout layout);
 void            amitk_study_set_canvas_maintain_size(AmitkStudy * study,

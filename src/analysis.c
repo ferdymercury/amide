@@ -33,6 +33,7 @@
 #ifdef AMIDE_DEBUG
 #include <sys/timeb.h>
 #endif
+#include "amide.h"
 
 
 

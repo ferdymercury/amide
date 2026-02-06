@@ -1,4 +1,7 @@
 etc/amide.desktop.in
+src/menus.ui
+src/render.ui
+src/series.ui
 src/alignment.c
 src/amide.c
 src/amitk_canvas.c

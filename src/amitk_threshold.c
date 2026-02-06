@@ -71,7 +71,7 @@ static gchar * threshold_style_names[] = {
 
 static void threshold_class_init (AmitkThresholdClass *klass);
 static void threshold_init (AmitkThreshold *threshold);
-static void threshold_destroy (GtkObject *object);
+static void threshold_destroy (GtkWidget *object);
 static void threshold_show_all (GtkWidget * widget);
 static void threshold_construct(AmitkThreshold * threshold, AmitkThresholdLayout layout);
 static void threshold_add_data_set(AmitkThreshold * threshold, AmitkDataSet * ds);
@@ -99,7 +99,7 @@ static void ds_thresholds_changed_cb(AmitkDataSet * ds, AmitkThreshold* threshol
 static void ds_conversion_changed_cb(AmitkDataSet * ds, AmitkThreshold* threshold);
 static void ds_modality_changed_cb(AmitkDataSet * ds, AmitkThreshold* threshold);
 static void study_view_mode_changed_cb(AmitkStudy * study, AmitkThreshold * threshold);
-static gint threshold_arrow_cb(GtkWidget* widget, GdkEvent * event, gpointer AmitkThreshold);
+static gint threshold_arrow_cb(AmitkCanvasItem * item, AmitkCanvasItem * target, GdkEvent * event, gpointer AmitkThreshold);
 static void color_table_cb(GtkWidget * widget, gpointer data);
 static void color_table_independent_cb(GtkWidget * widget, gpointer AmitkThreshold);
 static void threshold_ref_frame_cb(GtkWidget* widget, gpointer data);
@@ -118,7 +118,7 @@ static void thresholds_dialog_class_init (AmitkThresholdsDialogClass *klass);
 static void thresholds_dialog_init (AmitkThresholdsDialog *thresholds_dialog);
 static void thresholds_dialog_construct(AmitkThresholdsDialog * thresholds_dialog, GtkWindow * parent, GList * data_sets);
 
-static GtkVBoxClass *threshold_parent_class;
+static GtkBoxClass *threshold_parent_class;
 static GtkDialogClass *threshold_dialog_parent_class;
 static GtkDialogClass *thresholds_dialog_parent_class;
 
@@ -144,7 +144,7 @@ GType amitk_threshold_get_type (void) {
 	NULL /* value table */
       };
 
-      threshold_type = g_type_register_static(GTK_TYPE_VBOX, "AmitkThreshold", &threshold_info, 0);
+      threshold_type = g_type_register_static(GTK_TYPE_BOX, "AmitkThreshold", &threshold_info, 0);
     }
 
   return threshold_type;
@@ -152,15 +152,13 @@ GType amitk_threshold_get_type (void) {
 
 static void threshold_class_init (AmitkThresholdClass *klass)
 {
-  GtkObjectClass *gtkobject_class;
   GtkWidgetClass *widget_class;
 
-  gtkobject_class = (GtkObjectClass*) klass;
   widget_class    = (GtkWidgetClass*) klass;
 
   threshold_parent_class = g_type_class_peek_parent(klass);
 
-  gtkobject_class->destroy = threshold_destroy;
+  widget_class->destroy = threshold_destroy;
   widget_class->show_all = threshold_show_all;
 
 }
@@ -173,6 +171,8 @@ static void threshold_init (AmitkThreshold *threshold)
   guint i_ref;
 
 
+  gtk_orientable_set_orientation(GTK_ORIENTABLE(threshold),
+                                 GTK_ORIENTATION_VERTICAL);
 
   /* initialize some critical stuff */
   for (i_ref=0; i_ref<2; i_ref++) {
@@ -185,10 +185,11 @@ static void threshold_init (AmitkThreshold *threshold)
   threshold->histogram_image = NULL;
 
   if (threshold_cursor == NULL)
-    threshold_cursor = gdk_cursor_new(GDK_SB_V_DOUBLE_ARROW);
+    threshold_cursor = gdk_cursor_new_for_display(gdk_display_get_default(),
+                                                  GDK_SB_V_DOUBLE_ARROW);
 
 }
-static void threshold_destroy (GtkObject * object) {
+static void threshold_destroy (GtkWidget * object) {
 
   AmitkThreshold * threshold;
 
@@ -199,8 +200,8 @@ static void threshold_destroy (GtkObject * object) {
 
   threshold_remove_data_set(threshold);
 
-  if (GTK_OBJECT_CLASS (threshold_parent_class)->destroy)
-    (* GTK_OBJECT_CLASS (threshold_parent_class)->destroy) (object);
+  if (GTK_WIDGET_CLASS (threshold_parent_class)->destroy)
+    (* GTK_WIDGET_CLASS (threshold_parent_class)->destroy) (object);
 }
 
 /* this is used to catch the show_all signal, which would show the
@@ -228,10 +229,10 @@ void amitk_threshold_style_widgets(GtkWidget ** radio_buttons, GtkWidget * hbox)
     radio_buttons[i_threshold_style] = gtk_radio_button_new(NULL);
     switch(i_threshold_style) {
     case AMITK_THRESHOLD_STYLE_MIN_MAX:
-      image = gtk_image_new_from_stock("amide_icon_threshold_style_min_max",GTK_ICON_SIZE_LARGE_TOOLBAR);
+      image = gtk_image_new_from_icon_name("amide_icon_threshold_style_min_max",GTK_ICON_SIZE_LARGE_TOOLBAR);
       break;
     case AMITK_THRESHOLD_STYLE_CENTER_WIDTH:
-      image = gtk_image_new_from_stock("amide_icon_threshold_style_center_width",GTK_ICON_SIZE_LARGE_TOOLBAR);
+      image = gtk_image_new_from_icon_name("amide_icon_threshold_style_center_width",GTK_ICON_SIZE_LARGE_TOOLBAR);
       break;
     default:
       image = NULL;
@@ -282,9 +283,9 @@ static void threshold_construct(AmitkThreshold * threshold,
 
   /* we're using two tables packed into a box */
   if (layout == AMITK_THRESHOLD_BOX_LAYOUT)
-    main_box = gtk_hbox_new(FALSE,0);
+    main_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
   else /* layout == AMITK_THRESHOLD_LINEAR_LAYOUT */
-    main_box = gtk_vbox_new(FALSE,0);
+    main_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
   gtk_container_add(GTK_CONTAINER(threshold), main_box);
 
 
@@ -292,22 +293,22 @@ static void threshold_construct(AmitkThreshold * threshold,
     left table 
     --------------------------------------- */
   
-  left_table = gtk_table_new(8,5,FALSE);
+  left_table = gtk_grid_new();
+  gtk_grid_set_row_spacing(GTK_GRID(left_table), Y_PADDING);
+  gtk_grid_set_column_spacing(GTK_GRID(left_table), X_PADDING);
   left_row=0;
   gtk_box_pack_start(GTK_BOX(main_box), left_table, TRUE,TRUE,0);
   
   if (!threshold->minimal) {
     for (i_ref=0; i_ref<2; i_ref++) {
       threshold->percent_label[i_ref] = gtk_label_new(_("Percent"));
-      gtk_table_attach(GTK_TABLE(left_table), threshold->percent_label[i_ref], 
-		       1+2*i_ref,2+2*i_ref,left_row,left_row+1,
-		       X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(left_table), threshold->percent_label[i_ref],
+                      1+2*i_ref, left_row, 1, 1);
       /* show/hide taken care of by threshold_update_layout */
       
       threshold->absolute_label[i_ref] = gtk_label_new("");
-      gtk_table_attach(GTK_TABLE(left_table), threshold->absolute_label[i_ref], 
-		       2+2*i_ref,3+2*i_ref,left_row,left_row+1,
-		       X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(left_table), threshold->absolute_label[i_ref],
+                      2+2*i_ref, left_row, 1, 1);
       /* show/hide taken care of by threshold_update_layout */
     }
     left_row++;
@@ -315,8 +316,8 @@ static void threshold_construct(AmitkThreshold * threshold,
     
     for (i_limit=0; i_limit < AMITK_LIMIT_NUM; i_limit++) {
       threshold->min_max_label[i_limit] = gtk_label_new(NULL);
-      gtk_table_attach(GTK_TABLE(left_table),  threshold->min_max_label[i_limit], 0,1,left_row+1-i_limit,left_row+2-i_limit,
-		       X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(left_table), threshold->min_max_label[i_limit],
+                      0, left_row+1-i_limit, 1, 1);
       gtk_widget_show(threshold->min_max_label[i_limit]);
     }
     
@@ -345,14 +346,14 @@ static void threshold_construct(AmitkThreshold * threshold,
 	g_signal_connect(G_OBJECT(threshold->spin_button[i_ref][i_entry]), "value_changed",  
 			 G_CALLBACK(threshold_spin_button_cb), threshold);
       }
-      gtk_table_attach(GTK_TABLE(left_table),  threshold->spin_button[i_ref][AMITK_THRESHOLD_ENTRY_MAX_PERCENT], 1+2*i_ref,2+2*i_ref,
-		       left_row,left_row+1, X_PACKING_OPTIONS | GTK_FILL,  0,  X_PADDING, Y_PADDING);
-      gtk_table_attach(GTK_TABLE(left_table), threshold->spin_button[i_ref][AMITK_THRESHOLD_ENTRY_MAX_ABSOLUTE], 2+2*i_ref,3+2*i_ref,
-		       left_row,left_row+1,X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
-      gtk_table_attach(GTK_TABLE(left_table), threshold->spin_button[i_ref][AMITK_THRESHOLD_ENTRY_MIN_PERCENT], 1+2*i_ref,2+2*i_ref, 
-		       left_row+1,left_row+2, X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
-      gtk_table_attach(GTK_TABLE(left_table), threshold->spin_button[i_ref][AMITK_THRESHOLD_ENTRY_MIN_ABSOLUTE], 2+2*i_ref,3+2*i_ref, 
-		       left_row+1, left_row+2, X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(left_table), threshold->spin_button[i_ref][AMITK_THRESHOLD_ENTRY_MAX_PERCENT],
+                      1+2*i_ref, left_row, 1, 1);
+      gtk_grid_attach(GTK_GRID(left_table), threshold->spin_button[i_ref][AMITK_THRESHOLD_ENTRY_MAX_ABSOLUTE],
+                      2+2*i_ref, left_row, 1, 1);
+      gtk_grid_attach(GTK_GRID(left_table), threshold->spin_button[i_ref][AMITK_THRESHOLD_ENTRY_MIN_PERCENT],
+                      1+2*i_ref, left_row+1, 1, 1);
+      gtk_grid_attach(GTK_GRID(left_table), threshold->spin_button[i_ref][AMITK_THRESHOLD_ENTRY_MIN_ABSOLUTE],
+                      2+2*i_ref, left_row+1, 1, 1);
       /* show/hide taken care of by threshold_update_layout */
     }
     left_row+=2;
@@ -368,12 +369,15 @@ static void threshold_construct(AmitkThreshold * threshold,
       threshold->color_table_label[i_view_mode] = gtk_label_new(temp_string);
       g_free(temp_string);
     }
-    gtk_table_attach(GTK_TABLE(left_table), threshold->color_table_label[i_view_mode], 
-		     0,1, left_row,left_row+1, X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(left_table),
+                    threshold->color_table_label[i_view_mode],
+                    0, left_row, 1, 1);
 
-    threshold->color_table_hbox[i_view_mode] = gtk_hbox_new(FALSE, 0);
-    gtk_table_attach(GTK_TABLE(left_table), threshold->color_table_hbox[i_view_mode], 
-		     1,5, left_row,left_row+1, X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+    threshold->color_table_hbox[i_view_mode] =
+      gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+    gtk_grid_attach(GTK_GRID(left_table),
+                    threshold->color_table_hbox[i_view_mode],
+                    1, left_row, 4, 1);
 
     if (i_view_mode == AMITK_VIEW_MODE_SINGLE) {
       threshold->color_table_independent[i_view_mode] = NULL;
@@ -400,13 +404,11 @@ static void threshold_construct(AmitkThreshold * threshold,
   if (!threshold->minimal) {
     /* threshold type selection */
     label = gtk_label_new(_("Threshold Type"));
-    gtk_table_attach(GTK_TABLE(left_table), label, 0,1, left_row,left_row+1,
-		     X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(left_table), label, 0, left_row, 1, 1);
     gtk_widget_show(label);
     
-    hbox = gtk_hbox_new(FALSE, 0);
-    gtk_table_attach(GTK_TABLE(left_table), hbox, 1,5, left_row,left_row+1,
-		     X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+    hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+    gtk_grid_attach(GTK_GRID(left_table), hbox, 1, left_row, 4, 1);
     gtk_widget_show(hbox);
     left_row++;
 
@@ -415,16 +417,16 @@ static void threshold_construct(AmitkThreshold * threshold,
       threshold->type_button[i_thresholding] = gtk_radio_button_new(NULL);
       switch(i_thresholding) {
       case AMITK_THRESHOLDING_PER_SLICE:
-	image = gtk_image_new_from_stock("amide_icon_thresholding_per_slice",GTK_ICON_SIZE_LARGE_TOOLBAR);
+	image = gtk_image_new_from_icon_name("amide_icon_thresholding_per_slice",GTK_ICON_SIZE_LARGE_TOOLBAR);
 	break;
       case AMITK_THRESHOLDING_PER_FRAME:
-	image = gtk_image_new_from_stock("amide_icon_thresholding_per_frame",GTK_ICON_SIZE_LARGE_TOOLBAR);
+	image = gtk_image_new_from_icon_name("amide_icon_thresholding_per_frame",GTK_ICON_SIZE_LARGE_TOOLBAR);
 	break;
       case AMITK_THRESHOLDING_INTERPOLATE_FRAMES:
-	image = gtk_image_new_from_stock("amide_icon_thresholding_interpolate_frames",GTK_ICON_SIZE_LARGE_TOOLBAR);
+	image = gtk_image_new_from_icon_name("amide_icon_thresholding_interpolate_frames",GTK_ICON_SIZE_LARGE_TOOLBAR);
 	break;
       case AMITK_THRESHOLDING_GLOBAL:
-	image = gtk_image_new_from_stock("amide_icon_thresholding_global",GTK_ICON_SIZE_LARGE_TOOLBAR);
+	image = gtk_image_new_from_icon_name("amide_icon_thresholding_global",GTK_ICON_SIZE_LARGE_TOOLBAR);
 	break;
       default:
 	image = NULL;
@@ -455,14 +457,12 @@ static void threshold_construct(AmitkThreshold * threshold,
 
     /* threshold type selection */
     label = gtk_label_new(_("Threshold Style"));
-    gtk_table_attach(GTK_TABLE(left_table), label, 0,1, left_row,left_row+1,
-		     X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(left_table), label, 0, left_row, 1, 1);
     gtk_widget_show(label);
     
-    hbox = gtk_hbox_new(FALSE, 0);
+    hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
     amitk_threshold_style_widgets(threshold->style_button, hbox);
-    gtk_table_attach(GTK_TABLE(left_table), hbox, 1,5, left_row,left_row+1,
-		     X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(left_table), hbox, 1, left_row, 4, 1);
     for (i_threshold_style = 0; i_threshold_style < AMITK_THRESHOLD_STYLE_NUM; i_threshold_style++) 
       g_signal_connect(G_OBJECT(threshold->style_button[i_threshold_style]), "clicked",  
 		       G_CALLBACK(threshold_style_cb), threshold);
@@ -471,26 +471,24 @@ static void threshold_construct(AmitkThreshold * threshold,
 
 
     threshold->window_label = gtk_label_new("Apply Window");
-    gtk_table_attach(GTK_TABLE(left_table), threshold->window_label,
-		     0,1,left_row,left_row+1,
-		     X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(left_table), threshold->window_label,
+                    0, left_row, 1, 1);
     /* show/hide taken care of by threshold_update_window */
 
-    threshold->window_vbox = gtk_vbox_new(FALSE, 0);
-    gtk_table_attach(GTK_TABLE(left_table), threshold->window_vbox,
-		     1,5,left_row,left_row+1,
-		     X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+    threshold->window_vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    gtk_grid_attach(GTK_GRID(left_table), threshold->window_vbox,
+                    1, left_row, 4, 1);
     /* show/hide taken care of by threshold_update_window */
 
     for (i_window=0; i_window < AMITK_WINDOW_NUM; i_window++) {
       x = div(i_window, 5);
       if (x.rem == 0) {
-	hbox = gtk_hbox_new(FALSE, 0);
+	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 	gtk_box_pack_start(GTK_BOX(threshold->window_vbox), hbox, FALSE, FALSE, 3);
 	gtk_widget_show(hbox);
       }
       button = gtk_button_new();
-      image = gtk_image_new_from_stock(windowing_icons[i_window],GTK_ICON_SIZE_LARGE_TOOLBAR);
+      image = gtk_image_new_from_icon_name(windowing_icons[i_window],GTK_ICON_SIZE_LARGE_TOOLBAR);
       gtk_button_set_image(GTK_BUTTON(button), image);
       g_object_set_data(G_OBJECT(button), "which_window",GINT_TO_POINTER(i_window));
       gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 3);
@@ -506,26 +504,28 @@ static void threshold_construct(AmitkThreshold * threshold,
   /*---------------------------------------
     right table 
     --------------------------------------- */
-  right_table = gtk_table_new(4,5,FALSE);
+  right_table = gtk_grid_new();
+  gtk_grid_set_row_spacing(GTK_GRID(right_table), Y_PADDING);
+  gtk_grid_set_column_spacing(GTK_GRID(right_table), X_PADDING);
   right_row=0;
   gtk_box_pack_start(GTK_BOX(main_box), right_table, TRUE,TRUE,0);
 
   /* color table selector */
   threshold->ref_frame_label[0] = gtk_label_new(_("ref. frame 0:"));
-  gtk_table_attach(GTK_TABLE(right_table), threshold->ref_frame_label[0], 1,2, right_row,right_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(right_table), threshold->ref_frame_label[0],
+                  1, right_row, 1, 1);
   /* show/hide taken care of by threshold_update_layout */
   
   threshold->ref_frame_label[1] = gtk_label_new(_("ref. frame 1:"));
-  gtk_table_attach(GTK_TABLE(right_table), threshold->ref_frame_label[1], 3,4, right_row,right_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(right_table), threshold->ref_frame_label[1],
+                  3, right_row, 1, 1);
   /* show/hide taken care of by threshold_update_layout */
 
   for (i_ref=0; i_ref<2; i_ref++) {
-    threshold->threshold_ref_frame_menu[i_ref] = gtk_combo_box_new_text();
-    gtk_table_attach(GTK_TABLE(right_table), threshold->threshold_ref_frame_menu[i_ref],
-		     2+i_ref*2,3+i_ref*2, right_row,right_row+1,
-		     X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+    threshold->threshold_ref_frame_menu[i_ref] = gtk_combo_box_text_new();
+    gtk_grid_attach(GTK_GRID(right_table),
+                    threshold->threshold_ref_frame_menu[i_ref],
+                    2+i_ref*2, right_row, 1, 1);
     gtk_widget_set_size_request(threshold->threshold_ref_frame_menu[i_ref], 50, -1);
     g_object_set_data(G_OBJECT(threshold->threshold_ref_frame_menu[i_ref]), 
 		      "which_ref", GINT_TO_POINTER(i_ref));
@@ -541,23 +541,20 @@ static void threshold_construct(AmitkThreshold * threshold,
 
   if (!threshold->minimal) {
     threshold->histogram_label = gtk_label_new(_("distribution"));
-    gtk_table_attach(GTK_TABLE(right_table),  threshold->histogram_label, 
-		     0,1, right_row, right_row+1,
-		     X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(right_table), threshold->histogram_label,
+                    0, right_row, 1, 1);
     /* show/hide taken care of by threshold_update_layout */
   }
 
   for (i_ref=0; i_ref<2; i_ref++) {
     threshold->full_label[i_ref] = gtk_label_new(_("full"));
-    gtk_table_attach(GTK_TABLE(right_table),  threshold->full_label[i_ref], 
-		     1+2*i_ref,2+2*i_ref, right_row, right_row+1,
-		     X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(right_table), threshold->full_label[i_ref],
+                    1+2*i_ref, right_row, 1, 1);
     /* show/hide taken care of by threshold_update_layout */
 
     threshold->scaled_label[i_ref] = gtk_label_new(_("scaled"));
-    gtk_table_attach(GTK_TABLE(right_table),  threshold->scaled_label[i_ref], 
-		     2+2*i_ref,3+2*i_ref, right_row, right_row+1,
-		     X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(right_table), threshold->scaled_label[i_ref],
+                    2+2*i_ref, right_row, 1, 1);
     /* show/hide taken care of by threshold_update_layout */
 
   }
@@ -568,17 +565,15 @@ static void threshold_construct(AmitkThreshold * threshold,
 
   /* the histogram */
   if (!threshold->minimal) {
-#ifdef AMIDE_LIBGNOMECANVAS_AA
-    threshold->histogram = gnome_canvas_new_aa();
-#else
-    threshold->histogram = gnome_canvas_new();
-#endif
-    gtk_table_attach(GTK_TABLE(right_table), threshold->histogram, 0,1,right_row,right_row+1,
-		     X_PACKING_OPTIONS | GTK_FILL, Y_PACKING_OPTIONS | GTK_FILL, X_PADDING, Y_PADDING);
+    threshold->histogram = amitk_simple_canvas_new();
+    gtk_widget_set_hexpand(threshold->histogram, TRUE);
+    gtk_widget_set_halign(threshold->histogram, GTK_ALIGN_CENTER);
+    gtk_grid_attach(GTK_GRID(right_table), threshold->histogram,
+                    0, right_row, 1, 1);
     gtk_widget_set_size_request(threshold->histogram,
 				IMAGE_DISTRIBUTION_WIDTH,
 				AMITK_DATA_SET_DISTRIBUTION_SIZE + 2*THRESHOLD_TRIANGLE_HEIGHT);
-    gnome_canvas_set_scroll_region(GNOME_CANVAS(threshold->histogram), 
+    amitk_simple_canvas_set_bounds(AMITK_SIMPLE_CANVAS(threshold->histogram),
 				   0.0, THRESHOLD_TRIANGLE_WIDTH/2.0,
 				   IMAGE_DISTRIBUTION_WIDTH,
 				   (THRESHOLD_TRIANGLE_WIDTH/2.0 + AMITK_DATA_SET_DISTRIBUTION_SIZE));
@@ -589,15 +584,12 @@ static void threshold_construct(AmitkThreshold * threshold,
 
   /* the color scale */
   for (i_ref=0; i_ref<2; i_ref++) {
-#ifdef AMIDE_LIBGNOMECANVAS_AA
-    threshold->color_scales[i_ref] = gnome_canvas_new_aa();
-#else
-    threshold->color_scales[i_ref] = gnome_canvas_new();
-#endif
-    gtk_table_attach(GTK_TABLE(right_table),  threshold->color_scales[i_ref], 
-		     1+2*i_ref,3+2*i_ref,right_row,right_row+1,
-		     X_PACKING_OPTIONS | GTK_FILL, Y_PACKING_OPTIONS | GTK_FILL, X_PADDING, Y_PADDING);
-    gnome_canvas_set_scroll_region(GNOME_CANVAS(threshold->color_scales[i_ref]), 0.0, 0.0,
+    threshold->color_scales[i_ref] = amitk_simple_canvas_new();
+    gtk_widget_set_hexpand(threshold->color_scales[i_ref], TRUE);
+    gtk_widget_set_halign(threshold->color_scales[i_ref], GTK_ALIGN_CENTER);
+    gtk_grid_attach(GTK_GRID(right_table), threshold->color_scales[i_ref],
+                    1+2*i_ref, right_row, 2, 1);
+    amitk_simple_canvas_set_bounds(AMITK_SIMPLE_CANVAS(threshold->color_scales[i_ref]), 0.0, 0.0,
 				   THRESHOLD_COLOR_SCALES_WIDTH+2* THRESHOLD_TRIANGLE_WIDTH,
 				   THRESHOLD_COLOR_SCALE_HEIGHT + 2*THRESHOLD_TRIANGLE_HEIGHT + 1);
     gtk_widget_set_size_request(threshold->color_scales[i_ref],
@@ -694,34 +686,39 @@ static gint threshold_visible_refs(AmitkDataSet * data_set) {
 static void threshold_update_histogram(AmitkThreshold * threshold) {
 
   rgb_t fg;
-  GtkStyle * widget_style;
+  AmitkCanvasItem * root;
+  GtkStyleContext * widget_style;
   GdkPixbuf * pixbuf;
+  GdkRGBA rgba;
 
   if (threshold->minimal) return; /* no histogram in minimal configuration */
 
   /* figure out what colors to use for the distribution image */
-  widget_style = gtk_widget_get_style(GTK_WIDGET(threshold));
+  /* GTK 3 returns white color for the threshold widget, while GTK 2
+     returns black.  So use the progress dialog (should be the same).  */
+  widget_style = gtk_widget_get_style_context(threshold->progress_dialog);
   if (widget_style == NULL) {
     g_warning(_("Threshold has no style?\n"));
-    widget_style = gtk_style_new();
+    widget_style = gtk_style_context_new();
   }
 
-  fg.r = widget_style->fg[GTK_STATE_NORMAL].red >> 8;
-  fg.g = widget_style->fg[GTK_STATE_NORMAL].green >> 8;
-  fg.b = widget_style->fg[GTK_STATE_NORMAL].blue >> 8;
+  gtk_style_context_get_color(widget_style, GTK_STATE_FLAG_NORMAL, &rgba);
+  fg.r = (int)(0.5 + CLAMP(rgba.red, 0., 1.) * 255.);
+  fg.g = (int)(0.5 + CLAMP(rgba.green, 0., 1.) * 255.);
+  fg.b = (int)(0.5 + CLAMP(rgba.blue, 0., 1.) * 255.);
 
   pixbuf = image_of_distribution(threshold->data_set, fg, 
 				 amitk_progress_dialog_update, 
 				 threshold->progress_dialog);
 
+  root = amitk_simple_canvas_get_root_item(AMITK_SIMPLE_CANVAS(threshold->histogram));
   if (pixbuf != NULL) {
     if (threshold->histogram_image != NULL)
-      gnome_canvas_item_set(threshold->histogram_image, "pixbuf", pixbuf, NULL);
+      g_object_set(threshold->histogram_image, "pixbuf", pixbuf, NULL);
     else 
       threshold->histogram_image = 
-	gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(threshold->histogram)),
-			      gnome_canvas_pixbuf_get_type(), "pixbuf", pixbuf,
-			      "x", 0.0, "y", ((gdouble) THRESHOLD_TRIANGLE_HEIGHT),  NULL);
+        amitk_canvas_image_new(root, pixbuf, 0.0, THRESHOLD_TRIANGLE_HEIGHT,
+                             NULL);
     g_object_unref(pixbuf);
   }
 
@@ -794,7 +791,7 @@ static void threshold_update_spin_buttons(AmitkThreshold * threshold) {
 
 static void threshold_update_arrow(AmitkThreshold * threshold, AmitkThresholdArrow arrow) {
 
-  GnomeCanvasPoints * points;
+  AmitkCanvasPoints * points;
   gdouble left, right, point, top, bottom;
   gboolean up_pointing=FALSE;
   gboolean down_pointing=FALSE;
@@ -812,7 +809,7 @@ static void threshold_update_arrow(AmitkThreshold * threshold, AmitkThresholdArr
 
   for (i_ref=0; i_ref< threshold_visible_refs(threshold->data_set); i_ref++) {
 
-    points = gnome_canvas_points_new(3);
+    points = amitk_canvas_points_new(3);
     initial_diff = 
       threshold->initial_max[i_ref]-
       threshold->initial_min[i_ref];
@@ -962,29 +959,31 @@ static void threshold_update_arrow(AmitkThreshold * threshold, AmitkThresholdArr
     if ((AMITK_DATA_SET_THRESHOLD_STYLE(threshold->data_set) == AMITK_THRESHOLD_STYLE_MIN_MAX) && 
 	((arrow == AMITK_THRESHOLD_ARROW_FULL_CENTER) || (arrow == AMITK_THRESHOLD_ARROW_SCALED_CENTER)) ) {
       if (threshold->arrow[i_ref][arrow] != NULL) {
-	gtk_object_destroy(GTK_OBJECT(threshold->arrow[i_ref][arrow]));
+	amitk_canvas_item_remove(threshold->arrow[i_ref][arrow]);
 	threshold->arrow[i_ref][arrow] = NULL;
       }
     } else { /* otherwise, do all the drawing */
       
       if (threshold->arrow[i_ref][arrow] != NULL)
-	gnome_canvas_item_set(threshold->arrow[i_ref][arrow], "points", points, NULL);
+	g_object_set(threshold->arrow[i_ref][arrow], "points", points, NULL);
       else {
 	threshold->arrow[i_ref][arrow] = 
-	  gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(threshold->color_scales[i_ref])),
-				gnome_canvas_polygon_get_type(),
-				"points", points,
-				"fill_color", fill_color,
-				"outline_color", "black",
-				"width_pixels", 2,
-				NULL);
+          amitk_canvas_polyline_new(amitk_simple_canvas_get_root_item(AMITK_SIMPLE_CANVAS(threshold->color_scales[i_ref])),
+                                  TRUE, 0, "points", points,
+                                  "fill-color", fill_color,
+                                  "stroke-color", "black",
+                                  "line-width", 2.0, NULL);
 	g_object_set_data(G_OBJECT(threshold->arrow[i_ref][arrow]), "type", GINT_TO_POINTER(arrow));
 	g_object_set_data(G_OBJECT(threshold->arrow[i_ref][arrow]), "which_ref", GINT_TO_POINTER(i_ref));
-	g_signal_connect(G_OBJECT(threshold->arrow[i_ref][arrow]), "event",
+	g_signal_connect(G_OBJECT(threshold->arrow[i_ref][arrow]), "button-press-event",
+			 G_CALLBACK(threshold_arrow_cb), threshold);
+	g_signal_connect(G_OBJECT(threshold->arrow[i_ref][arrow]), "button-release-event",
+			 G_CALLBACK(threshold_arrow_cb), threshold);
+	g_signal_connect(G_OBJECT(threshold->arrow[i_ref][arrow]), "motion-notify-event",
 			 G_CALLBACK(threshold_arrow_cb), threshold);
       }
     }
-    gnome_canvas_points_unref(points);
+    amitk_canvas_points_unref(points);
   }
     
   return;
@@ -1039,11 +1038,11 @@ static void threshold_update_color_scale(AmitkThreshold * threshold, AmitkThresh
     }
    
     if (threshold->color_scale_image[i_ref][scale] != NULL) {
-      gnome_canvas_item_set(threshold->color_scale_image[i_ref][scale], "pixbuf", pixbuf, NULL);
+      g_object_set(threshold->color_scale_image[i_ref][scale], "pixbuf", pixbuf, NULL);
     } else {
       threshold->color_scale_image[i_ref][scale] = 
-	gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(threshold->color_scales[i_ref])),
-			      gnome_canvas_pixbuf_get_type(), "pixbuf", pixbuf,  "x", x, "y", y, NULL);
+        amitk_canvas_image_new(amitk_simple_canvas_get_root_item(AMITK_SIMPLE_CANVAS(threshold->color_scales[i_ref])),
+                             pixbuf, x, y, NULL);
     }
     g_object_unref(pixbuf);
 
@@ -1055,7 +1054,7 @@ static void threshold_update_color_scale(AmitkThreshold * threshold, AmitkThresh
 static void threshold_update_connector_lines(AmitkThreshold * threshold, AmitkThresholdScale scale) {
 
   gdouble temp;
-  GnomeCanvasPoints * line_points;
+  AmitkCanvasPoints * line_points;
   guint i_ref;
   amide_data_t initial_diff;
   amide_data_t global_diff;
@@ -1071,7 +1070,7 @@ static void threshold_update_connector_lines(AmitkThreshold * threshold, AmitkTh
     if (initial_diff < EPSILON) initial_diff = EPSILON;
 
     /* update the line that connect the max arrows of each color scale */
-    line_points = gnome_canvas_points_new(2);
+    line_points = amitk_canvas_points_new(2);
     line_points->coords[0] = THRESHOLD_COLOR_SCALE_WIDTH+THRESHOLD_TRIANGLE_WIDTH;
     temp = (1.0-(threshold->threshold_max[i_ref]-
 		 amitk_data_set_get_global_min(threshold->data_set))/global_diff);
@@ -1084,19 +1083,18 @@ static void threshold_update_connector_lines(AmitkThreshold * threshold, AmitkTh
     else if (temp > 1.0) temp = 1.0;
     line_points->coords[3] = THRESHOLD_TRIANGLE_HEIGHT + THRESHOLD_COLOR_SCALE_HEIGHT * temp;
     if (threshold->connector_line[i_ref][AMITK_THRESHOLD_LINE_MAX] != NULL)
-      gnome_canvas_item_set(threshold->connector_line[i_ref][AMITK_THRESHOLD_LINE_MAX],
+      g_object_set(threshold->connector_line[i_ref][AMITK_THRESHOLD_LINE_MAX],
 			    "points", line_points, NULL);
     else
       threshold->connector_line[i_ref][AMITK_THRESHOLD_LINE_MAX] =
-	gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(threshold->color_scales[i_ref])),
-			      gnome_canvas_line_get_type(),
-			      "points", line_points, 
-			      "fill_color", "black",
-			      "width_units", 1.0, NULL);
-    gnome_canvas_points_unref(line_points);
+        amitk_canvas_polyline_new(amitk_simple_canvas_get_root_item(AMITK_SIMPLE_CANVAS(threshold->color_scales[i_ref])),
+                                FALSE, 0, "points", line_points,
+                                "fill-color", "black",
+                                "line-width", 1.0, NULL);
+    amitk_canvas_points_unref(line_points);
 
     /* update the line that connect the min arrows of each color scale */
-    line_points = gnome_canvas_points_new(2);
+    line_points = amitk_canvas_points_new(2);
     line_points->coords[0] = THRESHOLD_COLOR_SCALE_WIDTH+THRESHOLD_TRIANGLE_WIDTH;
     temp = (1.0-(threshold->threshold_min[i_ref]-
 		 amitk_data_set_get_global_min(threshold->data_set))/global_diff);
@@ -1109,20 +1107,19 @@ static void threshold_update_connector_lines(AmitkThreshold * threshold, AmitkTh
     else if (temp < 0.0) temp = 0.0;
     line_points->coords[3] = THRESHOLD_TRIANGLE_HEIGHT + THRESHOLD_COLOR_SCALE_HEIGHT * temp;
     if (threshold->connector_line[i_ref][AMITK_THRESHOLD_LINE_MIN] != NULL)
-      gnome_canvas_item_set(threshold->connector_line[i_ref][AMITK_THRESHOLD_LINE_MIN],
+      g_object_set(threshold->connector_line[i_ref][AMITK_THRESHOLD_LINE_MIN],
 			    "points", line_points, NULL);
     else
       threshold->connector_line[i_ref][AMITK_THRESHOLD_LINE_MIN] =
-	gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(threshold->color_scales[i_ref])),
-			      gnome_canvas_line_get_type(),
-			      "points", line_points, 
-			      "fill_color", "black",
-			      "width_units", 1.0, NULL);
-    gnome_canvas_points_unref(line_points);
+        amitk_canvas_polyline_new(amitk_simple_canvas_get_root_item(AMITK_SIMPLE_CANVAS(threshold->color_scales[i_ref])),
+                                FALSE, 0, "points", line_points,
+                                "fill-color", "black",
+                                "line-width", 1.0, NULL);
+    amitk_canvas_points_unref(line_points);
 
     /* update the line that connects the center arrows of each color scale */
     if (AMITK_DATA_SET_THRESHOLD_STYLE(threshold->data_set) == AMITK_THRESHOLD_STYLE_CENTER_WIDTH) {
-      line_points = gnome_canvas_points_new(2);
+      line_points = amitk_canvas_points_new(2);
       line_points->coords[0] = THRESHOLD_COLOR_SCALE_WIDTH+THRESHOLD_TRIANGLE_WIDTH;
       temp = (1.0-((threshold->threshold_max[i_ref]+threshold->threshold_min[i_ref])/2.0-
 		   amitk_data_set_get_global_min(threshold->data_set))/global_diff);
@@ -1138,19 +1135,18 @@ static void threshold_update_connector_lines(AmitkThreshold * threshold, AmitkTh
       else if (temp < 0.0) temp = 0.0;
       line_points->coords[3] = THRESHOLD_TRIANGLE_HEIGHT + THRESHOLD_COLOR_SCALE_HEIGHT * temp;
       if (threshold->connector_line[i_ref][AMITK_THRESHOLD_LINE_CENTER] != NULL)
-	gnome_canvas_item_set(threshold->connector_line[i_ref][AMITK_THRESHOLD_LINE_CENTER],
+	g_object_set(threshold->connector_line[i_ref][AMITK_THRESHOLD_LINE_CENTER],
 			      "points", line_points, NULL);
       else
 	threshold->connector_line[i_ref][AMITK_THRESHOLD_LINE_CENTER] =
-	  gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(threshold->color_scales[i_ref])),
-				gnome_canvas_line_get_type(),
-				"points", line_points, 
-				"fill_color", "black",
-				"width_units", 1.0, NULL);
-      gnome_canvas_points_unref(line_points);
+          amitk_canvas_polyline_new(amitk_simple_canvas_get_root_item(AMITK_SIMPLE_CANVAS(threshold->color_scales[i_ref])),
+                                  FALSE, 0, "points", line_points,
+                                  "fill-color", "black",
+                                  "line-width", 1.0, NULL);
+      amitk_canvas_points_unref(line_points);
     } else { /* hide if not CENTER_WIDTH style */
       if (threshold->connector_line[i_ref][AMITK_THRESHOLD_LINE_CENTER] != NULL) {
-	gtk_object_destroy(GTK_OBJECT(threshold->connector_line[i_ref][AMITK_THRESHOLD_LINE_CENTER]));
+	amitk_canvas_item_remove(threshold->connector_line[i_ref][AMITK_THRESHOLD_LINE_CENTER]);
 	threshold->connector_line[i_ref][AMITK_THRESHOLD_LINE_CENTER] = NULL;
       }
     }
@@ -1358,7 +1354,7 @@ static void threshold_update_ref_frames(AmitkThreshold * threshold) {
     /* make new menu */
     for (i_frame=0; i_frame<AMITK_DATA_SET_NUM_FRAMES(threshold->data_set); i_frame++) {
       temp_string = g_strdup_printf("%d",i_frame);
-      gtk_combo_box_append_text(GTK_COMBO_BOX(threshold->threshold_ref_frame_menu[i_ref]),
+      gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(threshold->threshold_ref_frame_menu[i_ref]),
 				temp_string);
       g_free(temp_string);
      }
@@ -1539,24 +1535,27 @@ static void study_view_mode_changed_cb(AmitkStudy * study, AmitkThreshold * thre
 
 /* function called when the max or min triangle is moved 
  * mostly taken from Pennington's fine book */
-static gint threshold_arrow_cb(GtkWidget* widget, GdkEvent * event, gpointer data) {
+static gint threshold_arrow_cb(AmitkCanvasItem * item, AmitkCanvasItem * target, GdkEvent * event, gpointer data) {
 
   AmitkThreshold * threshold = data;
-  gdouble item_x, item_y;
+  AmitkSimpleCanvas * canvas;
+  gdouble item_y;
   gdouble delta;
   amide_data_t temp, center, width, max, min;
   AmitkThresholdArrow which_threshold_arrow;
   guint which_ref;
 
-  which_ref = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "which_ref"));
+  which_ref = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(item), "which_ref"));
   
-  /* get the location of the event, and convert it to our coordinate system */
-  item_x = event->button.x;
-  item_y = event->button.y;
-  gnome_canvas_item_w2i(GNOME_CANVAS_ITEM(widget)->parent, &item_x, &item_y);
+  if (event->type == GDK_MOTION_NOTIFY)
+    item_y = event->motion.y;
+  else
+    item_y = event->button.y;
+
+  canvas = amitk_canvas_item_get_canvas(item);
 
   /* figure out which of the arrows triggered the callback */
-  which_threshold_arrow = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "type"));
+  which_threshold_arrow = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(item), "type"));
 
   /* switch on the event which called this */
   switch (event->type)
@@ -1566,7 +1565,8 @@ static gint threshold_arrow_cb(GtkWidget* widget, GdkEvent * event, gpointer dat
       threshold->initial_y[which_ref] = item_y;
       threshold->initial_min[which_ref] = threshold->threshold_min[which_ref];
       threshold->initial_max[which_ref] = threshold->threshold_max[which_ref];
-      gnome_canvas_item_grab(GNOME_CANVAS_ITEM(threshold->arrow[which_ref][which_threshold_arrow]),
+      amitk_simple_canvas_pointer_grab(canvas,
+                              threshold->arrow[which_ref][which_threshold_arrow],
 			     GDK_POINTER_MOTION_MASK | GDK_BUTTON_RELEASE_MASK,
 			     threshold_cursor,
 			     event->button.time);
@@ -1730,7 +1730,7 @@ static gint threshold_arrow_cb(GtkWidget* widget, GdkEvent * event, gpointer dat
       } 
 
 
-      gnome_canvas_item_ungrab(GNOME_CANVAS_ITEM(widget), event->button.time);
+      amitk_simple_canvas_pointer_ungrab(canvas, item, event->button.time);
 
       /* reset the scaled color scale */
       threshold->initial_max[which_ref] = threshold->threshold_max[which_ref];
@@ -2052,7 +2052,8 @@ static void init_common(GtkWindow * dialog) {
   g_return_if_fail(GTK_IS_WINDOW(dialog));
 
   pixbuf =  
-    gtk_widget_render_icon(GTK_WIDGET(dialog), "amide_icon_thresholding", -1, 0);
+    gtk_icon_theme_load_icon(gtk_icon_theme_get_default(),
+                             "amide_icon_thresholding", 64, 0, NULL);
   gtk_window_set_icon(dialog, pixbuf);
   g_object_unref(pixbuf);
 
@@ -2064,11 +2065,10 @@ static void threshold_dialog_init (AmitkThresholdDialog * dialog) {
 
   init_common(GTK_WINDOW(dialog));
 
-  gtk_dialog_set_has_separator(GTK_DIALOG(dialog), FALSE);
-
-  dialog->vbox = gtk_vbox_new (FALSE, 10);
+  dialog->vbox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 10);
   gtk_container_set_border_width (GTK_CONTAINER (dialog), 10);
-  gtk_container_add (GTK_CONTAINER (GTK_DIALOG(dialog)->vbox), dialog->vbox);
+  gtk_container_add (GTK_CONTAINER (gtk_dialog_get_content_area
+                                    (GTK_DIALOG(dialog))), dialog->vbox);
   gtk_widget_show (dialog->vbox);
 
   /* make the data set title thingie */
@@ -2197,10 +2197,10 @@ static void thresholds_dialog_init (AmitkThresholdsDialog * dialog)
 
   dialog->thresholds = NULL;
 
-  gtk_dialog_set_has_separator(GTK_DIALOG(dialog), FALSE);
-  main_vbox = gtk_vbox_new (FALSE, 10);
+  main_vbox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 10);
   gtk_container_set_border_width (GTK_CONTAINER (dialog), 10);
-  gtk_container_add (GTK_CONTAINER (GTK_DIALOG(dialog)->vbox), main_vbox);
+  gtk_container_add (GTK_CONTAINER (gtk_dialog_get_content_area
+                                    (GTK_DIALOG(dialog))), main_vbox);
   gtk_widget_show (main_vbox);
 
   dialog->notebook = gtk_notebook_new();

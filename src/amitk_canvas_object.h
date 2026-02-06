@@ -30,17 +30,17 @@
 /* includes we always need with this widget */
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gtk/gtk.h>
-#include <libgnomecanvas/gnome-canvas.h>
+#include "amitk_canvas_compat.h"
 #include "amitk_volume.h"
 #include "amitk_color_table.h"
 
 G_BEGIN_DECLS
 
-GnomeCanvasItem * amitk_canvas_object_draw(GnomeCanvas * canvas, 
+AmitkCanvasItem * amitk_canvas_object_draw(AmitkSimpleCanvas * canvas,
 					   AmitkVolume * canvas_volume,
 					   AmitkObject * object,
 					   AmitkViewMode view_mode,
-					   GnomeCanvasItem * item,
+					   AmitkCanvasItem * item,
 					   amide_real_t pixel_dim,
 					   gint width, 
 					   gint height,
@@ -48,12 +48,7 @@ GnomeCanvasItem * amitk_canvas_object_draw(GnomeCanvas * canvas,
 					   gdouble y_offset,
 					   rgba_t roi_color,
 					   gint roi_width,
-#ifdef AMIDE_LIBGNOMECANVAS_AA
 					   gdouble transparency
-#else
-					   GdkLineStyle line_style,
-					   gboolean fill_roi
-#endif
 					   );
 
 

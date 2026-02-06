@@ -63,7 +63,7 @@ struct _AmitkWindowEdit
 
 struct _AmitkWindowEditClass
 {
-  GtkVBoxClass parent_class;
+  GtkBoxClass parent_class;
 
 };  
 

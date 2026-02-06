@@ -39,9 +39,6 @@ struct _AmitkDial
 {
   GtkWidget widget;
 
-  /* update policy (GTK_UPDATE_[CONTINUOUS/DELAYED/DISCONTINUOUS]) */
-  guint policy : 2;
-
   /* Button currently pressed or 0 if none */
   guint8 button;
 
@@ -49,17 +46,13 @@ struct _AmitkDial
   gint radius;
   gint pointer_width;
 
-  /* ID of update timer, or 0 if none */
-  guint32 timer;
-
   /* Current angle */
-  gfloat angle;
-  gfloat last_angle;
+  gdouble angle;
 
   /* Old values from adjustment stored so we know when something changes */
-  gfloat old_value;
-  gfloat old_lower;
-  gfloat old_upper;
+  gdouble old_value;
+  gdouble old_lower;
+  gdouble old_upper;
 
   /* The adjustment object that stores the data for this dial */
   GtkAdjustment *adjustment;
@@ -74,8 +67,6 @@ struct _AmitkDialClass
 GtkWidget*     amitk_dial_new                    (GtkAdjustment *adjustment);
 GType          amitk_dial_get_type               (void);
 GtkAdjustment* amitk_dial_get_adjustment         (AmitkDial      *dial);
-void           amitk_dial_set_update_policy      (AmitkDial      *dial,
-						GtkUpdateType  policy);
 
 void           amitk_dial_set_adjustment         (AmitkDial      *dial,
 						GtkAdjustment *adjustment);

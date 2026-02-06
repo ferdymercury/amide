@@ -30,6 +30,7 @@
 #include "amitk_data_set.h"
 #include "amitk_data_set_DOUBLE_0D_SCALING.h"
 #include "libmdc_interface.h"
+#include "amide.h"
 #include <medcon.h>
 #include <string.h>
 #include <locale.h>

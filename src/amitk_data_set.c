@@ -29,6 +29,7 @@
 #include "amitk_marshal.h"
 #include "amitk_type_builtins.h"
 #include "amitk_line_profile.h"
+#include "amide.h"
 
 /* variable type function declarations */
 #include "amitk_data_set_UBYTE_0D_SCALING.h"

@@ -402,10 +402,11 @@ GtkWidget * ui_gate_dialog_create(AmitkDataSet * ds, GtkWindow * parent) {
   column_type_t i_column;
 
   temp_string = g_strdup_printf(_("%s: Gate Dialog"),PACKAGE);
-  dialog = gtk_dialog_new_with_buttons(temp_string,  parent,
-					    GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_NO_SEPARATOR,
-					    NULL);
+  dialog = gtk_dialog_new();
+  gtk_window_set_title(GTK_WINDOW(dialog), temp_string);
   g_free(temp_string);
+  gtk_window_set_transient_for(GTK_WINDOW(dialog), parent);
+  gtk_window_set_destroy_with_parent(GTK_WINDOW(dialog), TRUE);
   gtk_window_set_resizable(GTK_WINDOW(dialog), TRUE);
 
   gd = g_try_new(ui_gate_dialog_t, 1);
@@ -419,13 +420,15 @@ GtkWidget * ui_gate_dialog_create(AmitkDataSet * ds, GtkWindow * parent) {
   g_signal_connect(G_OBJECT(dialog), "delete_event", G_CALLBACK(delete_event_cb), gd);
 
   /* start making the widgets for this dialog box */
-  packing_table = gtk_table_new(5,4,FALSE);
+  packing_table = gtk_grid_new();
+  gtk_grid_set_row_spacing(GTK_GRID(packing_table), Y_PADDING);
+  gtk_grid_set_column_spacing(GTK_GRID(packing_table), X_PADDING);
   table_row=0;
-  gtk_container_add (GTK_CONTAINER (GTK_DIALOG(dialog)->vbox), packing_table);
+  gtk_container_add (GTK_CONTAINER (gtk_dialog_get_content_area
+                                    (GTK_DIALOG(dialog))), packing_table);
 
   label = gtk_label_new(_("Start Gate"));
-  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
 
   gd->start_spin = gtk_spin_button_new_with_range(0, G_MAXDOUBLE, 1.0);
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(gd->start_spin), TRUE);
@@ -434,15 +437,13 @@ GtkWidget * ui_gate_dialog_create(AmitkDataSet * ds, GtkWindow * parent) {
 		   G_CALLBACK(change_spin_cb), dialog);
   g_signal_connect(G_OBJECT(gd->start_spin), "output",
 		   G_CALLBACK(amitk_spin_button_scientific_output), NULL);
-  gtk_table_attach(GTK_TABLE(packing_table), gd->start_spin,1,2,
-		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), gd->start_spin, 1, table_row, 1, 1);
   table_row++;
 
 
 
   label = gtk_label_new(_("End Gate"));
-  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
     
   gd->end_spin = gtk_spin_button_new_with_range(0, G_MAXDOUBLE, 1.0);
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(gd->end_spin), TRUE);
@@ -451,15 +452,12 @@ GtkWidget * ui_gate_dialog_create(AmitkDataSet * ds, GtkWindow * parent) {
 		   G_CALLBACK(change_spin_cb), dialog);
   g_signal_connect(G_OBJECT(gd->end_spin), "output",
 		   G_CALLBACK(amitk_spin_button_scientific_output), NULL);
-  gtk_table_attach(GTK_TABLE(packing_table), gd->end_spin,1,2,
-		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), gd->end_spin, 1, table_row, 1, 1);
   table_row++;
 
   /* a separator for clarity */
-  hseparator = gtk_hseparator_new();
-  gtk_table_attach(GTK_TABLE(packing_table), hseparator, 0, 4, 
-		   table_row, table_row+1,
-		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  hseparator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+  gtk_grid_attach(GTK_GRID(packing_table), hseparator, 0, table_row, 4, 1);
   table_row++;
 
   /* the scroll widget which the list will go into */
@@ -468,11 +466,9 @@ GtkWidget * ui_gate_dialog_create(AmitkDataSet * ds, GtkWindow * parent) {
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled),
   				 GTK_POLICY_AUTOMATIC,
   				 GTK_POLICY_AUTOMATIC);
-  gtk_table_attach(GTK_TABLE(packing_table), scrolled, 0,2, 
-  		   table_row, table_row+1, 
-  		   X_PACKING_OPTIONS | GTK_FILL, 
-  		   Y_PACKING_OPTIONS | GTK_FILL, 
-  		   X_PADDING, Y_PADDING);
+  gtk_widget_set_hexpand(scrolled, TRUE);
+  gtk_widget_set_vexpand(scrolled, TRUE);
+  gtk_grid_attach(GTK_GRID(packing_table), scrolled, 0, table_row, 2, 1);
   table_row++;
     
 
@@ -503,8 +499,8 @@ GtkWidget * ui_gate_dialog_create(AmitkDataSet * ds, GtkWindow * parent) {
   gd->autoplay_check_button = gtk_check_button_new_with_label (_("Auto play"));
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(gd->autoplay_check_button), FALSE);
   g_signal_connect(G_OBJECT(gd->autoplay_check_button), "toggled", G_CALLBACK(autoplay_cb),gd);
-  gtk_table_attach(GTK_TABLE(packing_table), gd->autoplay_check_button,0,2,table_row,table_row+1,
-		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), gd->autoplay_check_button,
+                  0, table_row, 2, 1);
   table_row++;
 
 

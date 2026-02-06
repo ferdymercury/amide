@@ -90,12 +90,20 @@ amide_SOURCES = \
 	amitk_common.h \
 	amitk_canvas.c \
 	amitk_canvas_object.c \
+	amitk_simple_canvas.c \
+	amitk_simple_canvas.h \
+	amitk_canvas_compat.c \
+	amitk_canvas_compat.h \
 	amitk_color_table.c \
 	amitk_color_table_menu.c \
+	amitk_curve.h \
+	amitk_curve.c \
 	amitk_data_set.c \
 	amitk_dial.c \
 	amitk_fiducial_mark.c \
 	amitk_filter.c \
+	amitk_gamma.h \
+	amitk_gamma.c \
 	amitk_line_profile.c \
 	amitk_object.c \
 	amitk_object_dialog.c \
@@ -449,9 +457,25 @@ stamp-amitk_type_builtins.c: $(AMITK_H_SOURCES) Makefile amitk_type_builtins.h
 	&& echo timestamp > $(@F)
 
 
+compile_resources = $(GLIB_COMPILE_RESOURCES)
+BUILT_SOURCES = gresource.c
+XML = $(builddir)/gresource.xml
+
+$(srcdir)/gresource.c: menus.ui render.ui series.ui
+	@echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" > $(XML)
+	@echo "<gresources>" >> $(XML)
+	@echo "<gresource prefix=\"/com/github/ferdymercury/amide\">" >> $(XML)
+	@echo "<file alias=\"gtk/menus.ui\">$(srcdir)/menus.ui</file>" >> $(XML)
+	@echo "<file alias=\"render.ui\">$(srcdir)/render.ui</file>" >> $(XML)
+	@echo "<file alias=\"series.ui\">$(srcdir)/series.ui</file>" >> $(XML)
+	@echo "</gresource>" >> $(XML)
+	@echo "</gresources>" >> $(XML)
+	$(compile_resources) --generate-source $(XML)
 
 
 CLEANFILES = \
+	$(XML) \
+	$(BUILT_SOURCES) \
 	$(AMITK_ROI_VARIABLE_C) \
 	$(AMITK_ROI_VARIABLE_H) \
 	$(AMITK_DATA_SET_VARIABLE_C) \
@@ -467,6 +491,10 @@ DISTCLEANFILES = *~
 
 EXTRA_DIST = amitk_marshal.list \
 variable_type.m4 \
+gamma_icons.c \
+menus.ui \
+render.ui \
+series.ui \
 amitk_data_set_variable_type.h \
 amitk_raw_data_variable_type.h \
 amitk_raw_data_variable_type.c \

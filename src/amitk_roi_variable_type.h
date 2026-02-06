@@ -45,9 +45,6 @@ GSList * amitk_roi_`'m4_Variable_Type`'_get_intersection_line(const AmitkRoi * r
 AmitkDataSet * amitk_roi_`'m4_Variable_Type`'_get_intersection_slice(const AmitkRoi * roi,
 								     const AmitkVolume * canvas_slice,
 								     const amide_real_t pixel_dim
-#ifndef AMIDE_LIBGNOMECANVAS_AA
-								     ,const gboolean fill_roi
-#endif
 								     );
 void amitk_roi_`'m4_Variable_Type`'_set_isocontour(AmitkRoi * roi, 
 						   AmitkDataSet * ds, 
