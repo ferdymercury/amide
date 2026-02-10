@@ -25,7 +25,7 @@
 
 
 #include "amide_config.h"
-#include <libgnomecanvas/libgnomecanvas.h>
+#include "amitk_canvas_compat.h"
 #include "amide.h"
 #include "amitk_study.h"
 #include "tb_profile.h"
@@ -68,13 +68,13 @@ typedef struct tb_profile_t {
 
 
   /* gaussian fit stuff */
-  GnomeCanvasItem * x_label[2];
+  AmitkCanvasItem * x_label[2];
   gboolean calc_gaussian_fit;
   gdouble initial_x;
   gdouble x_limit[2];
   gboolean fix_x;
   gboolean fix_dc_zero;
-  GnomeCanvasItem * x_limit_item[2];
+  AmitkCanvasItem * x_limit_item[2];
 
   guint reference_count;
 } tb_profile_t;
@@ -83,11 +83,11 @@ typedef struct tb_profile_t {
 typedef struct result_t {
   gchar * name;
   GPtrArray * line;
-  GnomeCanvasItem * line_item;
+  AmitkCanvasItem * line_item;
   amide_data_t min_y, max_y, peak_location;
   gdouble scale_y;
-  GnomeCanvasItem * y_label[2];
-  GnomeCanvasItem * legend;
+  AmitkCanvasItem * y_label[2];
+  AmitkCanvasItem * legend;
 
   /* gaussian fit stuff */
   gdouble b_fit, b_err;
@@ -96,7 +96,7 @@ typedef struct result_t {
   gdouble s_fit, s_err;
   gint iterations;
   gint status;
-  GnomeCanvasItem * fit_item;
+  AmitkCanvasItem * fit_item;
 
 } result_t;
 
@@ -105,7 +105,7 @@ static GPtrArray * results_free(GPtrArray * results);
 static tb_profile_t * profile_free(tb_profile_t * tb_profile);
 static tb_profile_t * profile_init(void);
 #ifdef AMIDE_LIBGSL_SUPPORT
-static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer data);
+static gboolean canvas_event_cb(AmitkCanvasItem * item, AmitkCanvasItem * target,  GdkEvent * event, gpointer data);
 static void calc_gaussian_fit_cb(GtkWidget * button, gpointer data);
 static void fix_x_cb(GtkWidget * widget, gpointer data);
 static void fix_dc_zero_cb(GtkWidget * widget, gpointer data);
@@ -121,7 +121,7 @@ static void save_profiles(const gchar * save_filename, tb_profile_t * tb_profile
 static void recalc_profiles(tb_profile_t * tb_profile);
 static gboolean update_while_idle(gpointer data);
 static void response_cb (GtkDialog * dialog, gint response_id, gpointer data);
-static void destroy_cb(GtkObject * object, gpointer data);
+static void destroy_cb(GtkWidget * object, gpointer data);
 static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * delete_event, gpointer data);
 static void view_center_changed_cb(AmitkStudy * study, gpointer data);
 static void selections_changed_cb(AmitkObject * object, gpointer data);
@@ -145,15 +145,15 @@ static GPtrArray * results_free(GPtrArray * results) {
     if (result->name != NULL)
       g_free(result->name);
     if (result->line_item != NULL)
-      gtk_object_destroy(GTK_OBJECT(result->line_item));
+      amitk_canvas_item_remove(result->line_item);
     if (result->y_label[0] != NULL)
-      gtk_object_destroy(GTK_OBJECT(result->y_label[0]));
+      amitk_canvas_item_remove(result->y_label[0]);
     if (result->y_label[1] != NULL)
-      gtk_object_destroy(GTK_OBJECT(result->y_label[1]));
+      amitk_canvas_item_remove(result->y_label[1]);
     if (result->legend != NULL)
-      gtk_object_destroy(GTK_OBJECT(result->legend));
+      amitk_canvas_item_remove(result->legend);
     if (result->fit_item != NULL)
-      gtk_object_destroy(GTK_OBJECT(result->fit_item));
+      amitk_canvas_item_remove(result->fit_item);
   }
   g_ptr_array_free(results, TRUE);
 
@@ -316,8 +316,8 @@ static void export_profiles(tb_profile_t * tb_profile) {
   file_chooser = gtk_file_chooser_dialog_new(_("Export Profile"), 
 					     GTK_WINDOW(tb_profile->dialog), /* parent window */
 					     GTK_FILE_CHOOSER_ACTION_SAVE,
-					     GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-					     GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+					     _("_Cancel"), GTK_RESPONSE_CANCEL,
+					     _("_Save"), GTK_RESPONSE_ACCEPT,
 					     NULL);
   gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(file_chooser), TRUE);
   gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(file_chooser), TRUE);
@@ -380,10 +380,9 @@ static void save_profiles(const gchar * save_filename, tb_profile_t * tb_profile
 
 #ifdef AMIDE_LIBGSL_SUPPORT
 
-static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer data) {
+static gboolean canvas_event_cb(AmitkCanvasItem * item,  AmitkCanvasItem * target, GdkEvent * event, gpointer data) {
   tb_profile_t * tb_profile = data;
   AmitkCanvasPoint canvas_cpoint;
-  GnomeCanvas * canvas;
   gdouble x_point;
   gboolean find_new_initial = FALSE;
   AmitkLineProfileDataElement * element;
@@ -394,9 +393,8 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
   result_t * result;
   
 
-  canvas = GNOME_CANVAS(widget);
-  gnome_canvas_window_to_world(canvas, event->button.x, event->button.y, &canvas_cpoint.x, &canvas_cpoint.y);
-  gnome_canvas_w2c_d(canvas, canvas_cpoint.x, canvas_cpoint.y, &canvas_cpoint.x, &canvas_cpoint.y);
+  canvas_cpoint.x = event->button.x_root;
+  canvas_cpoint.y = event->button.y_root;
   switch (event->type) {
 
   case GDK_BUTTON_RELEASE:
@@ -733,7 +731,8 @@ static void display_gaussian_fit(tb_profile_t * tb_profile) {
   GtkTextIter start_iter, end_iter;
   gchar * results_str;
   gdouble value;
-  GnomeCanvasPoints * points;
+  AmitkCanvasPoints * points;
+  AmitkCanvasItem * root;
   div_t x;
   guint color;
   result_t * result;
@@ -744,43 +743,34 @@ static void display_gaussian_fit(tb_profile_t * tb_profile) {
 
   /* make the x limit lines */
   if (tb_profile->x_limit_item[0] != NULL)
-    gtk_object_destroy(GTK_OBJECT(tb_profile->x_limit_item[0]));
+    amitk_canvas_item_remove(tb_profile->x_limit_item[0]);
   if (tb_profile->x_limit_item[1] != NULL)
-    gtk_object_destroy(GTK_OBJECT(tb_profile->x_limit_item[1]));
+    amitk_canvas_item_remove(tb_profile->x_limit_item[1]);
   
-  points = gnome_canvas_points_new(2);
+  points = amitk_canvas_points_new(2);
   points->coords[0] = points->coords[2] = 
     tb_profile->scale_x*(tb_profile->x_limit[0]-tb_profile->min_x)+EDGE_SPACING;
   points->coords[1] = EDGE_SPACING+CANVAS_HEIGHT/4.0;
   points->coords[3] = 3*CANVAS_HEIGHT/4.0+EDGE_SPACING;
+  root = amitk_simple_canvas_get_root_item(AMITK_SIMPLE_CANVAS(tb_profile->canvas));
   tb_profile->x_limit_item[0] = 
-    gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(tb_profile->canvas)),
-			  gnome_canvas_line_get_type(),
-			  "points", points,
-			  "fill_color", "white",
-#ifndef AMIDE_LIBGNOMECANVAS_AA
-			  "line_style", GDK_LINE_ON_OFF_DASH,
-#endif
-			  "width_units", 1.0,
-			  NULL);
-  gnome_canvas_points_unref(points);
+    amitk_canvas_polyline_new(root, FALSE, 0, "points", points,
+                            "stroke-color", "white",
+                            "line-width", 1.0,
+                            NULL);
+  amitk_canvas_points_unref(points);
   
-  points = gnome_canvas_points_new(2);
+  points = amitk_canvas_points_new(2);
   points->coords[0] = points->coords[2] =
     tb_profile->scale_x*(tb_profile->x_limit[1]-tb_profile->min_x)+EDGE_SPACING;
   points->coords[1] = EDGE_SPACING+CANVAS_HEIGHT/4.0;
   points->coords[3] = 3*CANVAS_HEIGHT/4.0+EDGE_SPACING;
   tb_profile->x_limit_item[1] = 
-    gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(tb_profile->canvas)),
-			  gnome_canvas_line_get_type(),
-			  "points", points,
-			  "fill_color", "white",
-#ifndef AMIDE_LIBGNOMECANVAS_AA
-			  "line_style", GDK_LINE_ON_OFF_DASH,
-#endif
-			  "width_units", 1.0,
-			  NULL);
-  gnome_canvas_points_unref(points);
+    amitk_canvas_polyline_new(root, FALSE, 0, "points", points,
+                            "stroke-color", "white",
+                            "line-width", 1.0,
+                            NULL);
+  amitk_canvas_points_unref(points);
 
   buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (tb_profile->text));
 
@@ -796,7 +786,7 @@ static void display_gaussian_fit(tb_profile_t * tb_profile) {
   for (i=0; i < tb_profile->results->len; i++) {
     result = g_ptr_array_index(tb_profile->results, i);
 
-    points = gnome_canvas_points_new(CANVAS_WIDTH);
+    points = amitk_canvas_points_new(CANVAS_WIDTH);
     for (j=0; j<CANVAS_WIDTH; j++) {
       loc = ((((gdouble) j)-EDGE_SPACING)/tb_profile->scale_x)+tb_profile->min_x;
       value = calc_gaussian(result->s_fit, result->p_fit, result->c_fit,result->b_fit, loc);
@@ -815,20 +805,15 @@ static void display_gaussian_fit(tb_profile_t * tb_profile) {
 
     /* make sure it's destroyed */
     if (result->fit_item != NULL)
-      gtk_object_destroy(GTK_OBJECT(result->fit_item));
+      amitk_canvas_item_remove(result->fit_item);
 
     /* and (re)create it */
     result->fit_item = 
-      gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(tb_profile->canvas)),
-			    gnome_canvas_line_get_type(),
-			    "points", points,
-			    "fill_color_rgba", color,
-#ifndef AMIDE_LIBGNOMECANVAS_AA
-			    "line_style", GDK_LINE_ON_OFF_DASH,
-#endif
-			    "width_units", 1.0,
-			    NULL);
-    gnome_canvas_points_unref(points);
+      amitk_canvas_polyline_new(root, FALSE, 0, "points", points,
+                              "stroke-color-rgba", color,
+                              "line-width", 1.0,
+                              NULL);
+    amitk_canvas_points_unref(points);
 
     results_str = 
       g_strdup_printf(_("\n\ngaussian fit on: %s\n"
@@ -881,7 +866,8 @@ static gboolean update_while_idle(gpointer data) {
   GPtrArray * one_line;
   gint i,j;
   AmitkLineProfileDataElement * element;
-  GnomeCanvasPoints * points;
+  AmitkCanvasPoints * points;
+  AmitkCanvasItem * root;
   result_t * result;
   div_t x;
   gchar * label;
@@ -947,33 +933,30 @@ static gboolean update_while_idle(gpointer data) {
     
   }
 
+  root = amitk_simple_canvas_get_root_item(AMITK_SIMPLE_CANVAS(tb_profile->canvas));
   label = g_strdup_printf("%g", tb_profile->min_x);
   if (tb_profile->x_label[0] != NULL) {
-    gnome_canvas_item_set(tb_profile->x_label[0], "text", label, NULL);
+    g_object_set(tb_profile->x_label[0], "text", label, NULL);
   } else {
     tb_profile->x_label[0] = 
-      gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(tb_profile->canvas)), 
-			    gnome_canvas_text_get_type(),
-			    "anchor", GTK_ANCHOR_SOUTH_WEST, "text", label,
-			    "x", (gdouble) EDGE_SPACING+5.0,
-			    "y", (gdouble) CANVAS_HEIGHT-EDGE_SPACING,
-			    "fill_color", "white",
-			    "font_desc", amitk_fixed_font_desc, NULL);
+      amitk_canvas_text_new(root, label, (gdouble) EDGE_SPACING+5.0,
+                          (gdouble) CANVAS_HEIGHT-EDGE_SPACING, -1,
+                          AMITK_CANVAS_ANCHOR_SOUTH_WEST,
+                          "fill-color", "white",
+                          "font-desc", amitk_fixed_font_desc, NULL);
   }
   g_free(label);
 
   label = g_strdup_printf("%g", tb_profile->max_x);
   if (tb_profile->x_label[1] != NULL) {
-    gnome_canvas_item_set(tb_profile->x_label[1], "text", label, NULL);
+    g_object_set(tb_profile->x_label[1], "text", label, NULL);
   } else {
     tb_profile->x_label[1] = 
-      gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(tb_profile->canvas)), 
-			    gnome_canvas_text_get_type(),
-			    "anchor", GTK_ANCHOR_SOUTH_EAST, "text", label,
-			    "x", (gdouble) CANVAS_WIDTH-EDGE_SPACING,
-			    "y", (gdouble) CANVAS_HEIGHT-EDGE_SPACING,
-			    "fill_color", "white",
-			    "font_desc", amitk_fixed_font_desc, NULL);
+      amitk_canvas_text_new(root, label, (gdouble) CANVAS_WIDTH-EDGE_SPACING,
+                          (gdouble) CANVAS_HEIGHT-EDGE_SPACING, -1,
+                          AMITK_CANVAS_ANCHOR_SOUTH_EAST,
+                          "fill-color", "white",
+                          "font-desc", amitk_fixed_font_desc, NULL);
   }
   g_free(label);
 
@@ -984,7 +967,7 @@ static gboolean update_while_idle(gpointer data) {
   for (i=0; i < tb_profile->results->len; i++) {
     result = g_ptr_array_index(tb_profile->results, i);
 
-    points = gnome_canvas_points_new(result->line->len);
+    points = amitk_canvas_points_new(result->line->len);
 
     result->scale_y = (CANVAS_HEIGHT-2*EDGE_SPACING)/(result->max_y-result->min_y);
     for (j=0; j<result->line->len; j++) {
@@ -994,45 +977,39 @@ static gboolean update_while_idle(gpointer data) {
     }
 
     x = div(i, NUM_COLOR_ROTATIONS);
-    result->line_item = gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(tb_profile->canvas)),
-					      gnome_canvas_line_get_type(),
-					      "points", points,
-					      "fill_color_rgba", color_rotation[x.rem],
-					      "width_units", 1.0,
-					      NULL);
-    gnome_canvas_points_unref(points);
+    result->line_item = amitk_canvas_polyline_new(root, FALSE, 0,
+                                                "points", points,
+                                                "stroke-color-rgba",
+                                                color_rotation[x.rem],
+                                                "line-width", 1.0, NULL);
+    amitk_canvas_points_unref(points);
 
     label = g_strdup_printf("%g", result->min_y);
     result->y_label[0] = 
-      gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(tb_profile->canvas)), 
-			    gnome_canvas_text_get_type(),
-			    "anchor", GTK_ANCHOR_SOUTH_WEST, "text", label,
-			    "x", (gdouble) EDGE_SPACING,
-			    "y", (gdouble) CANVAS_HEIGHT-EDGE_SPACING-TEXT_HEIGHT-(tb_profile->results->len-i-1)*TEXT_HEIGHT,
-			    "fill_color_rgba", color_rotation[x.rem],
-			    "font_desc", amitk_fixed_font_desc, NULL);
+      amitk_canvas_text_new(root, label, (gdouble) EDGE_SPACING,
+                          (gdouble) CANVAS_HEIGHT-EDGE_SPACING-TEXT_HEIGHT-
+                          (tb_profile->results->len-i-1)*TEXT_HEIGHT,
+                          -1, AMITK_CANVAS_ANCHOR_SOUTH_WEST,
+                          "fill-color-rgba", color_rotation[x.rem],
+                          "font-desc", amitk_fixed_font_desc, NULL);
     g_free(label);
     
     label = g_strdup_printf("%g", result->max_y);
     result->y_label[1] = 
-      gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(tb_profile->canvas)), 
-			    gnome_canvas_text_get_type(),
-			    "anchor", GTK_ANCHOR_NORTH_WEST, "text", label,
-			    "x", (gdouble) EDGE_SPACING,
-			    "y", (gdouble) EDGE_SPACING+i*TEXT_HEIGHT,
-			    "fill_color_rgba", color_rotation[x.rem],
-			    "font_desc", amitk_fixed_font_desc, NULL);
+      amitk_canvas_text_new(root, label, (gdouble) EDGE_SPACING,
+                          (gdouble) EDGE_SPACING+i*TEXT_HEIGHT, -1,
+                          AMITK_CANVAS_ANCHOR_NORTH_WEST,
+                          "fill-color-rgba", color_rotation[x.rem],
+                          "font-desc", amitk_fixed_font_desc, NULL);
     g_free(label);
 
     result->legend = 
-      gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(tb_profile->canvas)), 
-			    gnome_canvas_text_get_type(),
-			    "anchor", GTK_ANCHOR_NORTH_EAST, 
-			    "text", result->name,
-			    "x", (gdouble) CANVAS_WIDTH-EDGE_SPACING,
-			    "y", (gdouble) EDGE_SPACING+i*TEXT_HEIGHT,
-			    "fill_color_rgba", color_rotation[x.rem],
-			    "font_desc", amitk_fixed_font_desc, NULL);
+      amitk_canvas_text_new(root, result->name,
+                          (gdouble) CANVAS_WIDTH-EDGE_SPACING,
+                          (gdouble) EDGE_SPACING+i*TEXT_HEIGHT, -1,
+                          AMITK_CANVAS_ANCHOR_NORTH_EAST,
+                          "fill-color-rgba", color_rotation[x.rem],
+                          "font-desc", amitk_fixed_font_desc, NULL);
 
   tb_profile->initial_x = -1.0;
   tb_profile->x_limit[0] = tb_profile->min_x;
@@ -1098,7 +1075,7 @@ static void response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
 }
 
 
-static void destroy_cb(GtkObject * object, gpointer data) {
+static void destroy_cb(GtkWidget * object, gpointer data) {
   
   tb_profile_t * tb_profile = data;
 
@@ -1187,9 +1164,14 @@ void tb_profile(AmitkStudy * study, AmitkPreferences * preferences, GtkWindow * 
   GtkWidget * radio_button[3];
   GtkWidget * hbox;
   GtkWidget * label;
+  AmitkCanvasItem * root;
+  AmitkCanvasItem * item;
 #ifdef AMIDE_LIBGSL_SUPPORT
   GtkWidget * check_button;
-  GdkColor color;
+  GtkStyleContext * context;
+  GtkCssProvider * css;
+  const gchar * css_data = "textview text { "
+    "color: white; background-color: black; }";
 #endif
   
   tb_profile = profile_init();
@@ -1204,10 +1186,10 @@ void tb_profile(AmitkStudy * study, AmitkPreferences * preferences, GtkWindow * 
 			  AMITK_OBJECT_NAME(tb_profile->study));
   dialog = gtk_dialog_new_with_buttons(title, GTK_WINDOW(parent),
 				       GTK_DIALOG_DESTROY_WITH_PARENT,
-				       GTK_STOCK_SAVE_AS, AMITK_RESPONSE_SAVE_AS,
-				       GTK_STOCK_COPY, AMITK_RESPONSE_COPY,
-				       GTK_STOCK_HELP, GTK_RESPONSE_HELP,
-				       GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE,
+				       _("Save _As"), AMITK_RESPONSE_SAVE_AS,
+				       _("_Copy"), AMITK_RESPONSE_COPY,
+				       _("_Help"), GTK_RESPONSE_HELP,
+				       _("_Close"), GTK_RESPONSE_CLOSE,
 				       NULL);
   g_free(title);
   gtk_window_set_resizable(GTK_WINDOW(dialog), TRUE);
@@ -1227,21 +1209,22 @@ void tb_profile(AmitkStudy * study, AmitkPreferences * preferences, GtkWindow * 
 
 
   /* make the widgets for this dialog box */
-  table = gtk_table_new(5,3,FALSE);
+  table = gtk_grid_new();
+  gtk_grid_set_row_spacing(GTK_GRID(table), Y_PADDING);
+  gtk_grid_set_column_spacing(GTK_GRID(table), X_PADDING);
   table_row=0;
-  gtk_container_add(GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), table);
+  gtk_container_add(GTK_CONTAINER(gtk_dialog_get_content_area
+                                  (GTK_DIALOG(dialog))), table);
   gtk_widget_show(table);
   
   
   /* which view do we want the profile on */
   label = gtk_label_new(_("Line Profile on:"));
-  gtk_table_attach(GTK_TABLE(table), label, 0,1,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), label, 0, table_row, 1, 1);
   gtk_widget_show(label);
     
-  hbox = gtk_hbox_new(FALSE, 0);
-  gtk_table_attach(GTK_TABLE(table), hbox,1,3,
-		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+  gtk_grid_attach(GTK_GRID(table), hbox, 1, table_row, 2, 1);
   gtk_widget_show(hbox);
     
   /* the radio buttons */
@@ -1266,8 +1249,7 @@ void tb_profile(AmitkStudy * study, AmitkPreferences * preferences, GtkWindow * 
 
   /* changing the angle */
   label = gtk_label_new(_("Angle (degrees):"));
-  gtk_table_attach(GTK_TABLE(table), label, 0,1,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), label, 0, table_row, 1, 1);
   gtk_widget_show(label);
 
   tb_profile->angle_spin = gtk_spin_button_new_with_range(-G_MAXDOUBLE, G_MAXDOUBLE, 1.0);
@@ -1275,38 +1257,34 @@ void tb_profile(AmitkStudy * study, AmitkPreferences * preferences, GtkWindow * 
   gtk_spin_button_set_digits(GTK_SPIN_BUTTON(tb_profile->angle_spin),3);
   g_signal_connect(G_OBJECT(tb_profile->angle_spin), "value_changed", 
 		   G_CALLBACK(profile_angle_cb), tb_profile);
-  gtk_table_attach(GTK_TABLE(table),tb_profile->angle_spin,1,3, 
-		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), tb_profile->angle_spin, 1, table_row, 2, 1);
   gtk_widget_show(tb_profile->angle_spin);
   table_row++;
 
 
   /* the canvas */
-#ifdef AMIDE_LIBGNOMECANVAS_AA
-  tb_profile->canvas = gnome_canvas_new_aa();
-#else
-  tb_profile->canvas = gnome_canvas_new();
-#endif
-  gtk_table_attach(GTK_TABLE(table), tb_profile->canvas, 0, 3, table_row, table_row+1, 
-		   X_PACKING_OPTIONS | GTK_FILL, Y_PACKING_OPTIONS | GTK_FILL,
-		   X_PADDING, Y_PADDING);
-#ifdef AMIDE_LIBGSL_SUPPORT
-  g_signal_connect(G_OBJECT(tb_profile->canvas), "event",
-		   G_CALLBACK(canvas_event_cb), tb_profile);
-#endif
+  tb_profile->canvas = amitk_simple_canvas_new();
+  gtk_widget_set_halign(tb_profile->canvas, GTK_ALIGN_CENTER);
+  gtk_grid_attach(GTK_GRID(table), tb_profile->canvas, 0, table_row, 3, 1);
   gtk_widget_set_size_request(tb_profile->canvas, CANVAS_WIDTH+1, CANVAS_HEIGHT+1);
-  gnome_canvas_set_scroll_region(GNOME_CANVAS(tb_profile->canvas), 0.0, 0.0,
+  amitk_simple_canvas_set_bounds(AMITK_SIMPLE_CANVAS(tb_profile->canvas), 0.0, 0.0,
 				 CANVAS_WIDTH, CANVAS_HEIGHT);
   gtk_widget_show(tb_profile->canvas);
   table_row++;
 
   /* draw a black background on the canvas */
-  gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(tb_profile->canvas)),
-			gnome_canvas_rect_get_type(),
-			"x1",0.0, "y1", 0.0, 
-			"x2", (gdouble) CANVAS_WIDTH, "y2", (gdouble) CANVAS_HEIGHT,
-			"fill_color_rgba", 0x000000FF,
-			NULL);
+  root = amitk_simple_canvas_get_root_item(AMITK_SIMPLE_CANVAS(tb_profile->canvas));
+  /* Drawing a background is easily done by setting the
+     "background-color" property of the canvas but we need a
+     AmitkCanvasItem in order to connect the signal handler.  */
+  item = amitk_canvas_rect_new(root, 0.0, 0.0,
+                             (gdouble) CANVAS_WIDTH, (gdouble) CANVAS_HEIGHT,
+                             "fill-color-rgba", 0x000000FF,
+                             NULL);
+#ifdef AMIDE_LIBGSL_SUPPORT
+  g_signal_connect(item, "button-release-event",
+                   G_CALLBACK(canvas_event_cb), tb_profile);
+#endif
 
   
   /* the fit results */
@@ -1314,41 +1292,39 @@ void tb_profile(AmitkStudy * study, AmitkPreferences * preferences, GtkWindow * 
   check_button = gtk_check_button_new_with_label (_("calculate gaussian fit"));
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), tb_profile->calc_gaussian_fit);
   g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(calc_gaussian_fit_cb), tb_profile);
-  gtk_table_attach(GTK_TABLE(table), check_button,0,3,
-		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), check_button, 0, table_row, 3, 1);
   gtk_widget_show(check_button);
   table_row++;
 
   check_button = gtk_check_button_new_with_label (_("fix x location (c)"));
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), tb_profile->fix_x);
   g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(fix_x_cb), tb_profile);
-  gtk_table_attach(GTK_TABLE(table), check_button,0,3,
-		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), check_button, 0, table_row, 3, 1);
   gtk_widget_show(check_button);
   table_row++;
 
   check_button = gtk_check_button_new_with_label (_("fix dc value to zero (b)"));
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), tb_profile->fix_dc_zero);
   g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(fix_dc_zero_cb), tb_profile);
-  gtk_table_attach(GTK_TABLE(table), check_button,0,3,
-		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), check_button, 0, table_row, 3, 1);
   gtk_widget_show(check_button);
   table_row++;
 
   tb_profile->text = gtk_text_view_new ();
-  gtk_table_attach(GTK_TABLE(table), tb_profile->text, 0, 3, table_row, table_row+1, 
-		   X_PACKING_OPTIONS | GTK_FILL, Y_PACKING_OPTIONS | GTK_FILL,
-		   X_PADDING, Y_PADDING);
-  gtk_widget_modify_font (tb_profile->text, amitk_fixed_font_desc);
+  gtk_widget_set_hexpand(tb_profile->text, TRUE);
+  gtk_grid_attach(GTK_GRID(table), tb_profile->text, 0, table_row, 3, 1);
+  gtk_text_view_set_monospace(GTK_TEXT_VIEW(tb_profile->text), TRUE);
   gtk_text_view_set_editable(GTK_TEXT_VIEW(tb_profile->text), FALSE);
   gtk_widget_show(tb_profile->text);
   table_row++;
 
   /* set it to black */
-  gdk_color_parse ("black", &color);
-  gtk_widget_modify_base(tb_profile->text, GTK_STATE_NORMAL, &color);
-  gdk_color_parse ("white", &color);
-  gtk_widget_modify_text (tb_profile->text, GTK_STATE_NORMAL, &color);
+  context = gtk_widget_get_style_context(tb_profile->text);
+  css = gtk_css_provider_new();
+  gtk_css_provider_load_from_data(css, css_data, -1, NULL);
+  gtk_style_context_add_provider(context, GTK_STYLE_PROVIDER(css),
+                                 GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+  g_object_unref(css);
 #endif
 
   /* and show all our widgets */

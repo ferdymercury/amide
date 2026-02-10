@@ -36,6 +36,7 @@
 #include <sys/stat.h>
 #include "amitk_data_set_DOUBLE_0D_SCALING.h"
 #include <glib/gstdio.h> /* make sure we get g_mkdir on mingw32 */
+#include "amide.h"
 
 /* dcmtk redefines a lot of things that they shouldn't... */
 #undef PACKAGE_BUGREPORT
@@ -1284,7 +1285,7 @@ static AmitkDataSet * import_slices_as_dataset(GList * slices,
   } /* i_file loop */
 
   if (screwed_up_timing) 
-    amitk_append_str_with_newline(perror_buf, _("Detected discontinous frames in data set %s - frame durations have been adjusted to remove interframe time gaps"), AMITK_OBJECT_NAME(ds));
+    amitk_append_str_with_newline(perror_buf, _("Detected discontinuous frames in data set %s - frame durations have been adjusted to remove interframe time gaps"), AMITK_OBJECT_NAME(ds));
   
   if (screwed_up_thickness)
     amitk_append_str_with_newline(perror_buf, _("Slice thickness (%5.3f mm) not equal to slice spacing (%5.3f mm) in data set %s - will use slice spacing for thickness"), old_thickness, true_thickness, AMITK_OBJECT_NAME(ds));
@@ -2008,7 +2009,7 @@ static GList * import_dir(const gchar * filename,
 					 GTK_MESSAGE_QUESTION, GTK_BUTTONS_NONE,
 					 _("For series: %s\n\nListed in DICOMDIR: %s\n\nCould not read DICOM file: %s"),
 					 object_name, filename, image_name2);
-		gtk_dialog_add_button(GTK_DIALOG(question), GTK_STOCK_OK, GTK_RESPONSE_OK);
+		gtk_dialog_add_button(GTK_DIALOG(question), _("_OK"), GTK_RESPONSE_OK);
 		gtk_dialog_add_button(GTK_DIALOG(question), 
 				      _("OK, ignore similar errors"),1);
 		return_val = gtk_dialog_run(GTK_DIALOG(question));
@@ -2020,7 +2021,7 @@ static GList * import_dir(const gchar * filename,
 					 GTK_MESSAGE_QUESTION, GTK_BUTTONS_NONE,
 					 _("For series: %s\n\nListed in DICOMDIR: %s\n\nCould not read DICOM file: %s\n\nFound possible alternative file: %s"),
 					 object_name, filename, image_name2, lowercase_image_name2);
-		gtk_dialog_add_button(GTK_DIALOG(question), GTK_STOCK_OK, GTK_RESPONSE_OK);
+		gtk_dialog_add_button(GTK_DIALOG(question), _("_OK"), GTK_RESPONSE_OK);
 		gtk_dialog_add_button(GTK_DIALOG(question), 
 				      _("OK, ignore similar errors"), 1);
 		gtk_dialog_add_button(GTK_DIALOG(question), 

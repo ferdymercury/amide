@@ -236,8 +236,8 @@ static void response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
     file_chooser = gtk_file_chooser_dialog_new(_("Output MPEG As"),
 					       GTK_WINDOW(dialog), /* parent window */
 					       GTK_FILE_CHOOSER_ACTION_SAVE,
-					       GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-					       GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+					       _("_Cancel"), GTK_RESPONSE_CANCEL,
+					       _("_Save"), GTK_RESPONSE_ACCEPT,
 					       NULL);
     gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(file_chooser), TRUE);
     gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER (file_chooser), TRUE);
@@ -622,8 +622,8 @@ gpointer * ui_render_movie_dialog_create(ui_render_t * ui_render) {
   ui_render_movie->dialog = 
     gtk_dialog_new_with_buttons(temp_string, ui_render->window,
 				GTK_DIALOG_DESTROY_WITH_PARENT,
-				GTK_STOCK_HELP, GTK_RESPONSE_HELP,				
-				GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+				_("_Help"), GTK_RESPONSE_HELP,
+				_("_Cancel"), GTK_RESPONSE_CANCEL,
 				_("_Generate Movie"), AMITK_RESPONSE_EXECUTE,
 				NULL);
   g_free(temp_string);
@@ -641,14 +641,17 @@ gpointer * ui_render_movie_dialog_create(ui_render_t * ui_render) {
 
 
   /* start making the widgets for this dialog box */
-  packing_table = gtk_table_new(5,3,FALSE);
+  packing_table = gtk_grid_new();
+  gtk_grid_set_row_spacing(GTK_GRID(packing_table), Y_PADDING);
+  gtk_grid_set_column_spacing(GTK_GRID(packing_table), X_PADDING);
   table_row=0;
-  gtk_container_add (GTK_CONTAINER (GTK_DIALOG(ui_render_movie->dialog)->vbox), packing_table);
+  gtk_container_add (GTK_CONTAINER (gtk_dialog_get_content_area
+                                    (GTK_DIALOG(ui_render_movie->dialog))),
+                     packing_table);
 
   /* widgets to specify how many frames */
   label = gtk_label_new(_("Movie Duration (sec)"));
-  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
   ui_render_movie->duration_spin_button  = 
     gtk_spin_button_new_with_range(0, G_MAXDOUBLE, 1.0);
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(ui_render_movie->duration_spin_button), FALSE);
@@ -658,14 +661,14 @@ gpointer * ui_render_movie_dialog_create(ui_render_t * ui_render) {
 		   G_CALLBACK(change_frames_cb),  ui_render_movie);
   g_signal_connect(G_OBJECT(ui_render_movie->duration_spin_button), "output",
 		   G_CALLBACK(amitk_spin_button_scientific_output), NULL);
-  gtk_table_attach(GTK_TABLE(packing_table), ui_render_movie->duration_spin_button,1,2,
-		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table),
+                  ui_render_movie->duration_spin_button,
+                  1, table_row, 1, 1);
   table_row++;
 
   /* a separator for clarity */
-  hseparator = gtk_hseparator_new();
-  gtk_table_attach(GTK_TABLE(packing_table), hseparator, 0,3,
-		   table_row, table_row+1,GTK_FILL, 0, X_PADDING, Y_PADDING);
+  hseparator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+  gtk_grid_attach(GTK_GRID(packing_table), hseparator, 0, table_row, 3, 1);
   table_row++;
 
   /* widgets to specify number of rotations on the axis */
@@ -674,8 +677,7 @@ gpointer * ui_render_movie_dialog_create(ui_render_t * ui_render) {
     temp_string = g_strdup_printf(_("Rotations on %s"), amitk_axis_get_name(i_axis));
     label = gtk_label_new(temp_string);
     g_free(temp_string);
-    gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
 
     ui_render_movie->axis_spin_button[i_axis] = 
       gtk_spin_button_new_with_range(-G_MAXDOUBLE, G_MAXDOUBLE, 1.0);
@@ -687,25 +689,23 @@ gpointer * ui_render_movie_dialog_create(ui_render_t * ui_render) {
 		      "which_entry", GINT_TO_POINTER(i_axis));
     g_signal_connect(G_OBJECT(ui_render_movie->axis_spin_button[i_axis]), 
 		     "value_changed", G_CALLBACK(change_rotation_cb), ui_render_movie);
-    gtk_table_attach(GTK_TABLE(packing_table), ui_render_movie->axis_spin_button[i_axis],1,2,
-		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(packing_table),
+                    ui_render_movie->axis_spin_button[i_axis],
+                    1, table_row, 1, 1);
     table_row++;
   }
 
   /* a separator for clarity */
-  hseparator = gtk_hseparator_new();
-  gtk_table_attach(GTK_TABLE(packing_table), hseparator, 0,3,
-		   table_row, table_row+1,GTK_FILL, 0, X_PADDING, Y_PADDING);
+  hseparator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+  gtk_grid_attach(GTK_GRID(packing_table), hseparator, 0, table_row, 3, 1);
   table_row++;
 
   /* do we want to make a movie over time or over frames */
   label = gtk_label_new(_("Dynamic Movie:"));
-  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
 
-  hbox = gtk_hbox_new(FALSE, 0);
-  gtk_table_attach(GTK_TABLE(packing_table), hbox,1,2,
-		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+  gtk_grid_attach(GTK_GRID(packing_table), hbox, 1, table_row, 1, 1);
   gtk_widget_show(hbox);
   table_row++;
 
@@ -723,9 +723,8 @@ gpointer * ui_render_movie_dialog_create(ui_render_t * ui_render) {
   gtk_box_pack_start(GTK_BOX(hbox), radio_button3, FALSE, FALSE, 3);
   g_object_set_data(G_OBJECT(radio_button3), "dynamic_type", GINT_TO_POINTER(OVER_FRAMES));
 
-  hbox = gtk_hbox_new(FALSE, 0);
-  gtk_table_attach(GTK_TABLE(packing_table), hbox,1,2,
-		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+  gtk_grid_attach(GTK_GRID(packing_table), hbox, 1, table_row, 1, 1);
   gtk_widget_show(hbox);
   table_row++;
 
@@ -746,11 +745,11 @@ gpointer * ui_render_movie_dialog_create(ui_render_t * ui_render) {
 
   /* widgets to specify the start and end times */
   ui_render_movie->start_time_label = gtk_label_new(_("Start Time (s)"));
-  gtk_table_attach(GTK_TABLE(packing_table), ui_render_movie->start_time_label, 0,1,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), ui_render_movie->start_time_label,
+                  0, table_row, 1, 1);
   ui_render_movie->start_frame_label = gtk_label_new(_("Start Frame"));
-  gtk_table_attach(GTK_TABLE(packing_table), ui_render_movie->start_frame_label, 0,1,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), ui_render_movie->start_frame_label,
+                  0, table_row, 1, 1);
 
   ui_render_movie->start_time_spin_button = 
     gtk_spin_button_new_with_range(ui_render_movie->start_time, ui_render_movie->end_time, 1.0);
@@ -761,8 +760,9 @@ gpointer * ui_render_movie_dialog_create(ui_render_t * ui_render) {
 		   G_CALLBACK(change_start_time_cb), ui_render_movie);
   g_signal_connect(G_OBJECT(ui_render_movie->start_time_spin_button), "output",
 		   G_CALLBACK(amitk_spin_button_scientific_output), NULL);
-  gtk_table_attach(GTK_TABLE(packing_table), ui_render_movie->start_time_spin_button,1,2,
-		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table),
+                  ui_render_movie->start_time_spin_button,
+                  1, table_row, 1, 1);
 
   ui_render_movie->start_frame_spin_button =
     gtk_spin_button_new_with_range(ui_render_movie->start_frame,ui_render_movie->end_frame+0.1, 1.0);
@@ -771,16 +771,18 @@ gpointer * ui_render_movie_dialog_create(ui_render_t * ui_render) {
 			    ui_render_movie->start_frame);
   g_signal_connect(G_OBJECT(ui_render_movie->start_frame_spin_button), "value_changed", 
 		   G_CALLBACK(change_start_frame_cb), ui_render_movie);
-  gtk_table_attach(GTK_TABLE(packing_table), ui_render_movie->start_frame_spin_button,1,2,
-		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table),
+                  ui_render_movie->start_frame_spin_button,
+                  1, table_row, 1, 1);
   table_row++;
 
   ui_render_movie->end_time_label = gtk_label_new(_("End Time (s)"));
-  gtk_table_attach(GTK_TABLE(packing_table), ui_render_movie->end_time_label, 0,1,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), ui_render_movie->end_time_label,
+
+                  0, table_row, 1, 1);
   ui_render_movie->end_frame_label = gtk_label_new(_("End Frame"));
-  gtk_table_attach(GTK_TABLE(packing_table), ui_render_movie->end_frame_label, 0,1,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), ui_render_movie->end_frame_label,
+                  0, table_row, 1, 1);
 
 
   ui_render_movie->end_time_spin_button =
@@ -792,8 +794,9 @@ gpointer * ui_render_movie_dialog_create(ui_render_t * ui_render) {
 		   G_CALLBACK(change_end_time_cb), ui_render_movie);
   g_signal_connect(G_OBJECT(ui_render_movie->end_time_spin_button), "output",
 		   G_CALLBACK(amitk_spin_button_scientific_output), NULL);
-  gtk_table_attach(GTK_TABLE(packing_table), ui_render_movie->end_time_spin_button,1,2,
-		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table),
+                  ui_render_movie->end_time_spin_button,
+                  1, table_row, 1, 1);
 
   ui_render_movie->end_frame_spin_button =
     gtk_spin_button_new_with_range(ui_render_movie->start_frame,ui_render_movie->end_frame+0.1, 1.0);
@@ -802,21 +805,23 @@ gpointer * ui_render_movie_dialog_create(ui_render_t * ui_render) {
 			    ui_render_movie->end_frame);
   g_signal_connect(G_OBJECT(ui_render_movie->end_frame_spin_button), "value_changed", 
 		   G_CALLBACK(change_end_frame_cb), ui_render_movie);
-  gtk_table_attach(GTK_TABLE(packing_table), ui_render_movie->end_frame_spin_button,1,2,
-		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table),
+                  ui_render_movie->end_frame_spin_button,
+                  1, table_row, 1, 1);
   table_row++;
 
 
   ui_render_movie->time_on_image_label = gtk_label_new(_("Display time on image"));
-  gtk_table_attach(GTK_TABLE(packing_table), ui_render_movie->time_on_image_label, 0,1,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), ui_render_movie->time_on_image_label,
+                  0, table_row, 1, 1);
   ui_render_movie->time_on_image_button = gtk_check_button_new();
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui_render_movie->time_on_image_button), 
 			       ui_render_movie->ui_render->time_label_on);
   g_signal_connect(G_OBJECT(ui_render_movie->time_on_image_button), "toggled", 
 		   G_CALLBACK(time_label_on_cb), ui_render_movie);
-  gtk_table_attach(GTK_TABLE(packing_table), ui_render_movie->time_on_image_button,1,2,
-		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table),
+                  ui_render_movie->time_on_image_button,
+                  1, table_row, 1, 1);
   table_row++;
 
   /* progress dialog */

@@ -134,14 +134,8 @@ longer range things
 libgnomecanvas/pixbuf issues
 ---------------------
 
-These problems will probably never be rectified, as libgnomecanvas is
-now deprecated. More likely course of action will be likely to rewrite
-the parts that use libgnomecanvas to use a new canvas system.  A new
-canvas system has not yet been agreed on for gtk (as of 3.0 at
-least). Goocanvas would have seemed to be the obvious choice, as it's
-similar to libgnomecanvas but with cairo as the backend rather than
-libart, but development of this seems to have stalled. May need to go
-directly to cairo as the canvas.
+These problems were noticed with libgnomecanvas.
+With the new cairo drawing backend they might be fixed:
 
 
 * antialiased canvases have been unstable in the past, due to
@@ -152,10 +146,6 @@ directly to cairo as the canvas.
 	lines in configure.in have been reenabled to allow building in
 	support for antialiased canvases. To disable antialiasing, disable
 	these lines again.
-
-	last tested versions:
-		libart_lgpl-2.3.21
-		libgnomecanvas-2.30.3
 
 	-make sure to check that lines in tb_crop are placed correctly
 	-need to check that the export jpeg functions work, they have not been tested

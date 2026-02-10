@@ -63,14 +63,13 @@
 #define AXIS_ARROW_EDGE 7
 #define AXIS_ARROW_WIDTH 6
 
-static void manual_cb(GtkAction *action, gpointer * caller);
-static void about_cb(GtkAction *action, gpointer * caller);
+static void manual_cb(GSimpleAction *action, GVariant *param, gpointer data);
+static void about_cb(GSimpleAction *action, GVariant *param, gpointer data);
 
 /* our help menu... */
-GtkActionEntry ui_common_help_menu_items[UI_COMMON_HELP_MENU_NUM] = {
-  /* Help menu */
-  {"HelpContents", GTK_STOCK_HELP, N_("_Contents"), "F1", N_("Open the AMIDE manual"), G_CALLBACK (manual_cb) },
-  {"HelpAbout", GTK_STOCK_ABOUT, NULL, NULL, N_("About AMIDE"), G_CALLBACK (about_cb) },
+GActionEntry ui_common_help_menu_items[UI_COMMON_HELP_MENU_NUM] = {
+  { "manual", manual_cb },
+  { "about", about_cb }
 };
 
 
@@ -82,24 +81,17 @@ static gboolean ui_common_cursors_initialized = FALSE;
 static gchar * last_path_used=NULL;
 static ui_common_cursor_t current_cursor;
 
-#ifndef AMIDE_LIBGNOMECANVAS_AA
-static gchar * line_style_names[] = {
-  N_("Solid"),
-  N_("On/Off"),
-  N_("Double Dash")
-};
-#endif
 
 
 
 
-static void manual_cb(GtkAction *action, gpointer * caller) {
+static void manual_cb(GSimpleAction * action, GVariant * param, gpointer data) {
   amide_call_help(NULL);
 }
 
 
 /* the about dialog */
-static void about_cb(GtkAction *action, gpointer * caller) {
+static void about_cb(GSimpleAction * action, GVariant * param, gpointer data) {
 
   const gchar *authors[] = {
     "Andreas Loening <loening@alum.mit.edu>",
@@ -204,29 +196,30 @@ gchar * ui_common_suggest_path(void) {
 
 /* function which brings up an about box */
 void ui_common_about_cb(GtkWidget * button, gpointer data) {
-  about_cb(NULL, NULL);
+  about_cb(NULL, NULL, NULL);
 }
 
-void ui_common_draw_view_axis(GnomeCanvas * canvas, gint row, gint column, 
+void ui_common_draw_view_axis(AmitkSimpleCanvas * canvas, gint row, gint column,
 			      AmitkView view, AmitkLayout layout, 
 			      gint axis_width, gint axis_height) {
 
   const gchar * x_axis_label;
   gdouble x_axis_label_x_location;
   gdouble x_axis_label_y_location;
-  GtkAnchorType x_axis_label_anchor;
-  GnomeCanvasPoints * x_axis_line_points;
+  AmitkCanvasAnchorType x_axis_label_anchor;
+  AmitkCanvasPoints * x_axis_line_points;
 
   const gchar * y_axis_label;
   gdouble y_axis_label_x_location;
   gdouble y_axis_label_y_location;
-  GtkAnchorType y_axis_label_anchor;
-  GnomeCanvasPoints * y_axis_line_points;
+  AmitkCanvasAnchorType y_axis_label_anchor;
+  AmitkCanvasPoints * y_axis_line_points;
+  AmitkCanvasItem * root;
 
-  x_axis_line_points = gnome_canvas_points_new(2);
+  x_axis_line_points = amitk_canvas_points_new(2);
   x_axis_line_points->coords[0] = column*axis_width + AXIS_MARGIN; /* x1 */
 
-  y_axis_line_points = gnome_canvas_points_new(2);
+  y_axis_line_points = amitk_canvas_points_new(2);
   y_axis_line_points->coords[0] = column*axis_width + AXIS_MARGIN; /* x1 */
 
   switch(view) {
@@ -240,7 +233,7 @@ void ui_common_draw_view_axis(GnomeCanvas * canvas, gint row, gint column,
     x_axis_label = amitk_axis_get_name(AMITK_AXIS_X);
     x_axis_label_x_location = column*axis_width + axis_width-AXIS_MARGIN-AXIS_TEXT_MARGIN;
     x_axis_label_y_location = row*axis_height + AXIS_HEADER+AXIS_TEXT_MARGIN;
-    x_axis_label_anchor = GTK_ANCHOR_NORTH_EAST;
+    x_axis_label_anchor = AMITK_CANVAS_ANCHOR_NORTH_EAST;
     
     /* the z axis */
     y_axis_line_points->coords[1] = row*axis_height + AXIS_HEADER; /* y1 */
@@ -251,7 +244,7 @@ void ui_common_draw_view_axis(GnomeCanvas * canvas, gint row, gint column,
     y_axis_label = amitk_axis_get_name(AMITK_AXIS_Z);
     y_axis_label_x_location = column*axis_width + AXIS_MARGIN+AXIS_TEXT_MARGIN;
     y_axis_label_y_location = row*axis_height + axis_height-AXIS_MARGIN-AXIS_TEXT_MARGIN;
-    y_axis_label_anchor = GTK_ANCHOR_NORTH_WEST;
+    y_axis_label_anchor = AMITK_CANVAS_ANCHOR_NORTH_WEST;
     break;
   case AMITK_VIEW_SAGITTAL:
     /* the y axis */
@@ -269,10 +262,10 @@ void ui_common_draw_view_axis(GnomeCanvas * canvas, gint row, gint column,
     x_axis_label_y_location = row*axis_height + AXIS_HEADER+AXIS_TEXT_MARGIN;
     if (layout == AMITK_LAYOUT_ORTHOGONAL) {
       x_axis_label_x_location = column*axis_width + AXIS_MARGIN+AXIS_TEXT_MARGIN;
-      x_axis_label_anchor = GTK_ANCHOR_NORTH_WEST;
+      x_axis_label_anchor = AMITK_CANVAS_ANCHOR_NORTH_WEST;
     } else {/* AMITK_LAYOUT_LINEAR */
       x_axis_label_x_location = column*axis_width + axis_width-AXIS_MARGIN-AXIS_TEXT_MARGIN;
-      x_axis_label_anchor = GTK_ANCHOR_NORTH_EAST;
+      x_axis_label_anchor = AMITK_CANVAS_ANCHOR_NORTH_EAST;
     }
     
     /* the z axis */
@@ -290,10 +283,10 @@ void ui_common_draw_view_axis(GnomeCanvas * canvas, gint row, gint column,
     y_axis_label_y_location = row*axis_height + axis_height-AXIS_MARGIN-AXIS_TEXT_MARGIN;
     if (layout == AMITK_LAYOUT_ORTHOGONAL) {
       y_axis_label_x_location = column*axis_width + axis_width-AXIS_MARGIN-AXIS_TEXT_MARGIN;
-      y_axis_label_anchor = GTK_ANCHOR_SOUTH_EAST;
+      y_axis_label_anchor = AMITK_CANVAS_ANCHOR_SOUTH_EAST;
     } else {
       y_axis_label_x_location = column*axis_width + AXIS_MARGIN+AXIS_TEXT_MARGIN;
-      y_axis_label_anchor = GTK_ANCHOR_NORTH_WEST;
+      y_axis_label_anchor = AMITK_CANVAS_ANCHOR_NORTH_WEST;
     }
     break;
   case AMITK_VIEW_TRANSVERSE:
@@ -307,7 +300,7 @@ void ui_common_draw_view_axis(GnomeCanvas * canvas, gint row, gint column,
     x_axis_label = amitk_axis_get_name(AMITK_AXIS_X);
     x_axis_label_x_location = column*axis_width + axis_width-AXIS_MARGIN-AXIS_TEXT_MARGIN;
     x_axis_label_y_location = row*axis_height + axis_height-AXIS_MARGIN-AXIS_TEXT_MARGIN;
-    x_axis_label_anchor = GTK_ANCHOR_SOUTH_EAST;
+    x_axis_label_anchor = AMITK_CANVAS_ANCHOR_SOUTH_EAST;
 
     /* the y axis */
     y_axis_line_points->coords[1] = row*axis_height + axis_height-AXIS_MARGIN; /* y1 */
@@ -318,63 +311,58 @@ void ui_common_draw_view_axis(GnomeCanvas * canvas, gint row, gint column,
     y_axis_label = amitk_axis_get_name(AMITK_AXIS_Y);
     y_axis_label_x_location = column*axis_width + AXIS_MARGIN+AXIS_TEXT_MARGIN;
     y_axis_label_y_location = row*axis_height + AXIS_HEADER+AXIS_TEXT_MARGIN;
-    y_axis_label_anchor = GTK_ANCHOR_NORTH_WEST;
+    y_axis_label_anchor = AMITK_CANVAS_ANCHOR_NORTH_WEST;
 
     break;
   }
 
   /* the view label */
-  gnome_canvas_item_new(gnome_canvas_root(canvas), gnome_canvas_text_get_type(),
-			"anchor", GTK_ANCHOR_NORTH, "text", amitk_view_get_name(view),
-			"x", (gdouble) (column+0.5)*axis_width,
-			"y", (gdouble) (row+0.5)*axis_height, 
-			"fill_color", "black", 
-			"font_desc", amitk_fixed_font_desc, NULL);
+  root = amitk_simple_canvas_get_root_item(canvas);
+  amitk_canvas_text_new(root, amitk_view_get_name(view),
+                      (gdouble) (column+0.5)*axis_width,
+                      (gdouble) (row+0.5)*axis_height, -1,
+                      AMITK_CANVAS_ANCHOR_NORTH,
+                      "fill-color", "black",
+                      "font-desc", amitk_fixed_font_desc, NULL);
 
   /* the x axis */
-  gnome_canvas_item_new(gnome_canvas_root(canvas), gnome_canvas_line_get_type(),
-			"points", x_axis_line_points, "fill_color", "black",
-			"width_pixels", 3, "last_arrowhead", TRUE, 
-			"arrow_shape_a", (gdouble) AXIS_ARROW_LENGTH,
-			"arrow_shape_b", (gdouble) AXIS_ARROW_EDGE,
-			"arrow_shape_c", (gdouble) AXIS_ARROW_WIDTH,
-			NULL);
+  amitk_canvas_polyline_new(root, FALSE, 0, "points", x_axis_line_points,
+                          "stroke-color", "black", "line-width", 3.0,
+                          "end-arrow", TRUE,
+                          "arrow-length", (gdouble) AXIS_ARROW_LENGTH,
+                          "arrow-tip-length", (gdouble) AXIS_ARROW_EDGE,
+                          "arrow-width", (gdouble) AXIS_ARROW_WIDTH, NULL);
 
   /* the x label */
-  gnome_canvas_item_new(gnome_canvas_root(canvas), gnome_canvas_text_get_type(),
-			"anchor", x_axis_label_anchor,"text", x_axis_label,
-			"x", x_axis_label_x_location, "y", x_axis_label_y_location,
-			"fill_color", "black", "font_desc", amitk_fixed_font_desc, NULL); 
+  amitk_canvas_text_new(root, x_axis_label, x_axis_label_x_location,
+                      x_axis_label_y_location, -1, x_axis_label_anchor,
+                      "fill-color", "black",
+                      "font-desc", amitk_fixed_font_desc, NULL);
 
   /* the y axis */
-  gnome_canvas_item_new(gnome_canvas_root(canvas), gnome_canvas_line_get_type(),
-			"points", y_axis_line_points, "fill_color", "black",
-			"width_pixels", 3, "last_arrowhead", TRUE, 
-			"arrow_shape_a", (gdouble) AXIS_ARROW_LENGTH,
-			"arrow_shape_b", (gdouble) AXIS_ARROW_EDGE,
-			"arrow_shape_c", (gdouble) AXIS_ARROW_WIDTH,
-			NULL);
+  amitk_canvas_polyline_new(root, FALSE, 0, "points", y_axis_line_points,
+                          "stroke-color", "black", "line-width", 3.0,
+                          "end-arrow", TRUE,
+                          "arrow-length", (gdouble) AXIS_ARROW_LENGTH,
+                          "arrow-tip-length", (gdouble) AXIS_ARROW_EDGE,
+                          "arrow-width", (gdouble) AXIS_ARROW_WIDTH, NULL);
 
-  gnome_canvas_points_unref(x_axis_line_points);
-  gnome_canvas_points_unref(y_axis_line_points);
+  amitk_canvas_points_unref(x_axis_line_points);
+  amitk_canvas_points_unref(y_axis_line_points);
 
   /* the y label */
-  gnome_canvas_item_new(gnome_canvas_root(canvas),gnome_canvas_text_get_type(),
-			"anchor", y_axis_label_anchor, "text", y_axis_label,
-			"x", y_axis_label_x_location,"y", y_axis_label_y_location,
-			"fill_color", "black", "font_desc", amitk_fixed_font_desc, NULL); 
+  amitk_canvas_text_new(root, y_axis_label, y_axis_label_x_location,
+                      y_axis_label_y_location, -1, y_axis_label_anchor,
+                      "fill-color", "black",
+                      "font-desc", amitk_fixed_font_desc, NULL);
 
   return;
 }
 
 
-void ui_common_update_sample_roi_item(GnomeCanvasItem * roi_item,
+void ui_common_update_sample_roi_item(AmitkCanvasItem * roi_item,
 				      gint roi_width,
-#ifdef AMIDE_LIBGNOMECANVAS_AA
 				      gdouble transparency
-#else
-				      GdkLineStyle line_style
-#endif
 				      ) {
 
   rgba_t outline_color;
@@ -382,19 +370,13 @@ void ui_common_update_sample_roi_item(GnomeCanvasItem * roi_item,
 
   outline_color = amitk_color_table_outline_color(AMITK_COLOR_TABLE_NIH, TRUE);
   fill_color = outline_color;
-#ifdef AMIDE_LIBGNOMECANVAS_AA
   fill_color.a *= transparency;
-#endif
 
-  gnome_canvas_item_set(roi_item, 
-			"width_pixels", roi_width,
-			"fill_color_rgba", amitk_color_table_rgba_to_uint32(fill_color), 
-#ifdef AMIDE_LIBGNOMECANVAS_AA
-			"outline_color_rgba", amitk_color_table_rgba_to_uint32(outline_color), 
-#else
-			"line_style", line_style,
-#endif
-			NULL);
+  g_object_set(roi_item,
+               "line-width", (gdouble) roi_width,
+               "fill-color-rgba", amitk_color_table_rgba_to_uint32(fill_color),
+               "stroke-color-rgba", amitk_color_table_rgba_to_uint32(outline_color),
+               NULL);
 
   return;
 }
@@ -403,13 +385,8 @@ void ui_common_update_sample_roi_item(GnomeCanvasItem * roi_item,
 void ui_common_study_preferences_widgets(GtkWidget * packing_table,
 					 gint table_row,
 					 GtkWidget ** proi_width_spin,
-					 GnomeCanvasItem ** proi_item,
-#ifdef AMIDE_LIBGNOMECANVAS_AA
+					 AmitkCanvasItem ** proi_item,
 					 GtkWidget ** proi_transparency_spin,
-#else
-					 GtkWidget ** pline_style_menu,
-					 GtkWidget ** pfill_roi_button,
-#endif
 					 GtkWidget ** playout_button1,
 					 GtkWidget ** playout_button2,
 					 GtkWidget ** ppanel_layout_button1,
@@ -419,21 +396,17 @@ void ui_common_study_preferences_widgets(GtkWidget * packing_table,
 					 GtkWidget ** ptarget_size_spin) {
 
   GtkWidget * label;
-  GtkObject * adjustment;
+  GtkAdjustment * adjustment;
   GtkWidget * roi_canvas;
-  GnomeCanvasPoints * roi_line_points;
+  AmitkCanvasPoints * roi_line_points;
+  AmitkCanvasItem * root;
   GtkWidget * image;
   GtkWidget * hseparator;
-#ifndef AMIDE_LIBGNOMECANVAS_AA
-  GdkLineStyle i_line_style;
-#endif
 
 
   /* widgets to change the roi's size */
   label = gtk_label_new(_("ROI Width (pixels)"));
-  gtk_table_attach(GTK_TABLE(packing_table), label, 
-		   0,1, table_row, table_row+1,
-		   0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
   gtk_widget_show(label);
 
   adjustment = gtk_adjustment_new(AMITK_PREFERENCES_MIN_ROI_WIDTH,
@@ -444,24 +417,19 @@ void ui_common_study_preferences_widgets(GtkWidget * packing_table,
   gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(*proi_width_spin), TRUE);
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(*proi_width_spin), TRUE);
   gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(*proi_width_spin), GTK_UPDATE_ALWAYS);
-  gtk_table_attach(GTK_TABLE(packing_table), *proi_width_spin, 1,2, 
-		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), *proi_width_spin,
+                  1, table_row, 1, 1);
   gtk_widget_show(*proi_width_spin);
 
   /* a little canvas indicator thingie to show the user who the new preferences will look */
-#ifdef AMIDE_LIBGNOMECANVAS_AA
-  roi_canvas = gnome_canvas_new_aa();
-#else
-  roi_canvas = gnome_canvas_new();
-#endif
+  roi_canvas = amitk_simple_canvas_new();
   gtk_widget_set_size_request(roi_canvas, 100, 100);
-  gnome_canvas_set_scroll_region(GNOME_CANVAS(roi_canvas), 0.0, 0.0, 100.0, 100.0);
-  gtk_table_attach(GTK_TABLE(packing_table),  roi_canvas, 2,3,table_row,table_row+2,
-		   GTK_FILL, 0,  X_PADDING, Y_PADDING);
+  amitk_simple_canvas_set_bounds(AMITK_SIMPLE_CANVAS(roi_canvas), 0.0, 0.0, 100.0, 100.0);
+  gtk_grid_attach(GTK_GRID(packing_table), roi_canvas, 2, table_row, 1, 2);
   gtk_widget_show(roi_canvas);
 
   /* the box */
-  roi_line_points = gnome_canvas_points_new(5);
+  roi_line_points = amitk_canvas_points_new(5);
   roi_line_points->coords[0] = 25.0; /* x1 */
   roi_line_points->coords[1] = 25.0; /* y1 */
   roi_line_points->coords[2] = 75.0; /* x2 */
@@ -473,100 +441,56 @@ void ui_common_study_preferences_widgets(GtkWidget * packing_table,
   roi_line_points->coords[8] = 25.0; /* x4 */
   roi_line_points->coords[9] = 25.0; /* y4 */
 
-  
-  *proi_item = gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(roi_canvas)), 
-#ifdef AMIDE_LIBGNOMECANVAS_AA
-				     gnome_canvas_polygon_get_type(),
-#else
-				     gnome_canvas_line_get_type(),
-#endif
+  root = amitk_simple_canvas_get_root_item(AMITK_SIMPLE_CANVAS(roi_canvas));
+  *proi_item = amitk_canvas_polyline_new(root, TRUE, 0,
 				     "points", roi_line_points, 
 				     NULL);
-  gnome_canvas_points_unref(roi_line_points);
+  amitk_canvas_points_unref(roi_line_points);
   table_row++;
 
 
-#ifdef AMIDE_LIBGNOMECANVAS_AA
   /* widget to change the transparency level */
   /* only works for anti-aliased canvases */
   /* widgets to change the roi's size */
 
   label = gtk_label_new(_("ROI Transparency"));
-  gtk_table_attach(GTK_TABLE(packing_table), label, 
-		   0, 1, table_row, table_row+1,
-		   0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
   gtk_widget_show(label);
 
   *proi_transparency_spin = gtk_spin_button_new_with_range(0.0,1.0,AMITK_PREFERENCES_DEFAULT_CANVAS_ROI_TRANSPARENCY);
   gtk_spin_button_set_increments(GTK_SPIN_BUTTON(*proi_transparency_spin),0.1,0.1);
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(*proi_transparency_spin),FALSE);
-  gtk_table_attach(GTK_TABLE(packing_table), *proi_transparency_spin, 1,2, 
-		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), *proi_transparency_spin,
+                  1, table_row, 1, 1);
   gtk_widget_show(*proi_transparency_spin);
   table_row++;
-#else
-  /* widgets to change the roi's line style */
-  /* Anti-aliased canvas doesn't yet support this */
-  /* also need to remove #ifndef for relevant lines in amitk_canvas_object.c and other locations  */
-  label = gtk_label_new(_("ROI Line Style:"));
-  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-  		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-  gtk_widget_show(label);
 
-  *pline_style_menu = gtk_combo_box_new_text();
-  for (i_line_style=0; i_line_style<=GDK_LINE_DOUBLE_DASH; i_line_style++) 
-     gtk_combo_box_append_text(GTK_COMBO_BOX(*pline_style_menu),
-			       line_style_names[i_line_style]);
-  gtk_widget_set_size_request (*pline_style_menu, 125, -1);
-  gtk_table_attach(GTK_TABLE(packing_table),  *pline_style_menu, 1,2, 
-  		   table_row,table_row+1, GTK_FILL, 0,  X_PADDING, Y_PADDING);
-  gtk_widget_show(*pline_style_menu);
-  table_row++;
-
-  /* do we want to fill in isocontour roi's */
-  label = gtk_label_new(_("Draw Isocontours/Freehands Filled:"));
-  gtk_table_attach(GTK_TABLE(packing_table), label, 
-		   0,1, table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-  gtk_widget_show(label);
-
-  *pfill_roi_button = gtk_check_button_new();
-  gtk_table_attach(GTK_TABLE(packing_table), *pfill_roi_button,
-		   1,2, table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-  gtk_widget_show(*pfill_roi_button);
-  table_row++;
-#endif
-
-  hseparator = gtk_hseparator_new();
-  gtk_table_attach(GTK_TABLE(packing_table), hseparator, 
-		   0, 3, table_row, table_row+1,
-		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  hseparator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+  gtk_grid_attach(GTK_GRID(packing_table), hseparator, 0, table_row, 3, 1);
   table_row++;
   gtk_widget_show(hseparator);
 
 
   label = gtk_label_new(_("Canvas Layout:"));
-  gtk_table_attach(GTK_TABLE(packing_table), label, 
-		   0,1, table_row, table_row+1,
-		   0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
   gtk_widget_show(label);
 
   /* the radio buttons */
   *playout_button1 = gtk_radio_button_new(NULL);
-  image = gtk_image_new_from_stock("amide_icon_layout_linear",GTK_ICON_SIZE_DIALOG);
+  image = gtk_image_new_from_icon_name("amide_icon_layout_linear",GTK_ICON_SIZE_DIALOG);
   gtk_button_set_image(GTK_BUTTON(*playout_button1), image);
-  gtk_table_attach(GTK_TABLE(packing_table), *playout_button1,
-  		   1,2, table_row, table_row+1,
-  		   0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), *playout_button1,
+                  1, table_row, 1, 1);
   g_object_set_data(G_OBJECT(*playout_button1), "layout", GINT_TO_POINTER(AMITK_LAYOUT_LINEAR));
   gtk_widget_show(*playout_button1);
 
   *playout_button2 = gtk_radio_button_new(NULL);
   gtk_radio_button_set_group(GTK_RADIO_BUTTON(*playout_button2), 
 			     gtk_radio_button_get_group(GTK_RADIO_BUTTON(*playout_button1)));
-  image = gtk_image_new_from_stock("amide_icon_layout_orthogonal",GTK_ICON_SIZE_DIALOG);
+  image = gtk_image_new_from_icon_name("amide_icon_layout_orthogonal",GTK_ICON_SIZE_DIALOG);
   gtk_button_set_image(GTK_BUTTON(*playout_button2), image);
-  gtk_table_attach(GTK_TABLE(packing_table), *playout_button2, 2,3, table_row, table_row+1,
-  		   0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), *playout_button2,
+                  2, table_row, 1, 1);
   g_object_set_data(G_OBJECT(*playout_button2), "layout", GINT_TO_POINTER(AMITK_LAYOUT_ORTHOGONAL));
   gtk_widget_show(*playout_button2);
 
@@ -574,40 +498,35 @@ void ui_common_study_preferences_widgets(GtkWidget * packing_table,
 
 
   label = gtk_label_new(_("Multiple Canvases Layout:"));
-  gtk_table_attach(GTK_TABLE(packing_table), label, 
-		   0,1, table_row, table_row+1,
-		   0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
   gtk_widget_show(label);
 
   /* the radio buttons */
   *ppanel_layout_button1 = gtk_radio_button_new(NULL);
-  image = gtk_image_new_from_stock("amide_icon_panels_mixed", GTK_ICON_SIZE_LARGE_TOOLBAR);
+  image = gtk_image_new_from_icon_name("amide_icon_panels_mixed", GTK_ICON_SIZE_LARGE_TOOLBAR);
   gtk_button_set_image(GTK_BUTTON(*ppanel_layout_button1), image);
-  gtk_table_attach(GTK_TABLE(packing_table), *ppanel_layout_button1,
-  		   1,2, table_row, table_row+1,
-  		   0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), *ppanel_layout_button1,
+                  1, table_row, 1, 1);
   g_object_set_data(G_OBJECT(*ppanel_layout_button1), "panel_layout", GINT_TO_POINTER(AMITK_PANEL_LAYOUT_MIXED));
   gtk_widget_show(*ppanel_layout_button1);
 
   *ppanel_layout_button2 = gtk_radio_button_new(NULL);
   gtk_radio_button_set_group(GTK_RADIO_BUTTON(*ppanel_layout_button2), 
 			     gtk_radio_button_get_group(GTK_RADIO_BUTTON(*ppanel_layout_button1)));
-  image = gtk_image_new_from_stock("amide_icon_panels_linear_x", GTK_ICON_SIZE_LARGE_TOOLBAR);
+  image = gtk_image_new_from_icon_name("amide_icon_panels_linear_x", GTK_ICON_SIZE_LARGE_TOOLBAR);
   gtk_button_set_image(GTK_BUTTON(*ppanel_layout_button2), image);
-  gtk_table_attach(GTK_TABLE(packing_table), *ppanel_layout_button2,
-  		   2,3, table_row, table_row+1,
-  		   0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), *ppanel_layout_button2,
+                  2, table_row, 1, 1);
   g_object_set_data(G_OBJECT(*ppanel_layout_button2), "panel_layout", GINT_TO_POINTER(AMITK_PANEL_LAYOUT_LINEAR_X));
   gtk_widget_show(*ppanel_layout_button2);
 
   *ppanel_layout_button3 = gtk_radio_button_new(NULL);
   gtk_radio_button_set_group(GTK_RADIO_BUTTON(*ppanel_layout_button3), 
 			     gtk_radio_button_get_group(GTK_RADIO_BUTTON(*ppanel_layout_button1)));
-  image = gtk_image_new_from_stock("amide_icon_panels_linear_y", GTK_ICON_SIZE_LARGE_TOOLBAR);
+  image = gtk_image_new_from_icon_name("amide_icon_panels_linear_y", GTK_ICON_SIZE_LARGE_TOOLBAR);
   gtk_button_set_image(GTK_BUTTON(*ppanel_layout_button3), image);
-  gtk_table_attach(GTK_TABLE(packing_table), *ppanel_layout_button3,
-  		   3,4, table_row, table_row+1,
-  		   0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), *ppanel_layout_button3,
+                  3, table_row, 1, 1);
   g_object_set_data(G_OBJECT(*ppanel_layout_button3), "panel_layout", GINT_TO_POINTER(AMITK_PANEL_LAYOUT_LINEAR_Y));
   gtk_widget_show(*ppanel_layout_button3);
 
@@ -616,21 +535,20 @@ void ui_common_study_preferences_widgets(GtkWidget * packing_table,
 
   /* do we want the size of the canvas to not resize */
   label = gtk_label_new(_("Maintain view size constant:"));
-  gtk_table_attach(GTK_TABLE(packing_table), label, 
-		   0,1, table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
   gtk_widget_show(label);
 
   *pmaintain_size_button = gtk_check_button_new();
-  gtk_table_attach(GTK_TABLE(packing_table), *pmaintain_size_button, 
-		   1,2, table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_widget_set_halign(*pmaintain_size_button, GTK_ALIGN_CENTER);
+  gtk_grid_attach(GTK_GRID(packing_table), *pmaintain_size_button,
+                  1, table_row, 1, 1);
   gtk_widget_show(*pmaintain_size_button);
   table_row++;
 
 
   /* widgets to change the amount of empty space in the center of the target */
   label = gtk_label_new(_("Target Empty Area (pixels)"));
-  gtk_table_attach(GTK_TABLE(packing_table), label, 
-		   0,1, table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), label, 0, table_row, 1, 1);
   gtk_widget_show(label);
 
   adjustment = gtk_adjustment_new(AMITK_PREFERENCES_MIN_TARGET_EMPTY_AREA, 
@@ -642,8 +560,8 @@ void ui_common_study_preferences_widgets(GtkWidget * packing_table,
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(*ptarget_size_spin), TRUE);
   gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(*ptarget_size_spin), GTK_UPDATE_ALWAYS);
 
-  gtk_table_attach(GTK_TABLE(packing_table), *ptarget_size_spin, 1,2, 
-		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(packing_table), *ptarget_size_spin,
+                  1, table_row, 1, 1);
   gtk_widget_show(*ptarget_size_spin);
 
 
@@ -655,31 +573,27 @@ GtkWidget * ui_common_create_view_axis_indicator(AmitkLayout layout) {
   GtkWidget * axis_indicator;
   AmitkView i_view;
 
-#ifdef AMIDE_LIBGNOMECANVAS_AA
-  axis_indicator = gnome_canvas_new_aa();
-#else
-  axis_indicator = gnome_canvas_new();
-#endif
+  axis_indicator = amitk_simple_canvas_new();
   switch(layout) {
   case AMITK_LAYOUT_ORTHOGONAL:
     gtk_widget_set_size_request(axis_indicator, 2.0*AXIS_WIDTH, 2.0*ORTHOGONAL_AXIS_HEIGHT);
-    gnome_canvas_set_scroll_region(GNOME_CANVAS(axis_indicator), 0.0, 0.0, 
+    amitk_simple_canvas_set_bounds(AMITK_SIMPLE_CANVAS(axis_indicator), 0.0, 0.0,
 				   2.0*AXIS_WIDTH, 2.0*ORTHOGONAL_AXIS_HEIGHT);
-    ui_common_draw_view_axis(GNOME_CANVAS(axis_indicator), 0, 0, AMITK_VIEW_TRANSVERSE, 
+    ui_common_draw_view_axis(AMITK_SIMPLE_CANVAS(axis_indicator), 0, 0, AMITK_VIEW_TRANSVERSE,
 			     layout, AXIS_WIDTH, ORTHOGONAL_AXIS_HEIGHT);
-    ui_common_draw_view_axis(GNOME_CANVAS(axis_indicator), 1, 0, AMITK_VIEW_CORONAL, 
+    ui_common_draw_view_axis(AMITK_SIMPLE_CANVAS(axis_indicator), 1, 0, AMITK_VIEW_CORONAL,
 			     layout, AXIS_WIDTH, ORTHOGONAL_AXIS_HEIGHT);
-    ui_common_draw_view_axis(GNOME_CANVAS(axis_indicator), 0, 1, AMITK_VIEW_SAGITTAL, 
+    ui_common_draw_view_axis(AMITK_SIMPLE_CANVAS(axis_indicator), 0, 1, AMITK_VIEW_SAGITTAL,
 			     layout, AXIS_WIDTH, ORTHOGONAL_AXIS_HEIGHT);
 
     break;
   case AMITK_LAYOUT_LINEAR:
   default:
     gtk_widget_set_size_request(axis_indicator, 3.0*AXIS_WIDTH, LINEAR_AXIS_HEIGHT);
-    gnome_canvas_set_scroll_region(GNOME_CANVAS(axis_indicator), 0.0, 0.0, 
+    amitk_simple_canvas_set_bounds(AMITK_SIMPLE_CANVAS(axis_indicator), 0.0, 0.0,
 				   3.0*AXIS_WIDTH, LINEAR_AXIS_HEIGHT);
     for (i_view=0;i_view< AMITK_VIEW_NUM;i_view++)
-      ui_common_draw_view_axis(GNOME_CANVAS(axis_indicator), 0, i_view, i_view,
+      ui_common_draw_view_axis(AMITK_SIMPLE_CANVAS(axis_indicator), 0, i_view, i_view,
 			       layout, AXIS_WIDTH, LINEAR_AXIS_HEIGHT);
     break;
   }
@@ -690,41 +604,41 @@ GtkWidget * ui_common_create_view_axis_indicator(AmitkLayout layout) {
 
 
 
-/* This data is in X bitmap format, and can be created with the 'bitmap' utility. */
-#define small_dot_width 3
-#define small_dot_height 3
-static gchar small_dot_bits[] = {0x00, 0x02, 0x00};
- 
-
 /* load in the cursors */
 static void ui_common_cursor_init(void) {
 
-  GdkPixmap *source, *mask;
-  GdkColor fg = { 0, 0, 0, 0 }; /* black. */
-  GdkColor bg = { 0, 0, 0, 0 }; /* black */
+  cairo_surface_t * surf;
+  cairo_t * cr;
+  GdkPixbuf * pixbuf;
   GdkCursor * small_dot;
+  GdkDisplay * d;
  
-  source = gdk_bitmap_create_from_data(NULL, small_dot_bits, small_dot_width, small_dot_height);
-  mask = gdk_bitmap_create_from_data(NULL, small_dot_bits, small_dot_width, small_dot_height);
-  small_dot = gdk_cursor_new_from_pixmap (source, mask, &fg, &bg, 2,2);
-  g_object_unref (source);
-  g_object_unref (mask);
+  surf = cairo_image_surface_create(CAIRO_FORMAT_A1, 3, 3);
+  cr = cairo_create(surf);
+  cairo_arc(cr, 0, 0, 1.5, 0, 2 * M_PI);
+  cairo_fill(cr);
+  cairo_destroy(cr);
+  pixbuf = gdk_pixbuf_get_from_surface(surf, 0, 0, 3, 3);
+  cairo_surface_destroy(surf);
+  d = gdk_display_get_default();
+  small_dot = gdk_cursor_new_from_pixbuf(d, pixbuf, 0, 0);
+  g_object_unref(pixbuf);
                                      
   /* load in the cursors */
 
   ui_common_cursor[UI_CURSOR_DEFAULT] = NULL;
-  ui_common_cursor[UI_CURSOR_ROI_MODE] =  gdk_cursor_new(GDK_DRAFT_SMALL);
+  ui_common_cursor[UI_CURSOR_ROI_MODE] =  gdk_cursor_new_for_display(d, GDK_DRAFT_SMALL);
   ui_common_cursor[UI_CURSOR_ROI_RESIZE] = small_dot; /* was GDK_SIZING */
   ui_common_cursor[UI_CURSOR_ROI_ROTATE] = small_dot; /* was GDK_EXCHANGE */
-  ui_common_cursor[UI_CURSOR_ROI_DRAW] = gdk_cursor_new(GDK_PENCIL);
+  ui_common_cursor[UI_CURSOR_ROI_DRAW] = gdk_cursor_new_for_display(d, GDK_PENCIL);
   ui_common_cursor[UI_CURSOR_OBJECT_SHIFT] = small_dot; /* was GDK_FLEUR */
-  ui_common_cursor[UI_CURSOR_ROI_ISOCONTOUR] = gdk_cursor_new(GDK_DRAFT_SMALL);
-  ui_common_cursor[UI_CURSOR_ROI_ERASE] = gdk_cursor_new(GDK_DRAFT_SMALL);
-  ui_common_cursor[UI_CURSOR_DATA_SET_MODE] = gdk_cursor_new(GDK_CROSSHAIR);
-  ui_common_cursor[UI_CURSOR_FIDUCIAL_MARK_MODE] = gdk_cursor_new(GDK_DRAFT_SMALL);
-  ui_common_cursor[UI_CURSOR_RENDERING_ROTATE_XY] = gdk_cursor_new(GDK_FLEUR);
-  ui_common_cursor[UI_CURSOR_RENDERING_ROTATE_Z] = gdk_cursor_new(GDK_EXCHANGE);
-  ui_common_cursor[UI_CURSOR_WAIT] = gdk_cursor_new(GDK_WATCH);
+  ui_common_cursor[UI_CURSOR_ROI_ISOCONTOUR] = gdk_cursor_new_for_display(d, GDK_DRAFT_SMALL);
+  ui_common_cursor[UI_CURSOR_ROI_ERASE] = gdk_cursor_new_for_display(d, GDK_DRAFT_SMALL);
+  ui_common_cursor[UI_CURSOR_DATA_SET_MODE] = gdk_cursor_new_for_display(d, GDK_CROSSHAIR);
+  ui_common_cursor[UI_CURSOR_FIDUCIAL_MARK_MODE] = gdk_cursor_new_for_display(d, GDK_DRAFT_SMALL);
+  ui_common_cursor[UI_CURSOR_RENDERING_ROTATE_XY] = gdk_cursor_new_for_display(d, GDK_FLEUR);
+  ui_common_cursor[UI_CURSOR_RENDERING_ROTATE_Z] = gdk_cursor_new_for_display(d, GDK_EXCHANGE);
+  ui_common_cursor[UI_CURSOR_WAIT] = gdk_cursor_new_for_display(d, GDK_WATCH);
   
 
  
@@ -743,7 +657,7 @@ void ui_common_place_cursor_no_wait(ui_common_cursor_t which_cursor, GtkWidget *
 
   /* sanity checks */
   if (widget == NULL) return;
-  if (!GTK_WIDGET_REALIZED(widget)) return;
+  if (!gtk_widget_get_realized(widget)) return;
 
   if (which_cursor != UI_CURSOR_WAIT)
     current_cursor = which_cursor;
@@ -819,8 +733,8 @@ GtkWidget * ui_common_entry_dialog(GtkWindow * parent, gchar * prompt, gchar **r
 
   dialog = gtk_dialog_new_with_buttons (_("Request Dialog"),  parent,
 					GTK_DIALOG_DESTROY_WITH_PARENT,
-					GTK_STOCK_CANCEL, GTK_RESPONSE_CLOSE, 
-					GTK_STOCK_OK, GTK_RESPONSE_OK,
+					_("_Cancel"), GTK_RESPONSE_CLOSE,
+					_("_OK"), GTK_RESPONSE_OK,
 					NULL);
   g_object_set_data(G_OBJECT(dialog), "return_str_ptr", return_str_ptr);
   g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(init_response_cb), NULL);
@@ -828,25 +742,25 @@ GtkWidget * ui_common_entry_dialog(GtkWindow * parent, gchar * prompt, gchar **r
   gtk_dialog_set_response_sensitive(GTK_DIALOG(dialog), GTK_RESPONSE_OK,FALSE);
   gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_OK);
 
-  table = gtk_table_new(3,2,FALSE);
+  table = gtk_grid_new();
+  gtk_grid_set_row_spacing(GTK_GRID(table), Y_PADDING);
+  gtk_grid_set_column_spacing(GTK_GRID(table), X_PADDING);
   table_row=0;
-  gtk_container_add(GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), table);
+  gtk_container_add(GTK_CONTAINER(gtk_dialog_get_content_area
+                                  (GTK_DIALOG(dialog))), table);
 
 
-  image = gtk_image_new_from_stock(GTK_STOCK_DIALOG_QUESTION,GTK_ICON_SIZE_DIALOG);
-  gtk_table_attach(GTK_TABLE(table), image, 
-		   0,1, table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
+  image = gtk_image_new_from_icon_name("dialog-question", GTK_ICON_SIZE_DIALOG);
+  gtk_grid_attach(GTK_GRID(table), image, 0, table_row, 1, 1);
 
   label = gtk_label_new(prompt);
-  gtk_table_attach(GTK_TABLE(table), label, 
-		   1,2, table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), label, 1, table_row, 1, 1);
   table_row++;
 
 
   entry = gtk_entry_new();
   gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
-  gtk_table_attach(GTK_TABLE(table), entry, 
-		   1,2, table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), entry, 1, table_row, 1, 1);
   g_signal_connect(G_OBJECT(entry), "changed", G_CALLBACK(entry_activate), dialog);
   table_row++;
 
@@ -894,7 +808,7 @@ void ui_common_toolbar_insert_widget(GtkWidget * toolbar, GtkWidget * widget, co
   toolbar_item = gtk_tool_item_new();
   gtk_container_add(GTK_CONTAINER(toolbar_item), widget);
   if (tooltip != NULL)
-    gtk_tool_item_set_tooltip_text(toolbar_item,tooltip);
+    gtk_widget_set_tooltip_text(widget, tooltip);
   gtk_tool_item_set_homogeneous(toolbar_item, FALSE);
   gtk_toolbar_insert(GTK_TOOLBAR(toolbar), toolbar_item, position);
 
@@ -905,6 +819,25 @@ void ui_common_toolbar_append_widget(GtkWidget * toolbar, GtkWidget * widget, co
 
   ui_common_toolbar_insert_widget(toolbar, widget, tooltip, -1);
   return;
+}
+
+void ui_common_toolbar_append_widget_full(GtkWidget * toolbar, GtkWidget * widget, const gchar * label, const gchar * tooltip, GCallback cb, gpointer data) {
+
+  GtkToolItem * toolbar_item;
+  GtkWidget * menu_item;
+
+  toolbar_item = gtk_tool_item_new();
+  gtk_container_add(GTK_CONTAINER(toolbar_item), widget);
+  if (tooltip != NULL)
+    gtk_widget_set_tooltip_text(widget, tooltip);
+  if (label != NULL) {
+    menu_item = gtk_menu_item_new_with_label(label);
+    gtk_tool_item_set_proxy_menu_item(toolbar_item, label, menu_item);
+    if (cb != NULL)
+      g_signal_connect(menu_item, "activate", cb, data);
+  }
+  gtk_tool_item_set_homogeneous(toolbar_item, FALSE);
+  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), toolbar_item, -1);
 }
 
 void ui_common_toolbar_append_separator(GtkWidget * toolbar) {
@@ -934,12 +867,14 @@ void amide_register_window(gpointer * widget) {
 
 /* keep track of open windows */
 void amide_unregister_window(gpointer * widget) {
+  GtkApplication * app;
 
   g_return_if_fail(widget != NULL);
 
   windows = g_list_remove(windows, widget);
+  app = gtk_window_get_application(GTK_WINDOW(widget));
 
-  if (windows == NULL) gtk_main_quit();
+  if (windows == NULL) g_application_quit(G_APPLICATION(app));
 
   return;
 }

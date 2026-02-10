@@ -154,9 +154,9 @@ typedef enum {
 
 static void canvas_class_init (AmitkCanvasClass *klass);
 static void canvas_init (AmitkCanvas *canvas);
-static void canvas_destroy(GtkObject * object);
+static void canvas_destroy(GtkWidget * object);
 
-static GnomeCanvasItem * canvas_find_item(AmitkCanvas * canvas, AmitkObject * object);
+static AmitkCanvasItem * canvas_find_item(AmitkCanvas * canvas, AmitkObject * object);
 static GList * canvas_add_current_objects(AmitkCanvas * canvas, GList * objects);
 static void canvas_space_changed_cb(AmitkSpace * space, gpointer canvas);
 static void canvas_object_selection_changed_cb(AmitkObject * object, gpointer canvas);
@@ -184,8 +184,9 @@ static void canvas_create_isocontour_roi(AmitkCanvas * canvas, AmitkRoi * roi,
 					 AmitkPoint position, AmitkDataSet * active_slice);
 static gboolean canvas_create_freehand_roi(AmitkCanvas * canvas, AmitkRoi * roi, 
 					   AmitkPoint position, AmitkDataSet * active_slice);
-static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer data);
-static void canvas_scrollbar_adjustment_cb(GtkObject * adjustment, gpointer data);
+static gboolean canvas_event_cb(AmitkCanvasItem * item, AmitkCanvasItem * target, GdkEvent * event, gpointer data);
+static void canvas_setup_handlers(AmitkCanvas * canvas, AmitkCanvasItem * item);
+static void canvas_scrollbar_adjustment_cb(GtkAdjustment * adjustment, gpointer data);
 
 static gboolean canvas_recalc_corners(AmitkCanvas * canvas);
 static void canvas_update_scrollbar(AmitkCanvas * canvas, AmitkPoint center, amide_real_t thickness);
@@ -206,7 +207,7 @@ static void canvas_add_object(AmitkCanvas * canvas, AmitkObject * object);
 static void canvas_remove_object(AmitkCanvas * canvas, AmitkObject * object);
 
 
-static GtkVBoxClass *canvas_parent_class;
+static GtkBoxClass *canvas_parent_class;
 static guint canvas_signals[LAST_SIGNAL];
 
 
@@ -230,7 +231,7 @@ GType amitk_canvas_get_type (void) {
 	NULL   /* value table */
       };
 
-      canvas_type = g_type_register_static (GTK_TYPE_VBOX, "AmitkCanvas", &canvas_info, 0);
+      canvas_type = g_type_register_static (GTK_TYPE_BOX, "AmitkCanvas", &canvas_info, 0);
     }
 
   return canvas_type;
@@ -238,11 +239,11 @@ GType amitk_canvas_get_type (void) {
 
 static void canvas_class_init (AmitkCanvasClass *klass)
 {
-  GtkObjectClass *gtkobject_class;
+  GtkWidgetClass *gtkobject_class;
   /*  GtkWidgetClass *widget_class;
   GObjectClass   *gobject_class; */
 
-  gtkobject_class = (GtkObjectClass*) klass;
+  gtkobject_class = (GtkWidgetClass*) klass;
   /*  widget_class =    (GtkWidgetClass*) klass;
       gobject_class =   (GObjectClass *) klass; */
 
@@ -309,6 +310,8 @@ static void canvas_init (AmitkCanvas *canvas)
 {
   gint i;
 
+  gtk_orientable_set_orientation(GTK_ORIENTABLE(canvas),
+                                 GTK_ORIENTATION_VERTICAL);
   gtk_box_set_homogeneous(GTK_BOX(canvas), FALSE);
 
   /* initialize some critical stuff */
@@ -348,7 +351,7 @@ static void canvas_init (AmitkCanvas *canvas)
 
 }
 
-static void canvas_destroy (GtkObject * object) {
+static void canvas_destroy (GtkWidget * object) {
 
   AmitkCanvas * canvas;
 
@@ -392,12 +395,12 @@ static void canvas_destroy (GtkObject * object) {
   }
 
 
-  if (GTK_OBJECT_CLASS (canvas_parent_class)->destroy)
-    (* GTK_OBJECT_CLASS (canvas_parent_class)->destroy) (object);
+  if (GTK_WIDGET_CLASS (canvas_parent_class)->destroy)
+    (* GTK_WIDGET_CLASS (canvas_parent_class)->destroy) (object);
 }
 
 
-static GnomeCanvasItem * canvas_find_item(AmitkCanvas * canvas, AmitkObject * object) {
+static AmitkCanvasItem * canvas_find_item(AmitkCanvas * canvas, AmitkObject * object) {
 
   GList * items=canvas->object_items;
 
@@ -463,7 +466,7 @@ static void canvas_space_changed_cb(AmitkSpace * space, gpointer data) {
 static void canvas_object_selection_changed_cb(AmitkObject * object, gpointer data) {
 
   AmitkCanvas * canvas = data;
-  GnomeCanvasItem * item;
+  AmitkCanvasItem * item;
   gboolean undrawn_roi=FALSE;
 
   g_return_if_fail(AMITK_IS_CANVAS(canvas));
@@ -494,7 +497,7 @@ static void canvas_object_selection_changed_cb(AmitkObject * object, gpointer da
 	}
       } else if ((item = canvas_find_item(canvas, object)) != NULL) { /* an unselect */
 	canvas->object_items = g_list_remove(canvas->object_items, item);
-	gtk_object_destroy(GTK_OBJECT(item));
+	amitk_canvas_item_remove(item);
 	canvas_add_update(canvas, UPDATE_VIEW); /* needed to check if we need to reset the view slice */
       }
     }
@@ -741,19 +744,22 @@ static amide_real_t canvas_check_z_dimension(AmitkCanvas * canvas, amide_real_t 
   dialog = gtk_dialog_new_with_buttons (_("ROI Depth Selection"),
 					window,
 					GTK_DIALOG_DESTROY_WITH_PARENT,
-					GTK_STOCK_OK, GTK_RESPONSE_OK, NULL);
+					_("_OK"), GTK_RESPONSE_OK, NULL);
   gtk_container_set_border_width(GTK_CONTAINER(dialog), 10);
   gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_OK);
 
-  table = gtk_table_new(1,3,FALSE);
-  gtk_container_add(GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), table);
+  table = gtk_grid_new();
+  gtk_grid_set_row_spacing(GTK_GRID(table), Y_PADDING);
+  gtk_grid_set_column_spacing(GTK_GRID(table), X_PADDING);
+  gtk_container_add(GTK_CONTAINER(gtk_dialog_get_content_area
+                                  (GTK_DIALOG(dialog))), table);
 
   /* pick depth of roi */
-  image = gtk_image_new_from_stock(GTK_STOCK_DIALOG_QUESTION,GTK_ICON_SIZE_DIALOG);
-  gtk_table_attach(GTK_TABLE(table), image, 0,1, 0,1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
+  image = gtk_image_new_from_icon_name("dialog-question", GTK_ICON_SIZE_DIALOG);
+  gtk_grid_attach(GTK_GRID(table), image, 0, 0, 1, 1);
 
   label = gtk_label_new(_("Please pick depth of ROI (mm):"));
-  gtk_table_attach(GTK_TABLE(table), label, 1,2, 0,1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), label, 1, 0, 1, 1);
 
   spin_button = gtk_spin_button_new_with_range(0.0, G_MAXDOUBLE, MAX(z,EPSILON));
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), z);
@@ -764,7 +770,7 @@ static amide_real_t canvas_check_z_dimension(AmitkCanvas * canvas, amide_real_t 
   gtk_entry_set_activates_default(GTK_ENTRY(spin_button), TRUE);
   g_signal_connect(G_OBJECT(spin_button), "value_changed",  G_CALLBACK(value_spin_cb), &z);
   g_signal_connect(G_OBJECT(spin_button), "output", G_CALLBACK(amitk_spin_button_scientific_output), NULL);
-  gtk_table_attach(GTK_TABLE(table), spin_button, 2,3, 0,1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), spin_button, 2, 0, 1, 1);
 
   gtk_widget_show_all(dialog);
   gtk_dialog_run(GTK_DIALOG(dialog)); /* let the user input */
@@ -905,15 +911,18 @@ static void canvas_create_isocontour_roi(AmitkCanvas * canvas, AmitkRoi * roi,
   dialog = gtk_dialog_new_with_buttons (_("Isocontour Value Selection"),
 					window,
 					GTK_DIALOG_DESTROY_WITH_PARENT,
-					GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, 
-					GTK_STOCK_OK, GTK_RESPONSE_OK, 
+					_("_Cancel"), GTK_RESPONSE_CANCEL,
+					_("_OK"), GTK_RESPONSE_OK,
 					NULL);
   gtk_container_set_border_width(GTK_CONTAINER(dialog), 10);
   gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_OK);
 
-  table = gtk_table_new(4,3,FALSE);
+  table = gtk_grid_new();
+  gtk_grid_set_row_spacing(GTK_GRID(table), Y_PADDING);
+  gtk_grid_set_column_spacing(GTK_GRID(table), X_PADDING);
   table_row=0;
-  gtk_container_add(GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), table);
+  gtk_container_add(GTK_CONTAINER(gtk_dialog_get_content_area
+                                  (GTK_DIALOG(dialog))), table);
 
   /* complain if more then one frame or gate is currently showing for ISOCONTOUR_3D */
   if (AMITK_ROI_TYPE(roi) == AMITK_ROI_TYPE_ISOCONTOUR_3D) {
@@ -921,43 +930,42 @@ static void canvas_create_isocontour_roi(AmitkCanvas * canvas, AmitkRoi * roi,
 
     /* warning for multiple frames */
     if (temp_voxel.t != amitk_data_set_get_frame(AMITK_DATA_SET(draw_on_ds), end_time)) {
-      image = gtk_image_new_from_stock(GTK_STOCK_DIALOG_WARNING,GTK_ICON_SIZE_DIALOG);
-      gtk_table_attach(GTK_TABLE(table), image, 0,1, table_row,table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
+      image = gtk_image_new_from_icon_name("dialog-warning", GTK_ICON_SIZE_DIALOG);
+      gtk_grid_attach(GTK_GRID(table), image, 0, table_row, 1, 1);
 
       temp_str = g_strdup_printf(_("Multiple data frames are currently being shown from: %s\nThe isocontour will only be drawn over frame %d"),AMITK_OBJECT_NAME(draw_on_ds), temp_voxel.t);
       label = gtk_label_new(temp_str);
       g_free(temp_str);
-      gtk_table_attach(GTK_TABLE(table), label, 1,3,table_row,table_row+1, 0, 0, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(table), label, 1, table_row, 2, 1);
       table_row++;
     }
 
     /* warning for multiple gates */
     if (AMITK_DATA_SET_VIEW_START_GATE(draw_on_ds) != AMITK_DATA_SET_VIEW_END_GATE(draw_on_ds)) {
-      image = gtk_image_new_from_stock(GTK_STOCK_DIALOG_WARNING,GTK_ICON_SIZE_DIALOG);
-      gtk_table_attach(GTK_TABLE(table), image, 0,1, table_row,table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
+      image = gtk_image_new_from_icon_name("dialog-warning", GTK_ICON_SIZE_DIALOG);
+      gtk_grid_attach(GTK_GRID(table), image, 0, table_row, 1, 1);
 
       temp_str = g_strdup_printf(_("Multiple gates are currently being shown from: %s\nThe isocontour will only be drawn over gate %d"),AMITK_OBJECT_NAME(draw_on_ds), temp_voxel.g);
       label = gtk_label_new(temp_str);
       g_free(temp_str);
-      gtk_table_attach(GTK_TABLE(table), label, 1,3, table_row,table_row+1, 0, 0, X_PADDING, Y_PADDING);
+      gtk_grid_attach(GTK_GRID(table), label, 1, table_row, 2, 1);
       table_row++;
     }
   }
 
-  image = gtk_image_new_from_stock(GTK_STOCK_DIALOG_QUESTION,GTK_ICON_SIZE_DIALOG);
-  gtk_table_attach(GTK_TABLE(table), image, 0,1, table_row,table_row+2, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
+  image = gtk_image_new_from_icon_name("dialog-question", GTK_ICON_SIZE_DIALOG);
+  gtk_grid_attach(GTK_GRID(table), image, 0, table_row, 1, 2);
 
   /* box where the radio buttons will go */
-  hbox = gtk_hbox_new(FALSE, 0);
-  gtk_table_attach(GTK_TABLE(table), hbox,1,3,
-		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+  gtk_grid_attach(GTK_GRID(table), hbox, 1, table_row, 3, 1);
   gtk_widget_show(hbox);
   table_row++;
 
 
   /* the spin buttons */
   label = gtk_label_new(_("Min:"));
-  gtk_table_attach(GTK_TABLE(table), label, 1,2, table_row,table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), label, 1, table_row, 1, 1);
 
   min_spin_button = gtk_spin_button_new_with_range(-G_MAXDOUBLE, isocontour_min_value, MAX(EPSILON,fabs(isocontour_min_value)/10));
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(min_spin_button), isocontour_min_value);
@@ -968,12 +976,12 @@ static void canvas_create_isocontour_roi(AmitkCanvas * canvas, AmitkRoi * roi,
   gtk_entry_set_activates_default(GTK_ENTRY(min_spin_button), TRUE);
   g_signal_connect(G_OBJECT(min_spin_button), "value_changed",  G_CALLBACK(value_spin_cb), &isocontour_min_value);
   g_signal_connect(G_OBJECT(min_spin_button), "output", G_CALLBACK(amitk_spin_button_scientific_output), NULL);
-  gtk_table_attach(GTK_TABLE(table), min_spin_button, 2,3, table_row,table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), min_spin_button, 2, table_row, 2, 1);
   table_row++;
 
 
   label = gtk_label_new(_("Max:"));
-  gtk_table_attach(GTK_TABLE(table), label, 1,2, table_row,table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), label, 1, table_row, 1, 1);
 
   max_spin_button = gtk_spin_button_new_with_range(isocontour_max_value, G_MAXDOUBLE, MAX(EPSILON,fabs(isocontour_max_value)/10));
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(max_spin_button), isocontour_max_value);
@@ -984,7 +992,7 @@ static void canvas_create_isocontour_roi(AmitkCanvas * canvas, AmitkRoi * roi,
   gtk_entry_set_activates_default(GTK_ENTRY(max_spin_button), TRUE);
   g_signal_connect(G_OBJECT(max_spin_button), "value_changed",  G_CALLBACK(value_spin_cb), &isocontour_max_value);
   g_signal_connect(G_OBJECT(max_spin_button), "output", G_CALLBACK(amitk_spin_button_scientific_output), NULL);
-  gtk_table_attach(GTK_TABLE(table), max_spin_button, 2,3, table_row,table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), max_spin_button, 2, table_row, 2, 1);
   table_row++;
 
   /* appropriately gray them out */
@@ -998,7 +1006,7 @@ static void canvas_create_isocontour_roi(AmitkCanvas * canvas, AmitkRoi * roi,
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(radio_button[isocontour_range]), TRUE);
 
   for (i_range=0; i_range < AMITK_ROI_ISOCONTOUR_RANGE_NUM; i_range++) {
-    gtk_box_pack_start(GTK_BOX(hbox), radio_button[i_range], FALSE, FALSE, 3);
+    gtk_box_pack_start(GTK_BOX(hbox), radio_button[i_range], TRUE, TRUE, 3);
     g_object_set_data(G_OBJECT(radio_button[i_range]), "isocontour_range", 
 		      GINT_TO_POINTER(i_range));
     g_object_set_data(G_OBJECT(radio_button[i_range]), "min_spin_button", min_spin_button);
@@ -1091,18 +1099,21 @@ static gboolean canvas_create_freehand_roi(AmitkCanvas * canvas, AmitkRoi * roi,
   dialog = gtk_dialog_new_with_buttons (_("Freehand ROI Parameters"),
 					window,
 					GTK_DIALOG_DESTROY_WITH_PARENT,
-					GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, 
-					GTK_STOCK_OK, GTK_RESPONSE_OK, 
+					_("_Cancel"), GTK_RESPONSE_CANCEL,
+					_("_OK"), GTK_RESPONSE_OK,
 					NULL);
   gtk_container_set_border_width(GTK_CONTAINER(dialog), 10);
   gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_OK);
 
-  table = gtk_table_new(4,3,FALSE);
+  table = gtk_grid_new();
+  gtk_grid_set_row_spacing(GTK_GRID(table), Y_PADDING);
+  gtk_grid_set_column_spacing(GTK_GRID(table), X_PADDING);
   table_row=0;
-  gtk_container_add(GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), table);
+  gtk_container_add(GTK_CONTAINER(gtk_dialog_get_content_area
+                                  (GTK_DIALOG(dialog))), table);
 
-  image = gtk_image_new_from_stock(GTK_STOCK_DIALOG_QUESTION,GTK_ICON_SIZE_DIALOG);
-  gtk_table_attach(GTK_TABLE(table), image, 0,1, table_row,table_row+2, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
+  image = gtk_image_new_from_icon_name("dialog-question", GTK_ICON_SIZE_DIALOG);
+  gtk_grid_attach(GTK_GRID(table), image, 0, table_row, 1, 2);
 
   /* the spin buttons */
   for (i_axis=0; i_axis<AMITK_AXIS_NUM; i_axis++) {
@@ -1110,7 +1121,7 @@ static gboolean canvas_create_freehand_roi(AmitkCanvas * canvas, AmitkRoi * roi,
     temp_str = g_strdup_printf(_("Voxel Size %s"), amitk_axis_get_name(i_axis));
     label = gtk_label_new(temp_str);
     g_free(temp_str);
-    gtk_table_attach(GTK_TABLE(table), label, 1,2, table_row,table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), label, 1, table_row, 1, 1);
 
     spin_button[i_axis] = gtk_spin_button_new_with_range(point_get_component(voxel_size, i_axis)/2,
 							 point_get_component(voxel_size, i_axis)*3,
@@ -1121,7 +1132,7 @@ static gboolean canvas_create_freehand_roi(AmitkCanvas * canvas, AmitkRoi * roi,
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button[i_axis]), FALSE);
     gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(spin_button[i_axis]), GTK_UPDATE_ALWAYS);
     gtk_entry_set_activates_default(GTK_ENTRY(spin_button[i_axis]), TRUE);
-    gtk_table_attach(GTK_TABLE(table), spin_button[i_axis], 2,3, table_row,table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), spin_button[i_axis], 2, table_row, 1, 1);
     table_row++;
   }
 
@@ -1158,13 +1169,12 @@ static gboolean canvas_create_freehand_roi(AmitkCanvas * canvas, AmitkRoi * roi,
 
 
 /* function called when an event occurs on the canvas */
-static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer data) {
+static gboolean canvas_event_cb(AmitkCanvasItem * item, AmitkCanvasItem * target, GdkEvent * event, gpointer data) {
 
   AmitkCanvas * canvas = data;
   AmitkPoint base_point, canvas_point, diff_point;
-  AmitkCanvasPoint canvas_cpoint, diff_cpoint, event_cpoint;
+  AmitkCanvasPoint canvas_cpoint, diff_cpoint;
   rgba_t outline_color;
-  //  GnomeCanvasPoints * points;
   canvas_event_t canvas_event_type;
   AmitkObject * object=NULL;
   AmitkCanvasPoint temp_cpoint[2];
@@ -1177,7 +1187,8 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
   amide_data_t voxel_value;
   AmitkHelpInfo help_info;
   ui_common_cursor_t cursor_type;
-  static GnomeCanvasItem * canvas_item = NULL;
+  AmitkCanvasItem * root;
+  static AmitkCanvasItem * canvas_item = NULL;
   static gboolean grab_on = FALSE;
   static canvas_event_t extended_event_type = CANVAS_EVENT_NONE;
   static AmitkObject * extended_object= NULL;
@@ -1233,7 +1244,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
     object = canvas->undrawn_rois->data;
   
   if (object == NULL) /* no undrawn roi's, see if we're on an object */
-    object = g_object_get_data(G_OBJECT(widget), "object");
+    object = g_object_get_data(G_OBJECT(item), "object");
   
   if (object == NULL) 
     object = canvas->active_object; /* try the active object */
@@ -1244,8 +1255,8 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
   switch(event->type) {
 
   case GDK_ENTER_NOTIFY:
-    event_cpoint.x = event->crossing.x;
-    event_cpoint.y = event->crossing.y;
+    canvas_cpoint.x = event->crossing.x_root;
+    canvas_cpoint.y = event->crossing.y_root;
 
     if (event->crossing.mode != GDK_CROSSING_NORMAL) 
       canvas_event_type = CANVAS_EVENT_NONE; /* ignore grabs */
@@ -1262,8 +1273,8 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
     break;
     
   case GDK_LEAVE_NOTIFY:
-    event_cpoint.x = event->crossing.x;
-    event_cpoint.y = event->crossing.y;
+    canvas_cpoint.x = event->crossing.x_root;
+    canvas_cpoint.y = event->crossing.y_root;
     if (event->crossing.mode != GDK_CROSSING_NORMAL)
       canvas_event_type = CANVAS_EVENT_NONE; /* ignore grabs */
     else if (extended_event_type != CANVAS_EVENT_NONE)
@@ -1273,8 +1284,8 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
     break;
 
   case GDK_BUTTON_PRESS:
-    event_cpoint.x = event->button.x;
-    event_cpoint.y = event->button.y;
+    canvas_cpoint.x = event->button.x_root;
+    canvas_cpoint.y = event->button.y_root;
 
     if (enter_drawing_mode) {
       canvas_event_type = CANVAS_EVENT_PRESS_ENTER_DRAWING_MODE;
@@ -1350,8 +1361,8 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
     break;
     
   case GDK_MOTION_NOTIFY:
-    event_cpoint.x = event->motion.x;
-    event_cpoint.y = event->motion.y;
+    canvas_cpoint.x = event->motion.x_root;
+    canvas_cpoint.y = event->motion.y_root;
 
     if (grab_on && (canvas->undrawn_rois != NULL))  {
       canvas_event_type = CANVAS_EVENT_MOTION_NEW_ROI;
@@ -1424,8 +1435,8 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
     break;
     
   case GDK_BUTTON_RELEASE:
-    event_cpoint.x = event->button.x;
-    event_cpoint.y = event->button.y;
+    canvas_cpoint.x = event->button.x_root;
+    canvas_cpoint.y = event->button.y_root;
 
     if (canvas->undrawn_rois != NULL) {
       canvas_event_type = CANVAS_EVENT_RELEASE_NEW_ROI;
@@ -1522,7 +1533,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
     break;
 
   case GDK_SCROLL: /* scroll wheel event */
-    event_cpoint.x = event_cpoint.y = 0;
+    canvas_cpoint.x = canvas_cpoint.y = 0;
     if (event->scroll.direction == GDK_SCROLL_UP)
       canvas_event_type = CANVAS_EVENT_SCROLL_UP;
     else if (event->scroll.direction == GDK_SCROLL_DOWN)
@@ -1532,7 +1543,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
     break;
     
   default: 
-    event_cpoint.x = event_cpoint.y = 0;
+    canvas_cpoint.x = canvas_cpoint.y = 0;
     /* an event we don't handle */
     canvas_event_type = CANVAS_EVENT_NONE;
     break;
@@ -1545,9 +1556,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
   //    g_print("%s event %d grab %d gdk %d in_object %d\n", AMITK_IS_OBJECT(object) ? AMITK_OBJECT_NAME(object) : "line_profile", 
   //	    canvas_event_type, grab_on, event->type, in_object);
 
-  /* get the location of the event, and convert it to the canvas coordinates */
-  gnome_canvas_window_to_world(GNOME_CANVAS(canvas->canvas), event_cpoint.x, event_cpoint.y, &canvas_cpoint.x, &canvas_cpoint.y);
-  gnome_canvas_w2c_d(GNOME_CANVAS(canvas->canvas), canvas_cpoint.x, canvas_cpoint.y, &canvas_cpoint.x, &canvas_cpoint.y);
+  root = amitk_simple_canvas_get_root_item(AMITK_SIMPLE_CANVAS(canvas->canvas));
 
   /* Convert the event location info to real units */
   canvas_point = cp_2_p(canvas, canvas_cpoint);
@@ -1666,8 +1675,11 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
     initial_base_point = base_point;
     canvas_update_target(canvas, AMITK_CANVAS_TARGET_ACTION_SHOW, base_point, corner);
     /* grabbing the target doesn't quite work, double click events aren't handled correctly */
-    gnome_canvas_item_grab(canvas->image, GDK_POINTER_MOTION_MASK | GDK_BUTTON_RELEASE_MASK |GDK_BUTTON_PRESS_MASK ,
-    			   ui_common_cursor[UI_CURSOR_DATA_SET_MODE], event->button.time);
+    amitk_simple_canvas_pointer_grab(AMITK_SIMPLE_CANVAS(canvas->canvas), canvas->image,
+                            GDK_POINTER_MOTION_MASK | GDK_BUTTON_RELEASE_MASK
+                            | GDK_BUTTON_PRESS_MASK,
+                            ui_common_cursor[UI_CURSOR_DATA_SET_MODE],
+                            event->button.time);
     g_signal_emit(G_OBJECT (canvas), canvas_signals[VIEW_CHANGING], 0, &base_point, corner);
     break;
 
@@ -1696,13 +1708,11 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
       initial_canvas_point = canvas_point;
       previous_cpoint = canvas_cpoint;
 
-      canvas_item = gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(canvas->canvas)),
-					  gnome_canvas_pixbuf_get_type(),
-					  "pixbuf",pixbuf,
-					  "x", (double) canvas->border_width,
-					  "y", (double) canvas->border_width,
-					  NULL);
-      g_signal_connect(G_OBJECT(canvas_item), "event", G_CALLBACK(canvas_event_cb), canvas);
+      canvas_item = amitk_canvas_image_new(root, pixbuf,
+                                         (gdouble) canvas->border_width,
+                                         (gdouble) canvas->border_width,
+                                         NULL);
+      canvas_setup_handlers(canvas, canvas_item);
       g_object_unref(pixbuf);
     }
 
@@ -1728,19 +1738,25 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
     case AMITK_ROI_TYPE_CYLINDER:
       g_signal_emit(G_OBJECT (canvas), canvas_signals[HELP_EVENT], 0,
 		    AMITK_HELP_INFO_CANVAS_NEW_ROI, &base_point, 0.0);
-      canvas_item = 
-	gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(canvas->canvas)),
-			      (AMITK_ROI_TYPE(object) == AMITK_ROI_TYPE_BOX) ?
-			      gnome_canvas_rect_get_type() : gnome_canvas_ellipse_get_type(),
-			      "x1",canvas_cpoint.x, "y1", canvas_cpoint.y, 
-			      "x2", canvas_cpoint.x, "y2", canvas_cpoint.y,
-			      "fill_color", NULL,
-			      "outline_color_rgba", amitk_color_table_rgba_to_uint32(outline_color),
-			      "width_pixels", AMITK_STUDY_CANVAS_ROI_WIDTH(canvas->study),
-			      NULL);
-      g_signal_connect(G_OBJECT(canvas_item), "event", G_CALLBACK(canvas_event_cb), canvas);
+      if (AMITK_ROI_TYPE(object) == AMITK_ROI_TYPE_BOX)
+        canvas_item =
+          amitk_canvas_rect_new(root, canvas_cpoint.x, canvas_cpoint.y, 0, 0,
+                              "stroke-color-rgba",
+                              amitk_color_table_rgba_to_uint32(outline_color),
+                              "line-width",
+                              (gdouble) AMITK_STUDY_CANVAS_ROI_WIDTH(canvas->study),
+                              NULL);
+      else
+        canvas_item =
+          amitk_canvas_ellipse_new(root, canvas_cpoint.x, canvas_cpoint.y, 0, 0,
+                                 "stroke-color-rgba",
+                                 amitk_color_table_rgba_to_uint32(outline_color),
+                                 "line-width",
+                                 (gdouble) AMITK_STUDY_CANVAS_ROI_WIDTH(canvas->study),
+                                 NULL);
+      canvas_setup_handlers(canvas, canvas_item);
       grab_on = TRUE;
-      gnome_canvas_item_grab(canvas_item,
+      amitk_simple_canvas_pointer_grab(AMITK_SIMPLE_CANVAS(canvas->canvas), canvas_item,
 			     GDK_POINTER_MOTION_MASK | GDK_BUTTON_RELEASE_MASK,
 			     ui_common_cursor[UI_CURSOR_ROI_MODE],
 			     event->button.time);
@@ -1794,8 +1810,9 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 		  AMITK_HELP_INFO_UPDATE_LOCATION, &base_point, voxel_value);
 
     grab_on = TRUE;
-    canvas_item = GNOME_CANVAS_ITEM(widget); 
-    gnome_canvas_item_grab(canvas_item, GDK_POINTER_MOTION_MASK | GDK_BUTTON_RELEASE_MASK, 
+    canvas_item = item;
+    amitk_simple_canvas_pointer_grab(AMITK_SIMPLE_CANVAS(canvas->canvas), canvas_item,
+                            GDK_POINTER_MOTION_MASK | GDK_BUTTON_RELEASE_MASK,
 			   ui_common_cursor[cursor_type], event->button.time);
 
     initial_base_point = base_point;
@@ -1899,8 +1916,8 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
   case CANVAS_EVENT_PRESS_ERASE_POINT:
   case CANVAS_EVENT_PRESS_ERASE_LARGE_POINT:
     grab_on = TRUE;
-    canvas_item = GNOME_CANVAS_ITEM(widget);
-    gnome_canvas_item_grab(canvas_item,
+    canvas_item = item;
+    amitk_simple_canvas_pointer_grab(AMITK_SIMPLE_CANVAS(canvas->canvas), canvas_item,
     			   GDK_POINTER_MOTION_MASK | GDK_BUTTON_RELEASE_MASK,
     			   ui_common_cursor[UI_CURSOR_ROI_DRAW], event->button.time);
     /* and fall through */
@@ -1947,8 +1964,12 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 	temp_cpoint[0] = canvas_point_sub(initial_cpoint, diff_cpoint);
 	temp_cpoint[1] = canvas_point_add(initial_cpoint, diff_cpoint);
       }
-      gnome_canvas_item_set(canvas_item, "x1", temp_cpoint[0].x, "y1", temp_cpoint[0].y,
-			    "x2", temp_cpoint[1].x, "y2", temp_cpoint[1].y,NULL);
+      /* Using fabs is probably wrong here but occasionally there are
+         some warnings for invalid width/height.  I couldn't find a
+         reliable way to reproduce this...  */
+      canvas_item_set(canvas_item, "x", temp_cpoint[0].x, "y", temp_cpoint[0].y,
+                   "width", fabs(temp_cpoint[1].x - temp_cpoint[0].x),
+                   "height", fabs(temp_cpoint[1].y - temp_cpoint[0].y), NULL);
       break;
     case AMITK_ROI_TYPE_ISOCONTOUR_2D:
     case AMITK_ROI_TYPE_ISOCONTOUR_3D:
@@ -1977,8 +1998,10 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 		    AMITK_HELP_INFO_UPDATE_LOCATION, &base_point, voxel_value);
 
     diff_cpoint = canvas_point_sub(canvas_cpoint, previous_cpoint);
-    gnome_canvas_item_i2w(canvas_item->parent, &diff_cpoint.x, &diff_cpoint.y);
-    gnome_canvas_item_move(canvas_item,diff_cpoint.x,diff_cpoint.y); 
+    amitk_simple_canvas_convert_from_item_space(AMITK_SIMPLE_CANVAS(canvas->canvas),
+                                       amitk_canvas_item_get_parent(canvas_item),
+                                       &diff_cpoint.x, &diff_cpoint.y);
+    amitk_canvas_item_translate(canvas_item, diff_cpoint.x, diff_cpoint.y);
     previous_cpoint = canvas_cpoint;
     break;
 
@@ -1990,6 +2013,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 	 but this isn't defined in the current version of gnome.... 
 	 so I'll have to do a whole bunch of shit*/
       double affine[6];
+      cairo_matrix_t matrix;
       AmitkCanvasPoint item_center;
       AmitkPoint center;
       
@@ -2016,7 +2040,9 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
       affine[3] = affine[0];
       affine[4] = (1.0-affine[0])*item_center.x+affine[1]*item_center.y;
       affine[5] = (1.0-affine[3])*item_center.y+affine[2]*item_center.x;
-      gnome_canvas_item_affine_absolute(canvas_item,affine);
+      cairo_matrix_init(&matrix, affine[0], affine[1], affine[2],
+                        affine[3], affine[4], affine[5]);
+      amitk_canvas_item_set_transform(canvas_item, &matrix);
     }
     g_signal_emit(G_OBJECT (canvas), canvas_signals[HELP_EVENT], 0,
 		  AMITK_HELP_INFO_UPDATE_THETA, &base_point, theta*180.0/M_PI);
@@ -2034,6 +2060,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
       /* also, this "zoom" strategy doesn't always work if the object is not
 	 aligned with the view.... oh well... good enough for now... */
       double affine[6];
+      cairo_matrix_t matrix;
       AmitkCanvasPoint item_center;
       amide_real_t jump_limit, max, temp, dot;
       double cos_r, sin_r, rot;
@@ -2149,7 +2176,9 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 	- item_center.x*canvas_zoom.y*sin_r*sin_r + (canvas_zoom.y-canvas_zoom.x)*item_center.y*cos_r*sin_r;
       affine[5] = item_center.y - item_center.y*canvas_zoom.y*cos_r*cos_r 
 	- item_center.y*canvas_zoom.x*sin_r*sin_r + (canvas_zoom.y-canvas_zoom.x)*item_center.x*cos_r*sin_r;
-      gnome_canvas_item_affine_absolute(canvas_item,affine);
+      cairo_matrix_init(&matrix, affine[0], affine[1], affine[2],
+                        affine[3], affine[4], affine[5]);
+      amitk_canvas_item_set_transform(canvas_item, &matrix);
     }
     break;
 
@@ -2159,7 +2188,8 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
     g_signal_emit(G_OBJECT (canvas), canvas_signals[HELP_EVENT], 0,
 		  AMITK_HELP_INFO_UPDATE_LOCATION, &base_point, voxel_value);
     grab_on = FALSE;
-    gnome_canvas_item_ungrab(canvas->image, event->button.time);
+    amitk_simple_canvas_pointer_ungrab(AMITK_SIMPLE_CANVAS(canvas->canvas), canvas->image,
+                              event->button.time);
     /* queue target cross redraw */
     amitk_canvas_update_target(canvas, AMITK_CANVAS_TARGET_ACTION_HIDE, base_point, 0.0);
 
@@ -2197,7 +2227,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
     g_signal_emit(G_OBJECT (canvas), canvas_signals[HELP_EVENT], 0,help_info, &base_point, 0.0);
     extended_event_type = CANVAS_EVENT_NONE;
     extended_object = NULL;
-    gtk_object_destroy(GTK_OBJECT(canvas_item));
+    amitk_canvas_item_remove(canvas_item);
     break;
 
   case CANVAS_EVENT_CANCEL_CHANGE_ISOCONTOUR:
@@ -2214,7 +2244,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
     else /* DATA_SET */
       help_info = AMITK_HELP_INFO_CANVAS_DATA_SET;
     g_signal_emit(G_OBJECT (canvas), canvas_signals[HELP_EVENT], 0,help_info, &base_point, 0.0);
-    gtk_object_destroy(GTK_OBJECT(canvas_item));
+    amitk_canvas_item_remove(canvas_item);
     extended_event_type = CANVAS_EVENT_NONE;
     extended_object = NULL;
 
@@ -2257,12 +2287,13 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
     case AMITK_ROI_TYPE_CYLINDER:
     case AMITK_ROI_TYPE_BOX:
     case AMITK_ROI_TYPE_ELLIPSOID:  
-      gnome_canvas_item_ungrab(canvas_item, event->button.time);
+      amitk_simple_canvas_pointer_ungrab(AMITK_SIMPLE_CANVAS(canvas->canvas), canvas_item,
+                                event->button.time);
 
       diff_point = point_diff(initial_canvas_point, canvas_point);
       diff_point.z = canvas_check_z_dimension(canvas, AMITK_VOLUME_Z_CORNER(canvas->volume));
       diff_point.z /= 2;
-      gtk_object_destroy(GTK_OBJECT(canvas_item)); /* get rid of the roi drawn on the canvas */
+      amitk_canvas_item_remove(canvas_item); /* get rid of the roi drawn on the canvas */
       
 
       if (event->button.button == 1) { /* edge to edge */
@@ -2323,7 +2354,8 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 
 
   case CANVAS_EVENT_RELEASE_SHIFT_OBJECT_IMMEDIATE:
-    gnome_canvas_item_ungrab(GNOME_CANVAS_ITEM(widget), event->button.time);
+    amitk_simple_canvas_pointer_ungrab(AMITK_SIMPLE_CANVAS(canvas->canvas), item,
+                              event->button.time);
     grab_on = FALSE;
     shift = point_sub(base_point, initial_base_point);
     
@@ -2350,7 +2382,8 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 
 
   case CANVAS_EVENT_RELEASE_ROTATE_OBJECT_IMMEDIATE:
-    gnome_canvas_item_ungrab(GNOME_CANVAS_ITEM(widget), event->button.time);
+    amitk_simple_canvas_pointer_ungrab(AMITK_SIMPLE_CANVAS(canvas->canvas), item,
+                              event->button.time);
     grab_on = FALSE;
     if (canvas->view == AMITK_VIEW_SAGITTAL) theta = -theta; /* sagittal is a left-handed coord frame */
     
@@ -2368,7 +2401,8 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 
 
   case CANVAS_EVENT_RELEASE_RESIZE_ROI:
-    gnome_canvas_item_ungrab(GNOME_CANVAS_ITEM(widget), event->button.time);
+    amitk_simple_canvas_pointer_ungrab(AMITK_SIMPLE_CANVAS(canvas->canvas), item,
+                              event->button.time);
     grab_on = FALSE;
     
     radius_point = point_cmult(0.5,AMITK_VOLUME_CORNER(object));
@@ -2385,7 +2419,8 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
   case CANVAS_EVENT_RELEASE_DRAW_LARGE_POINT:
   case CANVAS_EVENT_RELEASE_ERASE_POINT:
   case CANVAS_EVENT_RELEASE_ERASE_LARGE_POINT:
-    gnome_canvas_item_ungrab(GNOME_CANVAS_ITEM(widget), event->button.time);
+    amitk_simple_canvas_pointer_ungrab(AMITK_SIMPLE_CANVAS(canvas->canvas), item,
+                              event->button.time);
     grab_on = FALSE;
     break;
 
@@ -2416,14 +2451,28 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 }
 
 
+static void canvas_setup_handlers(AmitkCanvas * canvas, AmitkCanvasItem * item) {
 
+  g_signal_connect(item, "button-press-event",
+                   G_CALLBACK(canvas_event_cb), canvas);
+  g_signal_connect(item, "button-release-event",
+                   G_CALLBACK(canvas_event_cb), canvas);
+  g_signal_connect(item, "enter-notify-event",
+                   G_CALLBACK(canvas_event_cb), canvas);
+  g_signal_connect(item, "leave-notify-event",
+                   G_CALLBACK(canvas_event_cb), canvas);
+  g_signal_connect(item, "motion-notify-event",
+                   G_CALLBACK(canvas_event_cb), canvas);
+  g_signal_connect(item, "scroll-event",
+                   G_CALLBACK(canvas_event_cb), canvas);
+}
 
 
 
 
 
 /* function called indicating the plane adjustment has changed */
-static void canvas_scrollbar_adjustment_cb(GtkObject * adjustment, gpointer data) {
+static void canvas_scrollbar_adjustment_cb(GtkAdjustment * adjustment, gpointer data) {
 
   AmitkCanvas * canvas = data;
   AmitkPoint canvas_center;
@@ -2431,7 +2480,7 @@ static void canvas_scrollbar_adjustment_cb(GtkObject * adjustment, gpointer data
   g_return_if_fail(AMITK_IS_CANVAS(canvas));
 
   canvas_center = amitk_space_b2s(AMITK_SPACE(canvas->volume), canvas->center);
-  canvas_center.z = GTK_ADJUSTMENT(adjustment)->value;
+  canvas_center.z = gtk_adjustment_get_value(adjustment);
   canvas->center = amitk_space_s2b(AMITK_SPACE(canvas->volume), canvas_center);
 
   canvas_add_update(canvas, UPDATE_ALL);
@@ -2529,17 +2578,13 @@ static void canvas_update_scrollbar(AmitkCanvas * canvas, AmitkPoint center, ami
   }
   
   
-  GTK_ADJUSTMENT(canvas->scrollbar_adjustment)->upper = upper;
-  GTK_ADJUSTMENT(canvas->scrollbar_adjustment)->lower = lower;
-  GTK_ADJUSTMENT(canvas->scrollbar_adjustment)->step_increment = min_voxel_size;
-  GTK_ADJUSTMENT(canvas->scrollbar_adjustment)->page_increment = (thickness/2.0 < min_voxel_size) ? min_voxel_size : thickness/2.0;
-  GTK_ADJUSTMENT(canvas->scrollbar_adjustment)->page_size = 0;
-  GTK_ADJUSTMENT(canvas->scrollbar_adjustment)->value = zp_start.z;
-
   /* allright, we need to update widgets connected to the adjustment without triggering our callback */
   g_signal_handlers_block_by_func(G_OBJECT(canvas->scrollbar_adjustment),
 				   G_CALLBACK(canvas_scrollbar_adjustment_cb), canvas);
-  gtk_adjustment_changed(GTK_ADJUSTMENT(canvas->scrollbar_adjustment));  
+  gtk_adjustment_configure(canvas->scrollbar_adjustment, zp_start.z,
+                           lower, upper, min_voxel_size,
+                           (thickness/2.0 < min_voxel_size)
+                           ? min_voxel_size : thickness/2.0, 0);
   g_signal_handlers_unblock_by_func(G_OBJECT(canvas->scrollbar_adjustment), 
 				     G_CALLBACK(canvas_scrollbar_adjustment_cb), canvas);
 
@@ -2551,7 +2596,8 @@ static void canvas_update_scrollbar(AmitkCanvas * canvas, AmitkPoint center, ami
 static void canvas_update_target(AmitkCanvas * canvas, AmitkCanvasTargetAction action, 
 				 AmitkPoint center, amide_real_t thickness) {
 
-  GnomeCanvasPoints * points[8];
+  AmitkCanvasPoints * points[8];
+  AmitkCanvasItem * root;
   AmitkCanvasPoint point0, point1;
   AmitkPoint start, end;
   gint i;
@@ -2564,7 +2610,9 @@ static void canvas_update_target(AmitkCanvas * canvas, AmitkCanvasTargetAction a
       ((action == AMITK_CANVAS_TARGET_ACTION_HIDE) && 
        (!AMITK_STUDY_CANVAS_TARGET(canvas->study)))) {
     for (i=0; i < 8 ; i++) 
-      if (canvas->target[i] != NULL) gnome_canvas_item_hide(canvas->target[i]);
+      if (canvas->target[i] != NULL)
+        canvas_item_set(canvas->target[i], "visibility",
+                     AMITK_CANVAS_ITEM_INVISIBLE, NULL);
     return;
   }
   if (((action == AMITK_CANVAS_TARGET_ACTION_HIDE) && AMITK_STUDY_CANVAS_TARGET(canvas->study)) ||
@@ -2590,28 +2638,28 @@ static void canvas_update_target(AmitkCanvas * canvas, AmitkCanvasTargetAction a
   else
     separation = 0.0;
     
-  points[0] = gnome_canvas_points_new(2);
+  points[0] = amitk_canvas_points_new(2);
   points[0]->coords[0] = (gdouble) canvas->border_width;
   points[0]->coords[1] = point1.y;
   points[0]->coords[2] = 
     ((point0.x-separation) > canvas->border_width) ? (point0.x-separation) : canvas->border_width;
   points[0]->coords[3] = point1.y;
 
-  points[1] = gnome_canvas_points_new(2);
+  points[1] = amitk_canvas_points_new(2);
   points[1]->coords[0] = point0.x;
   points[1]->coords[1] = 
     ((point1.y-separation) > canvas->border_width) ? (point1.y-separation) : canvas->border_width;
   points[1]->coords[2] = point0.x;
   points[1]->coords[3] = (gdouble) canvas->border_width;
     
-  points[2] = gnome_canvas_points_new(2);
+  points[2] = amitk_canvas_points_new(2);
   points[2]->coords[0] = point1.x;
   points[2]->coords[1] = (gdouble) canvas->border_width;
   points[2]->coords[2] = point1.x;
   points[2]->coords[3] =
     ((point1.y-separation) > canvas->border_width) ? (point1.y-separation) : canvas->border_width;
 
-  points[3] = gnome_canvas_points_new(2);
+  points[3] = amitk_canvas_points_new(2);
   points[3]->coords[0] = 
     ((point1.x+separation) < canvas->pixbuf_width+canvas->border_width) ? 
     (point1.x+separation) : canvas->pixbuf_width+canvas->border_width;
@@ -2619,14 +2667,14 @@ static void canvas_update_target(AmitkCanvas * canvas, AmitkCanvasTargetAction a
   points[3]->coords[2] = (gdouble) (canvas->pixbuf_width+canvas->border_width);
   points[3]->coords[3] = point1.y;
   
-  points[4] = gnome_canvas_points_new(2);
+  points[4] = amitk_canvas_points_new(2);
   points[4]->coords[0] = (gdouble) canvas->border_width;
   points[4]->coords[1] = point0.y;
   points[4]->coords[2] = 
     ((point0.x-separation) > canvas->border_width) ? (point0.x-separation) : canvas->border_width;
   points[4]->coords[3] = point0.y;
 
-  points[5] = gnome_canvas_points_new(2);
+  points[5] = amitk_canvas_points_new(2);
   points[5]->coords[0] = point0.x;
   points[5]->coords[1] = 
     ((point0.y+separation) < canvas->pixbuf_height+canvas->border_width) ? 
@@ -2634,7 +2682,7 @@ static void canvas_update_target(AmitkCanvas * canvas, AmitkCanvasTargetAction a
   points[5]->coords[2] = point0.x;
   points[5]->coords[3] = (gdouble) (canvas->pixbuf_height+canvas->border_width);
   
-  points[6] = gnome_canvas_points_new(2);
+  points[6] = amitk_canvas_points_new(2);
   points[6]->coords[0] = point1.x;
   points[6]->coords[1] = (gdouble) (canvas->pixbuf_height+canvas->border_width);
   points[6]->coords[2] = point1.x;
@@ -2642,7 +2690,7 @@ static void canvas_update_target(AmitkCanvas * canvas, AmitkCanvasTargetAction a
     ((point0.y+separation) < canvas->pixbuf_height+canvas->border_width) ? 
     (point0.y+separation) : canvas->pixbuf_height+canvas->border_width;
 
-  points[7] = gnome_canvas_points_new(2);
+  points[7] = amitk_canvas_points_new(2);
   points[7]->coords[0] = 
     ((point1.x+separation) < canvas->pixbuf_width+canvas->border_width) ? 
     (point1.x+separation) : canvas->pixbuf_width+canvas->border_width;
@@ -2650,24 +2698,26 @@ static void canvas_update_target(AmitkCanvas * canvas, AmitkCanvasTargetAction a
   points[7]->coords[2] = (gdouble) (canvas->pixbuf_width+canvas->border_width);
   points[7]->coords[3] = point0.y;
 
+  root = amitk_simple_canvas_get_root_item(AMITK_SIMPLE_CANVAS(canvas->canvas));
   for (i=0; i<8; i++) {
     if (canvas->target[i]==NULL) {
       canvas->target[i] =
-	gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(canvas->canvas)),
-			      gnome_canvas_line_get_type(),
-			      "points", points[i], 
-			      "fill_color_rgba", amitk_color_table_rgba_to_uint32(color),
-			      "width_pixels", 1, NULL);
-      g_signal_connect(G_OBJECT(canvas->target[i]), "event", G_CALLBACK(canvas_event_cb), canvas);
+        amitk_canvas_polyline_new(root, FALSE, 0, "points", points[i],
+                                "stroke-color-rgba",
+                                amitk_color_table_rgba_to_uint32(color),
+                                "line-width", 1.0, NULL);
+      canvas_setup_handlers(canvas, canvas->target[i]);
     } else if (action == AMITK_CANVAS_TARGET_ACTION_SHOW)
-      gnome_canvas_item_set(canvas->target[i],"points",points[i], 
-			    "fill_color_rgba", amitk_color_table_rgba_to_uint32(color),
-			    "width_pixels", 1, NULL);
+      canvas_item_set(canvas->target[i], "points", points[i],
+                   "stroke-color-rgba", amitk_color_table_rgba_to_uint32(color),
+                   "line-width", 1.0, NULL);
     else 
-      gnome_canvas_item_set(canvas->target[i],"points",points[i], 
-			    "fill_color_rgba", amitk_color_table_rgba_to_uint32(color), NULL);
-    gnome_canvas_item_show(canvas->target[i]);
-    gnome_canvas_points_unref(points[i]);
+      canvas_item_set(canvas->target[i], "points", points[i],
+                   "stroke-color-rgba", amitk_color_table_rgba_to_uint32(color),
+                   NULL);
+    canvas_item_set(canvas->target[i], "visibility", AMITK_CANVAS_ITEM_VISIBLE,
+                 NULL);
+    amitk_canvas_points_unref(points[i]);
   }
 
   return;
@@ -2679,7 +2729,8 @@ static void canvas_update_target(AmitkCanvas * canvas, AmitkCanvasTargetAction a
 /* function to update the arrows on the canvas */
 static void canvas_update_arrows(AmitkCanvas * canvas) {
 
-  GnomeCanvasPoints * points[4];
+  AmitkCanvasPoints * points[4];
+  AmitkCanvasItem * root;
   AmitkCanvasPoint point0, point1;
   AmitkPoint start, end;
   gint i;
@@ -2691,7 +2742,8 @@ static void canvas_update_arrows(AmitkCanvas * canvas) {
   if (canvas->slices == NULL) {
     for (i=0; i<4; i++)
       if (canvas->arrows[i] != NULL)
-	gnome_canvas_item_hide(canvas->arrows[i]);
+        canvas_item_set(canvas->arrows[i], "visibility",
+                     AMITK_CANVAS_ITEM_INVISIBLE, NULL);
     return;
   }
 
@@ -2714,7 +2766,7 @@ static void canvas_update_arrows(AmitkCanvas * canvas) {
      3) X's origin is top left, ours is bottom left
   */
   /* left arrow */
-  points[0] = gnome_canvas_points_new(4);
+  points[0] = amitk_canvas_points_new(4);
   points[0]->coords[0] = DEFAULT_CANVAS_BORDER_WIDTH-DEFAULT_CANVAS_TRIANGLE_SEPARATION;
   points[0]->coords[1] = point1.y;
   points[0]->coords[2] = points[0]->coords[0];
@@ -2725,7 +2777,7 @@ static void canvas_update_arrows(AmitkCanvas * canvas) {
   points[0]->coords[7] = point1.y - DEFAULT_CANVAS_TRIANGLE_WIDTH/2.0;
 
   /* top arrow */
-  points[1] = gnome_canvas_points_new(4);
+  points[1] = amitk_canvas_points_new(4);
   points[1]->coords[0] = point0.x;
   points[1]->coords[1] = DEFAULT_CANVAS_BORDER_WIDTH-DEFAULT_CANVAS_TRIANGLE_SEPARATION;
   points[1]->coords[2] = point1.x;
@@ -2736,7 +2788,7 @@ static void canvas_update_arrows(AmitkCanvas * canvas) {
   points[1]->coords[7] = DEFAULT_CANVAS_TRIANGLE_BORDER;
 
   /* right arrow */
-  points[2] = gnome_canvas_points_new(4);
+  points[2] = amitk_canvas_points_new(4);
   points[2]->coords[0] = DEFAULT_CANVAS_BORDER_WIDTH + DEFAULT_CANVAS_TRIANGLE_SEPARATION + canvas->pixbuf_width;
   points[2]->coords[1] = point1.y;
   points[2]->coords[2] = points[2]->coords[0];
@@ -2747,7 +2799,7 @@ static void canvas_update_arrows(AmitkCanvas * canvas) {
   points[2]->coords[7] = point1.y - DEFAULT_CANVAS_TRIANGLE_WIDTH/2;
 
   /* bottom arrow */
-  points[3] = gnome_canvas_points_new(4);
+  points[3] = amitk_canvas_points_new(4);
   points[3]->coords[0] = point0.x;
   points[3]->coords[1] = DEFAULT_CANVAS_BORDER_WIDTH + DEFAULT_CANVAS_TRIANGLE_SEPARATION + canvas->pixbuf_height;
   points[3]->coords[2] = point1.x;
@@ -2758,18 +2810,19 @@ static void canvas_update_arrows(AmitkCanvas * canvas) {
   points[3]->coords[7] = points[3]->coords[5];
 
 
+  root = amitk_simple_canvas_get_root_item(AMITK_SIMPLE_CANVAS(canvas->canvas));
   for (i=0; i<4; i++) {
     if (canvas->arrows[i] != NULL ) 
-      gnome_canvas_item_set(canvas->arrows[i],"points",points[i], NULL);
+      canvas_item_set(canvas->arrows[i], "points", points[i], NULL);
     else 
       canvas->arrows[i] =
-	gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(canvas->canvas)),
-			      gnome_canvas_polygon_get_type(),
-			      "points", points[i],"fill_color", "white",
-			      "outline_color", "black", "width_pixels", 2,
-			      NULL);
-    gnome_canvas_item_show(canvas->arrows[i]);
-    gnome_canvas_points_unref(points[i]);
+        amitk_canvas_polyline_new(root, TRUE, 0, "fill-color", "white",
+                                "stroke-color", "black",
+                                "points", points[i], "line-width", 2.0,
+                                NULL);
+    canvas_item_set(canvas->arrows[i], "visibility",
+                 AMITK_CANVAS_ITEM_VISIBLE, NULL);
+    amitk_canvas_points_unref(points[i]);
   }
 
   return;
@@ -2779,19 +2832,16 @@ static void canvas_update_arrows(AmitkCanvas * canvas) {
 /* function to update the line profile on the canvas */
 static void canvas_update_line_profile(AmitkCanvas * canvas) {
 
-  GnomeCanvasPoints * points;
+  AmitkCanvasPoints * points;
+  AmitkCanvasItem * root;
   AmitkCanvasPoint point0, point1;
   AmitkPoint start, end;
   amide_real_t temp;
   amide_real_t profile_angle;
-  gint roi_width;
-#ifndef AMIDE_LIBGNOMECANVAS_AA
-  GdkLineStyle line_style;
-#endif
+  gdouble roi_width;
   guint32 fill_color_rgba;
   rgba_t outline_color;
   AmitkLineProfile * line_profile;
-  gdouble affine[6];
   AmitkPoint initial;
   
 
@@ -2807,7 +2857,8 @@ static void canvas_update_line_profile(AmitkCanvas * canvas) {
     time */
 
     if (canvas->line_profile_item != NULL)
-      gnome_canvas_item_hide(canvas->line_profile_item);
+      canvas_item_set(canvas->line_profile_item, "visibility",
+                   AMITK_CANVAS_ITEM_INVISIBLE, NULL);
     return;
   }
 
@@ -2880,7 +2931,7 @@ static void canvas_update_line_profile(AmitkCanvas * canvas) {
   amitk_line_profile_set_end_point(AMITK_STUDY_LINE_PROFILE(canvas->study), end);
 
   /* calculate the line */
-  points = gnome_canvas_points_new(2);
+  points = amitk_canvas_points_new(2);
   points->coords[0] = point0.x;
   points->coords[1] = point0.y;
   points->coords[2] = point1.x;
@@ -2888,49 +2939,35 @@ static void canvas_update_line_profile(AmitkCanvas * canvas) {
 
 
   roi_width = AMITK_STUDY_CANVAS_ROI_WIDTH(canvas->study);
-#ifndef AMIDE_LIBGNOMECANVAS_AA
-  line_style = AMITK_STUDY_CANVAS_LINE_STYLE(canvas->study);
-#endif
   outline_color = amitk_color_table_outline_color(canvas_get_color_table(canvas), TRUE);
   fill_color_rgba = amitk_color_table_rgba_to_uint32(outline_color);
+  root = amitk_simple_canvas_get_root_item(AMITK_SIMPLE_CANVAS(canvas->canvas));
 
   if (canvas->line_profile_item != NULL ) {
     /* make sure to reset any affine translations we've done */
-    gnome_canvas_item_i2w_affine(canvas->line_profile_item,affine);
-    affine[0] = affine[3] = 1.0;
-    affine[1] = affine[2] = affine[4] = affine[5] = 0.0;
-    gnome_canvas_item_affine_absolute(canvas->line_profile_item,affine);
+    amitk_canvas_item_set_transform(canvas->line_profile_item, NULL);
 
-    gnome_canvas_item_set(canvas->line_profile_item,
-			  "points",points, 
-			  "fill_color_rgba", fill_color_rgba,
-			  "width_pixels", roi_width, 
-#ifndef AMIDE_LIBGNOMECANVAS_AA
-			  "line_style", line_style,  
-#endif
-			  NULL);
+    canvas_item_set(canvas->line_profile_item, "points", points,
+                 "stroke-color-rgba", fill_color_rgba,
+                 "line-width", roi_width, NULL);
   } else {
-    canvas->line_profile_item = 
-      gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(canvas->canvas)),
-			    gnome_canvas_line_get_type(),
-			    "points", points,
-			    "fill_color_rgba", fill_color_rgba,
-			    "width_pixels", roi_width,
-			    "last_arrowhead", TRUE,
-			    "arrow_shape_a", (gdouble) 6.0,
-			    "arrow_shape_b", (gdouble) 5.0,
-			    "arrow_shape_c", (gdouble) 4.0,
-#ifndef AMIDE_LIBGNOMECANVAS_AA
-			    "line_style", line_style,
-#endif
-			    NULL);
+    canvas->line_profile_item =
+      amitk_canvas_polyline_new(root, FALSE, 0, "points", points,
+                              "stroke-color-rgba", fill_color_rgba,
+                              "line-width", roi_width,
+                              "end-arrow", TRUE,
+                              "arrow-length", 6.0,
+                              "arrow-tip-length", 5.0,
+                              "arrow-width", 4.0,
+                              NULL);
     g_object_set_data(G_OBJECT(canvas->line_profile_item), "object", line_profile);
-    g_signal_connect(G_OBJECT(canvas->line_profile_item), "event", G_CALLBACK(canvas_event_cb), canvas);
+    canvas_setup_handlers(canvas, canvas->line_profile_item);
   }
 
   
-  gnome_canvas_item_show(canvas->line_profile_item);
-  gnome_canvas_points_unref(points);
+  canvas_item_set(canvas->line_profile_item, "visibility",
+               AMITK_CANVAS_ITEM_VISIBLE, NULL);
+  amitk_canvas_points_unref(points);
 
   return;
 }
@@ -2939,6 +2976,7 @@ static void canvas_update_line_profile(AmitkCanvas * canvas) {
 /* function to update the line profile on the canvas */
 static void canvas_update_time_on_image(AmitkCanvas * canvas) {
 
+  AmitkCanvasItem * root;
   amide_time_t midpt_time;
   gint hours, minutes, seconds;
   gchar * time_str;
@@ -2957,24 +2995,20 @@ static void canvas_update_time_on_image(AmitkCanvas * canvas) {
     time_str = g_strdup_printf("%d:%.2d:%.2d",hours,minutes,seconds);
 
     color = amitk_color_table_outline_color(canvas_get_color_table(canvas), FALSE);
+    root = amitk_simple_canvas_get_root_item(AMITK_SIMPLE_CANVAS(canvas->canvas));
     if (canvas->time_label != NULL) 
-      gnome_canvas_item_set(canvas->time_label,
-			    "text", time_str,
-			    "fill_color_rgba", color, NULL);
+      canvas_item_set(canvas->time_label, "text", time_str,
+                   "fill-color-rgba", color, NULL);
     else
-      canvas->time_label = 
-	gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(canvas->canvas)),
-			      gnome_canvas_text_get_type(),
-			      "anchor", GTK_ANCHOR_SOUTH_WEST,
-			      "text", time_str,
-			      "x", 4.0,
-			      "y", canvas->pixbuf_height-2.0,
-			      "fill_color_rgba", color,
-			      "font_desc", amitk_fixed_font_desc, NULL);
+      canvas->time_label =
+        amitk_canvas_text_new(root, time_str, 4.0, canvas->pixbuf_height-2.0,
+                            -1, AMITK_CANVAS_ANCHOR_SOUTH_WEST,
+                            "fill-color-rgba", color,
+                            "font-desc", amitk_fixed_font_desc, NULL);
     g_free(time_str);
   } else {
     if (canvas->time_label != NULL) {
-      gtk_object_destroy(GTK_OBJECT(canvas->time_label));
+      amitk_canvas_item_remove(canvas->time_label);
       canvas->time_label = NULL;
     }
   }
@@ -2985,6 +3019,7 @@ static void canvas_update_time_on_image(AmitkCanvas * canvas) {
 
 static void canvas_update_subject_orientation(AmitkCanvas * canvas) {
 
+  AmitkCanvasItem * root;
   gboolean remove = FALSE;
   int i;
   float x[4];
@@ -3003,7 +3038,8 @@ static void canvas_update_subject_orientation(AmitkCanvas * canvas) {
   if (remove) {
     for (i=0; i<4; i++) 
       if (canvas->orientation_label[i] != NULL)
-	gnome_canvas_item_hide(canvas->orientation_label[i]);
+        canvas_item_set(canvas->orientation_label[i], "visibility",
+                     AMITK_CANVAS_ITEM_INVISIBLE, NULL);
 
   } else {
 
@@ -3185,36 +3221,35 @@ static void canvas_update_subject_orientation(AmitkCanvas * canvas) {
     /* text locations */
     x[0] = 0;
     y[0] = canvas->border_width;
-    anchor[0] = GTK_ANCHOR_NORTH_WEST;
+    anchor[0] = AMITK_CANVAS_ANCHOR_NORTH_WEST;
 
     x[1] = 0;
     y[1] = canvas->border_width + canvas->pixbuf_height;
-    anchor[1] = GTK_ANCHOR_SOUTH_WEST;
+    anchor[1] = AMITK_CANVAS_ANCHOR_SOUTH_WEST;
     
     x[2] = canvas->border_width;
     y[2] = 2*canvas->border_width + canvas->pixbuf_height;
-    anchor[2] = GTK_ANCHOR_SOUTH_WEST;
+    anchor[2] = AMITK_CANVAS_ANCHOR_SOUTH_WEST;
     
     x[3] = canvas->border_width+canvas->pixbuf_width;
     y[3] = 2*canvas->border_width + canvas->pixbuf_height;
-    anchor[3] = GTK_ANCHOR_SOUTH_EAST;
+    anchor[3] = AMITK_CANVAS_ANCHOR_SOUTH_EAST;
 
     
+    root = amitk_simple_canvas_get_root_item(AMITK_SIMPLE_CANVAS(canvas->canvas));
     for (i=0; i<4; i++) {
       if (canvas->orientation_label[i] != NULL ) 
-	gnome_canvas_item_set(canvas->orientation_label[i],"text", _(orientation_label[which_orientation[i]]), 
-			      "x", x[i], "y", y[i], NULL);
+        canvas_item_set(canvas->orientation_label[i], "text",
+                     _(orientation_label[which_orientation[i]]),
+                     "x", x[i], "y", y[i], NULL);
       else 
-	canvas->orientation_label[i] = 
-	  gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(canvas->canvas)),
-				gnome_canvas_text_get_type(),
-				"anchor", anchor[i],
-				"text", _(orientation_label[which_orientation[i]]),
-				"x", x[i],
-				"y", y[i],
-				"fill_color", "black",
-				"font_desc", amitk_fixed_font_desc, NULL);
-      gnome_canvas_item_show(canvas->orientation_label[i]);
+        canvas->orientation_label[i] =
+          amitk_canvas_text_new(root, _(orientation_label[which_orientation[i]]),
+                              x[i], y[i], -1, anchor[i],
+                              "fill-color", "black",
+                              "font-desc", amitk_fixed_font_desc, NULL);
+      canvas_item_set(canvas->orientation_label[i], "visibility",
+                   AMITK_CANVAS_ITEM_VISIBLE, NULL);
     }
   }
 
@@ -3227,7 +3262,10 @@ static void canvas_update_pixbuf(AmitkCanvas * canvas) {
 
   gint old_width, old_height;
   rgba_t blank_rgba;
-  GtkStyle * widget_style;
+  AmitkCanvasItem * root;
+  GtkStyleContext * widget_style;
+  GtkWidget * toplevel;
+  GdkRGBA * rgba;
   amide_real_t pixel_dim;
   AmitkPoint corner;
   gint width,height;
@@ -3259,16 +3297,22 @@ static void canvas_update_pixbuf(AmitkCanvas * canvas) {
     /* just use a blank image */
 
     /* figure out what color to use */
-    widget_style = gtk_widget_get_style(GTK_WIDGET(canvas));
+    /* Obtain the style context from the toplevel widget because
+       canvas does not have background set.  */
+    toplevel = gtk_widget_get_toplevel(GTK_WIDGET(canvas));
+    widget_style = gtk_widget_get_style_context(toplevel);
     if (widget_style == NULL) {
       g_warning(_("Canvas has no style?\n"));
-      widget_style = gtk_style_new();
+      widget_style = gtk_style_context_new();
     }
 
-    blank_rgba.r = widget_style->bg[GTK_STATE_NORMAL].red >> 8;
-    blank_rgba.g = widget_style->bg[GTK_STATE_NORMAL].green >> 8;
-    blank_rgba.b = widget_style->bg[GTK_STATE_NORMAL].blue >> 8;
+    gtk_style_context_get(widget_style, GTK_STATE_FLAG_NORMAL,
+                          GTK_STYLE_PROPERTY_BACKGROUND_COLOR, &rgba, NULL);
+    blank_rgba.r = (int) (0.5 + CLAMP(rgba->red, 0., 1.) * 255.);
+    blank_rgba.g = (int) (0.5 + CLAMP(rgba->green, 0., 1.) * 255.);
+    blank_rgba.b = (int) (0.5 + CLAMP(rgba->blue, 0., 1.) * 255.);
     blank_rgba.a = 0xFF;
+    gdk_rgba_free(rgba);
 
     corner = AMITK_VOLUME_CORNER(canvas->volume);
 
@@ -3312,21 +3356,20 @@ static void canvas_update_pixbuf(AmitkCanvas * canvas) {
       gtk_widget_set_size_request(canvas->canvas, 
 				  canvas->pixbuf_width + 2 * canvas->border_width, 
 				  canvas->pixbuf_height + 2 * canvas->border_width);
-      gnome_canvas_set_scroll_region(GNOME_CANVAS(canvas->canvas), 0.0, 0.0, 
+
+      amitk_simple_canvas_set_bounds(AMITK_SIMPLE_CANVAS(canvas->canvas), 0.0, 0.0,
 				     canvas->pixbuf_width + 2 * canvas->border_width,
 				     canvas->pixbuf_height + 2 * canvas->border_width);
     }
     /* put the canvas rgb image on the canvas_image */
     if (canvas->image == NULL) {/* time to make a new image */
-      canvas->image = gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(canvas->canvas)),
-					    gnome_canvas_pixbuf_get_type(),
-					    "pixbuf", canvas->pixbuf,
-					    "x", (double) canvas->border_width,
-					    "y", (double) canvas->border_width,
-					    NULL);
-      g_signal_connect(G_OBJECT(canvas->image), "event", G_CALLBACK(canvas_event_cb), canvas);
+      root = amitk_simple_canvas_get_root_item(AMITK_SIMPLE_CANVAS(canvas->canvas));
+      canvas->image = amitk_canvas_image_new(root, canvas->pixbuf,
+                                           canvas->border_width,
+                                           canvas->border_width, NULL);
+      canvas_setup_handlers(canvas, canvas->image);
     } else {
-      gnome_canvas_item_set(canvas->image, "pixbuf", canvas->pixbuf, NULL);
+      canvas_item_set(canvas->image, "pixbuf", canvas->pixbuf, NULL);
     }
     
   }
@@ -3338,8 +3381,8 @@ static void canvas_update_pixbuf(AmitkCanvas * canvas) {
 static void canvas_update_object(AmitkCanvas * canvas, AmitkObject * object) {
 
   rgba_t outline_color;
-  GnomeCanvasItem * item;
-  GnomeCanvasItem * new_item;
+  AmitkCanvasItem * item;
+  AmitkCanvasItem * new_item;
   amide_real_t pixel_dim;
 
   g_return_if_fail(object != NULL);
@@ -3356,25 +3399,20 @@ static void canvas_update_object(AmitkCanvas * canvas, AmitkObject * object) {
   /* compensate for zoom */
   pixel_dim = (1/AMITK_STUDY_ZOOM(canvas->study))*AMITK_STUDY_VOXEL_DIM(canvas->study); 
 
-  new_item = amitk_canvas_object_draw(GNOME_CANVAS(canvas->canvas), 
+  new_item = amitk_canvas_object_draw(AMITK_SIMPLE_CANVAS(canvas->canvas),
 				      canvas->volume, object, AMITK_CANVAS_VIEW_MODE(canvas),
 				      item, pixel_dim,
 				      canvas->pixbuf_width, canvas->pixbuf_height,
 				      canvas->border_width,canvas->border_width,
 				      outline_color, 
 				      AMITK_STUDY_CANVAS_ROI_WIDTH(canvas->study),
-#ifdef AMIDE_LIBGNOMECANVAS_AA
 				      AMITK_STUDY_CANVAS_ROI_TRANSPARENCY(canvas->study)
-#else
-				      AMITK_STUDY_CANVAS_LINE_STYLE(canvas->study),
-				      AMITK_STUDY_CANVAS_FILL_ROI(canvas->study)
-#endif
 );
 
 
   if ((item == NULL) && (new_item != NULL)) {
     g_object_set_data(G_OBJECT(new_item), "object", object);
-    g_signal_connect(G_OBJECT(new_item), "event", G_CALLBACK(canvas_event_cb), canvas);
+    canvas_setup_handlers(canvas, new_item);
     canvas->object_items = g_list_append(canvas->object_items, new_item);
   }
 
@@ -3425,17 +3463,13 @@ static void canvas_update_setup(AmitkCanvas * canvas) {
     canvas->label = gtk_label_new(temp_str);
     g_free(temp_str);
 
-#ifdef AMIDE_LIBGNOMECANVAS_AA
-    canvas->canvas = gnome_canvas_new_aa();
-#else
-    canvas->canvas = gnome_canvas_new();
-#endif
+    canvas->canvas = amitk_simple_canvas_new();
 
     canvas->scrollbar_adjustment = gtk_adjustment_new(0.5, 0, 1, 1, 1, 1); /* junk values */
     g_signal_connect(canvas->scrollbar_adjustment, "value_changed", 
 		     G_CALLBACK(canvas_scrollbar_adjustment_cb), canvas);
-    canvas->scrollbar = gtk_hscrollbar_new(GTK_ADJUSTMENT(canvas->scrollbar_adjustment));
-    gtk_range_set_update_policy(GTK_RANGE(canvas->scrollbar), GTK_UPDATE_CONTINUOUS);
+    canvas->scrollbar = gtk_scrollbar_new(GTK_ORIENTATION_HORIZONTAL,
+                                          canvas->scrollbar_adjustment);
 
   }
 
@@ -3656,7 +3690,7 @@ static void canvas_add_object(AmitkCanvas * canvas, AmitkObject * object) {
 
 static void canvas_remove_object(AmitkCanvas * canvas, AmitkObject * object) {
 
-  GnomeCanvasItem * found_item;
+  AmitkCanvasItem * found_item;
   GList * children;
 
   g_return_if_fail(AMITK_IS_CANVAS(canvas));
@@ -3716,7 +3750,7 @@ static void canvas_remove_object(AmitkCanvas * canvas, AmitkObject * object) {
   
   if (found_item) {
     canvas->object_items = g_list_remove(canvas->object_items, found_item);
-    gtk_object_destroy(GTK_OBJECT(found_item));
+    amitk_canvas_item_remove(found_item);
     canvas_add_update(canvas, UPDATE_VIEW); /* needed to check if we need to reset the view slice */
   } else if (AMITK_IS_DATA_SET(object)) {
     canvas_add_update(canvas, UPDATE_ALL);
@@ -3835,10 +3869,10 @@ gint amitk_canvas_get_height(AmitkCanvas * canvas) {
 
   height = canvas->pixbuf_height + 2*canvas->border_width;
 
-  gtk_widget_size_request(canvas->label, &size);
+  gtk_widget_get_preferred_size(canvas->label, NULL, &size);
   height+=size.height;
 
-  gtk_widget_size_request(canvas->scrollbar, &size);
+  gtk_widget_get_preferred_size(canvas->scrollbar, NULL, &size);
   height+=size.height;
 
   return height;
@@ -3849,7 +3883,7 @@ GdkPixbuf * amitk_canvas_get_pixbuf(AmitkCanvas * canvas) {
 
   GdkPixbuf * pixbuf;
 
-  pixbuf = amitk_get_pixbuf_from_canvas(GNOME_CANVAS(canvas->canvas), 
+  pixbuf = amitk_get_pixbuf_from_canvas(AMITK_SIMPLE_CANVAS(canvas->canvas),
 					canvas->border_width,canvas->border_width,
 					canvas->pixbuf_width, canvas->pixbuf_height);
   

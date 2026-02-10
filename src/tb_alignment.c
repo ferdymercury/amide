@@ -459,7 +459,8 @@ static GtkWidget * create_alignment_type_page(tb_alignment_t * tb_alignment) {
   GtkWidget * rb[NUM_ALIGNMENT_TYPES];
   which_alignment_t i_alignment;
 
-  vbox = gtk_vbox_new (TRUE, 2);
+  vbox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 2);
+  gtk_box_set_homogeneous (GTK_BOX (vbox), TRUE);
   for (i_alignment = 0; i_alignment < NUM_ALIGNMENT_TYPES; i_alignment ++) {
     if (i_alignment == 0)
       rb[i_alignment] =  gtk_radio_button_new_with_label(NULL, alignment_names[i_alignment]);
@@ -487,7 +488,9 @@ static GtkWidget * create_data_sets_page(tb_alignment_t * tb_alignment) {
   GtkTreeSelection *selection;
   GtkWidget * vseparator;
 
-  table = gtk_table_new(3,3,FALSE);
+  table = gtk_grid_new();
+  gtk_grid_set_row_spacing(GTK_GRID(table), Y_PADDING);
+  gtk_grid_set_column_spacing(GTK_GRID(table), X_PADDING);
     
   /* the moving data set */
   store = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_POINTER);
@@ -505,12 +508,13 @@ static GtkWidget * create_data_sets_page(tb_alignment_t * tb_alignment) {
   g_signal_connect(G_OBJECT(selection), "changed",
 		   G_CALLBACK(data_set_selection_changed_cb), tb_alignment);
 
-  gtk_table_attach(GTK_TABLE(table),tb_alignment->list_moving_ds, 0,1,0,1,
-		   GTK_FILL|GTK_EXPAND, GTK_FILL | GTK_EXPAND,X_PADDING, Y_PADDING);
+  gtk_widget_set_hexpand(tb_alignment->list_moving_ds, TRUE);
+  gtk_widget_set_vexpand(tb_alignment->list_moving_ds, TRUE);
+  gtk_grid_attach(GTK_GRID(table), tb_alignment->list_moving_ds, 0, 0, 1, 1);
 
 
-  vseparator = gtk_vseparator_new();
-  gtk_table_attach(GTK_TABLE(table), vseparator, 1,2,0,2, 0, GTK_FILL, X_PADDING, Y_PADDING);
+  vseparator = gtk_separator_new(GTK_ORIENTATION_VERTICAL);
+  gtk_grid_attach(GTK_GRID(table), vseparator, 1, 0, 1, 2);
   
   /* the fixed data set */
   store = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_POINTER);
@@ -528,8 +532,9 @@ static GtkWidget * create_data_sets_page(tb_alignment_t * tb_alignment) {
   g_signal_connect(G_OBJECT(selection), "changed",
 		   G_CALLBACK(data_set_selection_changed_cb), tb_alignment);
 
-  gtk_table_attach(GTK_TABLE(table),tb_alignment->list_fixed_ds, 2,3,0,1,
-		   GTK_FILL|GTK_EXPAND, GTK_FILL | GTK_EXPAND,X_PADDING, Y_PADDING);
+  gtk_widget_set_hexpand(tb_alignment->list_fixed_ds, TRUE);
+  gtk_widget_set_vexpand(tb_alignment->list_fixed_ds, TRUE);
+  gtk_grid_attach(GTK_GRID(table), tb_alignment->list_fixed_ds, 2, 0, 1, 1);
 
   return table;
 }
@@ -542,7 +547,9 @@ static GtkWidget * create_fiducial_marks_page(tb_alignment_t * tb_alignment) {
   GtkTreeViewColumn *column;
   GtkTreeSelection *selection;
   
-  table = gtk_table_new(2,2,FALSE);
+  table = gtk_grid_new();
+  gtk_grid_set_row_spacing(GTK_GRID(table), Y_PADDING);
+  gtk_grid_set_column_spacing(GTK_GRID(table), X_PADDING);
 
   store = gtk_list_store_new(3, G_TYPE_BOOLEAN, G_TYPE_STRING, G_TYPE_POINTER);
   tb_alignment->list_points = gtk_tree_view_new_with_model (GTK_TREE_MODEL (store));
@@ -563,8 +570,9 @@ static GtkWidget * create_fiducial_marks_page(tb_alignment_t * tb_alignment) {
 
   selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (tb_alignment->list_points));
   gtk_tree_selection_set_mode (selection, GTK_SELECTION_NONE);
-  gtk_table_attach(GTK_TABLE(table),tb_alignment->list_points, 0,1,0,1,
-		   GTK_FILL|GTK_EXPAND, GTK_FILL | GTK_EXPAND,X_PADDING, Y_PADDING);
+  gtk_widget_set_hexpand(tb_alignment->list_points, TRUE);
+  gtk_widget_set_vexpand(tb_alignment->list_points, TRUE);
+  gtk_grid_attach(GTK_GRID(table), tb_alignment->list_points, 0, 0, 1, 1);
 
   return table;
 }
@@ -670,7 +678,6 @@ static void prepare_page_cb(GtkAssistant * wizard, GtkWidget * page, gpointer da
 void tb_alignment(AmitkStudy * study, GtkWindow * parent) {
 
   tb_alignment_t * tb_alignment;
-  GdkPixbuf * logo;
   guint count;
   gint i;
   
@@ -749,12 +756,9 @@ void tb_alignment(AmitkStudy * study, GtkWindow * parent) {
 			      GTK_ASSISTANT_PAGE_CONFIRM);
 
   /* things for all page */
-  logo = gtk_widget_render_icon(GTK_WIDGET(tb_alignment->dialog), "amide_icon_logo", GTK_ICON_SIZE_DIALOG, 0);
   for (i=0; i<NUM_PAGES; i++) {
-    gtk_assistant_set_page_header_image(GTK_ASSISTANT(tb_alignment->dialog), tb_alignment->page[i], logo);
     g_object_set_data(G_OBJECT(tb_alignment->page[i]),"which_page", GINT_TO_POINTER(i));
   }
-  g_object_unref(logo);
 
   gtk_widget_show_all(tb_alignment->dialog);
 

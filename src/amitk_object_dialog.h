@@ -30,7 +30,7 @@
 
 /* includes we always need with this widget */
 #include <gtk/gtk.h>
-#include <libgnomecanvas/libgnomecanvas.h>
+#include "amitk_canvas_compat.h"
 #include "amitk_object.h"
 #include "amitk_data_set.h"
 
@@ -92,13 +92,8 @@ struct _AmitkObjectDialog
 
   /* study preferences */
   GtkWidget * roi_width_spin;
-  GnomeCanvasItem * roi_item;
-#ifdef AMIDE_LIBGNOMECANVAS_AA
+  AmitkCanvasItem * roi_item;
   GtkWidget * roi_transparency_spin;
-#else
-  GtkWidget * line_style_menu;
-  GtkWidget * fill_roi_button;
-#endif
   GtkWidget * layout_button1;
   GtkWidget * layout_button2;
   GtkWidget * panel_layout_button1;

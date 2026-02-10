@@ -45,7 +45,7 @@ typedef struct _AmitkSpaceEditClass        AmitkSpaceEditClass;
 
 struct _AmitkSpaceEdit
 {
-  GtkVBox vbox;
+  GtkBox vbox;
 
   GtkWidget * entry[AMITK_AXIS_NUM][AMITK_AXIS_NUM];
 
@@ -55,7 +55,7 @@ struct _AmitkSpaceEdit
 
 struct _AmitkSpaceEditClass
 {
-  GtkVBoxClass parent_class;
+  GtkBoxClass parent_class;
 
 };  
 

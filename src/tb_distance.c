@@ -59,7 +59,7 @@ static void space_changed_cb(gpointer unused, gpointer data);
 static void update_result_text(tb_distance_t * tb_distance);
 static void update_objects(tb_distance_t * tb_distance);
 static void tree_view_activate_object(GtkWidget * tree_view, AmitkObject * object, gpointer data);
-static void destroy_cb(GtkObject * object, gpointer data);
+static void destroy_cb(GtkWidget * object, gpointer data);
 static void response_cb (GtkDialog * dialog, gint response_id, gpointer data);
 
 static tb_distance_t * tb_distance_free(tb_distance_t * tb_distance) {
@@ -216,7 +216,7 @@ static void tree_view_activate_object(GtkWidget * tree_view, AmitkObject * objec
   update_objects(tb_distance);
 }
 
-static void destroy_cb(GtkObject * object, gpointer data) {
+static void destroy_cb(GtkWidget * object, gpointer data) {
   tb_distance_t * tb_distance = data;
   tb_distance = tb_distance_free(tb_distance);
   return;
@@ -250,8 +250,8 @@ void tb_distance(AmitkStudy * study, GtkWindow * parent_window) {
   tb_distance = tb_distance_init();
 
   tb_distance->dialog = gtk_dialog_new_with_buttons(_("Distance Measurement Tool"), parent_window,
-				       GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_NO_SEPARATOR,
-				       GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+				       GTK_DIALOG_DESTROY_WITH_PARENT,
+				       _("_Cancel"), GTK_RESPONSE_CANCEL,
 				       NULL);
   
 
@@ -260,16 +260,17 @@ void tb_distance(AmitkStudy * study, GtkWindow * parent_window) {
   gtk_window_set_resizable(GTK_WINDOW(tb_distance->dialog), TRUE);
 
   /* make the widgets for this dialog box */
-  table = gtk_table_new(2,3,FALSE);
-  gtk_container_add (GTK_CONTAINER (GTK_DIALOG(tb_distance->dialog)->vbox), table);
+  table = gtk_grid_new();
+  gtk_grid_set_row_spacing(GTK_GRID(table), Y_PADDING);
+  gtk_grid_set_column_spacing(GTK_GRID(table), X_PADDING);
+  gtk_container_add (GTK_CONTAINER (gtk_dialog_get_content_area
+                                    (GTK_DIALOG(tb_distance->dialog))), table);
 
 
   label = gtk_label_new(_("Starting Point"));
-  gtk_table_attach(GTK_TABLE(table), label, 0,1, table_row,table_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), label, 0, table_row, 1, 1);
   label = gtk_label_new(_("Ending Point"));
-  gtk_table_attach(GTK_TABLE(table), label, 1,2, table_row,table_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), label, 1, table_row, 1, 1);
   table_row++;
 
 
@@ -283,8 +284,8 @@ void tb_distance(AmitkStudy * study, GtkWindow * parent_window) {
   scrolled = gtk_scrolled_window_new(NULL,NULL);  
   gtk_widget_set_size_request(scrolled,250,250);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-  gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolled), tb_distance->tree_view1);
-  gtk_table_attach(GTK_TABLE(table), scrolled, 0,1, table_row, table_row+1,GTK_FILL, GTK_FILL | GTK_EXPAND, X_PADDING, Y_PADDING);
+  gtk_container_add(GTK_CONTAINER(scrolled), tb_distance->tree_view1);
+  gtk_grid_attach(GTK_GRID(table), scrolled, 0, table_row, 1, 1);
 
 
   /* and make the ending point tree view */
@@ -297,8 +298,8 @@ void tb_distance(AmitkStudy * study, GtkWindow * parent_window) {
   scrolled = gtk_scrolled_window_new(NULL,NULL);  
   gtk_widget_set_size_request(scrolled,250,250);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-  gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolled), tb_distance->tree_view2);
-  gtk_table_attach(GTK_TABLE(table), scrolled, 1,2, table_row, table_row+1,GTK_FILL, GTK_FILL | GTK_EXPAND, X_PADDING, Y_PADDING);
+  gtk_container_add(GTK_CONTAINER(scrolled), tb_distance->tree_view2);
+  gtk_grid_attach(GTK_GRID(table), scrolled, 1, table_row, 1, 1);
 
   table_row++;
 
@@ -308,7 +309,7 @@ void tb_distance(AmitkStudy * study, GtkWindow * parent_window) {
   tb_distance->result_text_buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (text_view));
   update_result_text(tb_distance);
 
-  gtk_table_attach(GTK_TABLE(table), text_view, 0,2, table_row,table_row+1, FALSE,FALSE, X_PADDING, Y_PADDING);
+  gtk_grid_attach(GTK_GRID(table), text_view, 0, table_row, 2, 1);
   gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(text_view), GTK_WRAP_WORD);
   gtk_text_view_set_editable(GTK_TEXT_VIEW(text_view), FALSE);
   gtk_widget_set_size_request(text_view,400,-1);
