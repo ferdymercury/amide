@@ -25,125 +25,69 @@
 
 #include "amitk_data_set.h"
 #include "amitk_study.h"
-
-#include "../pixmaps/amide_logo.h"
-
-#include "../pixmaps/interpolation_nearest_neighbor.h"
-#include "../pixmaps/interpolation_trilinear.h"
-#include "../pixmaps/transfer_function.h"
-
-
-#include "../pixmaps/fuse_type_blend.h"
-#include "../pixmaps/fuse_type_overlay.h"
-
-#include "../pixmaps/target.h"
-
-#include "../pixmaps/view_transverse.h"
-#include "../pixmaps/view_coronal.h"
-#include "../pixmaps/view_sagittal.h"
-
-#include "../pixmaps/view_single.h"
-#include "../pixmaps/view_linked.h"
-#include "../pixmaps/view_linked3.h"
-
-#include "../pixmaps/thresholding.h"
-#include "../pixmaps/thresholding_per_slice.h"
-#include "../pixmaps/thresholding_per_frame.h"
-#include "../pixmaps/thresholding_interpolate_frames.h"
-#include "../pixmaps/thresholding_global.h"
-
-#include "../pixmaps/threshold_style_min_max.h"
-#include "../pixmaps/threshold_style_center_width.h"
-
-/* #include "../pixmaps/window_bone_icon.h" */
-/* #include "../pixmaps/window_soft_tissue_icon.h" */
-#include "../pixmaps/window_abdomen.h"
-#include "../pixmaps/window_brain.h"
-#include "../pixmaps/window_extremities.h"
-#include "../pixmaps/window_liver.h"
-#include "../pixmaps/window_lung.h"
-#include "../pixmaps/window_pelvis_soft_tissue.h"
-#include "../pixmaps/window_skull_base.h"
-#include "../pixmaps/window_spine_a.h"
-#include "../pixmaps/window_spine_b.h"
-#include "../pixmaps/window_thorax_soft_tissue.h"
-
-
-#include "../pixmaps/roi_box.h"
-#include "../pixmaps/roi_cylinder.h"
-#include "../pixmaps/roi_ellipsoid.h"
-#include "../pixmaps/roi_isocontour_2d.h"
-#include "../pixmaps/roi_isocontour_3d.h"
-#include "../pixmaps/roi_freehand_2d.h"
-#include "../pixmaps/roi_freehand_3d.h"
-#include "../pixmaps/align_pt.h"
-#include "../pixmaps/study.h"
-
-#include "../pixmaps/layout_linear.h"
-#include "../pixmaps/layout_orthogonal.h"
-
-#include "../pixmaps/panels_mixed.h"
-#include "../pixmaps/panels_linear_x.h"
-#include "../pixmaps/panels_linear_y.h"
+#include "amide-icon-resources.h"
+#include "pixmaps.h"
 
 
 static gboolean icons_initialized=FALSE;
 
+#define AMIDE_ICONS_NUM 44
+
 static struct {
-  const guint8 * pixbuf_inline;
+  const gchar * resource_path;
   const gchar * icon_id;
-} amide_icons[] = {
-  { amide_logo, "amide_icon_logo" },
-  { align_pt, "amide_icon_align_pt" },
-  { fuse_type_blend, "amide_icon_fuse_type_blend" },
-  { fuse_type_overlay, "amide_icon_fuse_type_overlay" },
-  { interpolation_nearest_neighbor, "amide_icon_interpolation_nearest_neighbor" },
-  { interpolation_trilinear, "amide_icon_interpolation_trilinear" },
-  { layout_linear, "amide_icon_layout_linear" },
-  { layout_orthogonal, "amide_icon_layout_orthogonal" },
-  { panels_mixed, "amide_icon_panels_mixed" },
-  { panels_linear_x, "amide_icon_panels_linear_x" },
-  { panels_linear_y, "amide_icon_panels_linear_y" },
-  { roi_box, "amide_icon_roi_box" },
-  { roi_cylinder, "amide_icon_roi_cylinder" },
-  { roi_ellipsoid, "amide_icon_roi_ellipsoid" },
-  { roi_isocontour_2d, "amide_icon_roi_isocontour_2d"},
-  { roi_isocontour_3d, "amide_icon_roi_isocontour_3d"},
-  { roi_freehand_2d, "amide_icon_roi_freehand_2d"},
-  { roi_freehand_3d, "amide_icon_roi_freehand_3d"},
-  { study, "amide_icon_study"},
-  { target, "amide_icon_canvas_target" },
-  { transfer_function, "amide_icon_transfer_function" },
-  { threshold_style_min_max, "amide_icon_threshold_style_min_max" },
-  { threshold_style_center_width, "amide_icon_threshold_style_center_width" },
-  { thresholding, "amide_icon_thresholding" },  
-  { thresholding_per_slice, "amide_icon_thresholding_per_slice" },
-  { thresholding_per_frame, "amide_icon_thresholding_per_frame" },
-  { thresholding_interpolate_frames, "amide_icon_thresholding_interpolate_frames" },
-  { thresholding_global, "amide_icon_thresholding_global" },
-  { view_transverse, "amide_icon_view_transverse" },
-  { view_coronal, "amide_icon_view_coronal" },
-  { view_sagittal, "amide_icon_view_sagittal" },
-  { view_single, "amide_icon_view_mode_single" },
-  { view_linked, "amide_icon_view_mode_linked_2way" },
-  { view_linked3, "amide_icon_view_mode_linked_3way" },
-  { window_abdomen, "amide_icon_window_abdomen" },
-  { window_brain, "amide_icon_window_brain" },
-  { window_extremities,"amide_icon_window_extremities" },
-  { window_liver,"amide_icon_window_window_liver" },
-  { window_lung,"amide_icon_window_lung" },
-  { window_pelvis_soft_tissue,"amide_icon_window_pelvis_soft_tissue" },
-  { window_skull_base,"amide_icon_window_skull_base"},
-  { window_spine_a,"amide_icon_window_spine_a"},
-  { window_spine_b,"amide_icon_window_spine_b"},
-  { window_thorax_soft_tissue,"amide_icon_window_soft_tissue"},
+}  amide_icons[AMIDE_ICONS_NUM] = {
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "logo", .icon_id = "amide_icon_logo"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "align_pt", .icon_id = "amide_icon_align_pt"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "fuse_type_blend", .icon_id = "amide_icon_fuse_type_blend"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "fuse_type_overlay", .icon_id = "amide_icon_fuse_type_overlay"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "interpolation_nearest_neighbor", .icon_id = "amide_icon_interpolation_nearest_neighbor"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "interpolation_trilinear", .icon_id = "amide_icon_interpolation_trilinear"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "layout_linear", .icon_id = "amide_icon_layout_linear"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "layout_orthogonal", .icon_id = "amide_icon_layout_orthogonal"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "panels_mixed", .icon_id = "amide_icon_panels_mixed"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "panels_linear_x", .icon_id = "amide_icon_panels_linear_x"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "panels_linear_y", .icon_id = "amide_icon_panels_linear_y"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "roi_box", .icon_id = "amide_icon_roi_box"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "roi_cylinder", .icon_id = "amide_icon_roi_cylinder"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "roi_ellipsoid", .icon_id = "amide_icon_roi_ellipsoid"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "roi_isocontour_2d", .icon_id = "amide_icon_roi_isocontour_2d"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "roi_isocontour_3d", .icon_id = "amide_icon_roi_isocontour_3d"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "roi_freehand_2d", .icon_id = "amide_icon_roi_freehand_2d"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "roi_freehand_3d", .icon_id = "amide_icon_roi_freehand_3d"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "study", .icon_id = "amide_icon_study"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "target", .icon_id = "amide_icon_canvas_target"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "transfer_function", .icon_id = "amide_icon_transfer_function"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "threshold_style_min_max", .icon_id = "amide_icon_threshold_style_min_max"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "threshold_style_center_width", .icon_id = "amide_icon_threshold_style_center_width"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "thresholding", .icon_id = "amide_icon_thresholding"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "thresholding_per_slice", .icon_id = "amide_icon_thresholding_per_slice"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "thresholding_per_frame", .icon_id = "amide_icon_thresholding_per_frame"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "thresholding_interpolate_frames", .icon_id = "amide_icon_thresholding_interpolate_frames"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "thresholding_global", .icon_id = "amide_icon_thresholding_global"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "view_transverse", .icon_id = "amide_icon_view_transverse"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "view_coronal", .icon_id = "amide_icon_view_coronal"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "view_sagittal", .icon_id = "amide_icon_view_sagittal"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "view_single", .icon_id = "amide_icon_view_mode_single"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "view_linked", .icon_id = "amide_icon_view_mode_linked_2way"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "view_linked3", .icon_id = "amide_icon_view_mode_linked_3way"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "window_abdomen", .icon_id = "amide_icon_window_abdomen"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "window_brain", .icon_id = "amide_icon_window_brain"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "window_extremities", .icon_id = "amide_icon_window_extremities"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "window_liver", .icon_id = "amide_icon_window_liver"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "window_lung", .icon_id = "amide_icon_window_lung"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "window_pelvis_soft_tissue", .icon_id = "amide_icon_window_pelvis_soft_tissue"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "window_skull_base", .icon_id = "amide_icon_window_skull_base"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "window_spine_a", .icon_id = "amide_icon_window_spine_a"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "window_spine_b", .icon_id = "amide_icon_window_spine_b"},
+  {.resource_path = AMIDE_ICON_GRESOURCE_PREFIX "window_soft_tissue", .icon_id = "amide_icon_window_soft_tissue"},
 };
 
 const gchar * windowing_icons[AMITK_WINDOW_NUM] = {
   "amide_icon_window_abdomen",
   "amide_icon_window_brain",
   "amide_icon_window_extremities",
-  "amide_icon_window_window_liver",
+  "amide_icon_window_liver",
   "amide_icon_window_lung",
   "amide_icon_window_pelvis_soft_tissue",
   "amide_icon_window_skull_base",
@@ -156,18 +100,30 @@ const gchar * windowing_icons[AMITK_WINDOW_NUM] = {
 
 void pixmaps_initialize_icons() {
 
-  GtkIconFactory *icon_factory;
-  GtkIconSet *icon_set; 
-  GdkPixbuf * pixbuf;
+  GtkIconFactory *icon_factory = NULL;
+  GtkIconSet *icon_set = NULL;
+  GResource *icon_resource = NULL;
+  GdkPixbuf * pixbuf = NULL;
+  GError *err = NULL;
   gint i;
 
   if (icons_initialized) return;
 
+  icon_resource = amide_get_resource();
+  g_resources_register(icon_resource);
+
   /* create amide's group of icons */
   icon_factory = gtk_icon_factory_new();
 
-  for (i=0; i < G_N_ELEMENTS(amide_icons); i++) {
-    pixbuf = gdk_pixbuf_new_from_inline(-1, amide_icons[i].pixbuf_inline, FALSE, NULL);
+  for (i=0; i < AMIDE_ICONS_NUM; i++) {
+    pixbuf = gdk_pixbuf_new_from_resource(amide_icons[i].resource_path, NULL);
+    if (pixbuf == NULL) {
+      /*if (err != NULL) {
+        fprintf(stderr, "Unable to read load resource: %s\n", err->message);
+        g_error_free(err);
+      }*/
+      fprintf (stderr, "%s : %s\n", amide_icons[i].resource_path, amide_icons[i].icon_id);
+    }
     icon_set = gtk_icon_set_new_from_pixbuf(pixbuf);
     g_object_unref(pixbuf);
 
@@ -181,5 +137,7 @@ void pixmaps_initialize_icons() {
   g_object_unref (icon_factory);
 
   icons_initialized=TRUE;
+  /* set the app icon now that the resource is working */
+  gtk_window_set_default_icon_name(amide_icons[0].icon_id);
   return;
 }

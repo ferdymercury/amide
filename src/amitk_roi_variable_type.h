@@ -25,7 +25,7 @@
 
 
 #ifndef __AMITK_ROI_`'m4_Internal_Data_Format`'_H__
-#define __AMITK_ROI_`'m4_Variable_Type`'_H__
+#define __AMITK_ROI_@VARIABLE_TYPE@_H__
 
 /* header files that are always needed with this file */
 #include "amitk_roi.h"
@@ -33,40 +33,40 @@
 
 
 /* function declarations */
-#define ROI_TYPE_`'m4_Variable_Type`'
+#define ROI_TYPE_@VARIABLE_TYPE@
 
 #if defined(ROI_TYPE_ELLIPSOID) || defined(ROI_TYPE_CYLINDER) || defined(ROI_TYPE_BOX)
-GSList * amitk_roi_`'m4_Variable_Type`'_get_intersection_line(const AmitkRoi * roi, 
+GSList * amitk_roi_@VARIABLE_TYPE@_get_intersection_line(const AmitkRoi * roi, 
 							      const AmitkVolume * canvas_slice,
 							      const amide_real_t pixel_dim);
 #endif
 
 #if defined(ROI_TYPE_ISOCONTOUR_2D) || defined(ROI_TYPE_ISOCONTOUR_3D) || defined(ROI_TYPE_FREEHAND_2D) || defined(ROI_TYPE_FREEHAND_3D)
-AmitkDataSet * amitk_roi_`'m4_Variable_Type`'_get_intersection_slice(const AmitkRoi * roi,
+AmitkDataSet * amitk_roi_@VARIABLE_TYPE@_get_intersection_slice(const AmitkRoi * roi,
 								     const AmitkVolume * canvas_slice,
 								     const amide_real_t pixel_dim
 #ifndef AMIDE_LIBGNOMECANVAS_AA
 								     ,const gboolean fill_roi
 #endif
 								     );
-void amitk_roi_`'m4_Variable_Type`'_set_isocontour(AmitkRoi * roi, 
+void amitk_roi_@VARIABLE_TYPE@_set_isocontour(AmitkRoi * roi, 
 						   AmitkDataSet * ds, 
 						   AmitkVoxel iso_vp,
 						   amide_data_t iso_min_value,
 						   amide_data_t iso_max_value,
 						   AmitkRoiIsocontourRange iso_range);
-void amitk_roi_`'m4_Variable_Type`'_manipulate_area(AmitkRoi * roi, gboolean erase, AmitkVoxel voxel, gint area_size);
-void amitk_roi_`'m4_Variable_Type`'_calc_center_of_mass(AmitkRoi * roi);
+void amitk_roi_@VARIABLE_TYPE@_manipulate_area(AmitkRoi * roi, gboolean erase, AmitkVoxel voxel, gint area_size);
+void amitk_roi_@VARIABLE_TYPE@_calc_center_of_mass(AmitkRoi * roi);
 #endif
 
-void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set_fast(const AmitkRoi * roi,  
+void amitk_roi_@VARIABLE_TYPE@_calculate_on_data_set_fast(const AmitkRoi * roi,  
 							       const AmitkDataSet * ds, 
 							       const guint frame,
 							       const guint gate,
 							       const gboolean inverse,
 							       void (*calculation)(AmitkVoxel, amide_data_t, amide_real_t, gpointer),
 							       gpointer data);
-void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set_accurate(const AmitkRoi * roi,  
+void amitk_roi_@VARIABLE_TYPE@_calculate_on_data_set_accurate(const AmitkRoi * roi,  
 								   const AmitkDataSet * ds, 
 								   const guint frame,
 								   const guint gate,
@@ -75,9 +75,9 @@ void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set_accurate(const AmitkRo
 								   gpointer data);
 
 
-#undef ROI_TYPE_`'m4_Variable_Type`'
+#undef ROI_TYPE_@VARIABLE_TYPE@
 
-#endif /* __AMITK_ROI_`'m4_Variable_Type`'_H__ */
+#endif /* __AMITK_ROI_@VARIABLE_TYPE@_H__ */
 
 
 

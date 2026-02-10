@@ -1,0 +1,2 @@
+subdir('help')
+subdir('gtkdoc')

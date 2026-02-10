@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/com/github/Amide/icons">
+    <file alias="align_pt" compressed="true">pixmaps/align_pt.png</file>
+    <file alias="file_logo" compressed="true">pixmaps/amide_file_logo.png</file>
+    <file alias="logo" compressed="true">pixmaps/amide_logo.svg</file>
+    <file alias="compartmental_models" compressed="true">pixmaps/compartmental_models.eps</file>
+    <file alias="fuse_type_blend" compressed="true">pixmaps/fuse_type_blend.png</file>
+    <file alias="fuse_type" compressed="true">pixmaps/fuse_type.fig</file>
+    <file alias="fuse_type_overlay" compressed="true">pixmaps/fuse_type_overlay.png</file>
+    <file alias="icons" compressed="true">pixmaps/icons.fig</file>
+    <file alias="interpolation_nearest_neighbor" compressed="true">pixmaps/interpolation_nearest_neighbor.png</file>
+    <file alias="interpolation_trilinear" compressed="true">pixmaps/interpolation_trilinear.png</file>
+    <file alias="layout_linear" compressed="true">pixmaps/layout_linear.png</file>
+    <file alias="layout_orthogonal" compressed="true">pixmaps/layout_orthogonal.png</file>
+    <file alias="panels_linear_x" compressed="true">pixmaps/panels_linear_x.png</file>
+    <file alias="panels_linear_y" compressed="true">pixmaps/panels_linear_y.png</file>
+    <file alias="panels_mixed" compressed="true">pixmaps/panels_mixed.png</file>
+    <file alias="roi_box" compressed="true">pixmaps/roi_box.png</file>
+    <file alias="roi_cylinder" compressed="true">pixmaps/roi_cylinder.png</file>
+    <file alias="roi_ellipsoid" compressed="true">pixmaps/roi_ellipsoid.png</file>
+    <file alias="roi_freehand_2d" compressed="true">pixmaps/roi_freehand_2d.png</file>
+    <file alias="roi_freehand_3d" compressed="true">pixmaps/roi_freehand_3d.png</file>
+    <file alias="roi_isocontour_2d" compressed="true">pixmaps/roi_isocontour_2d.png</file>
+    <file alias="roi_isocontour_3d" compressed="true">pixmaps/roi_isocontour_3d.png</file>
+    <file alias="study" compressed="true">pixmaps/study.png</file>
+    <file alias="target" compressed="true">pixmaps/target.png</file>
+    <file alias="three_compartment" compressed="true">pixmaps/three_compartment.png</file>
+    <file alias="thresholding_global" compressed="true">pixmaps/thresholding_global.png</file>
+    <file alias="thresholding_interpolate_frames" compressed="true">pixmaps/thresholding_interpolate_frames.png</file>
+    <file alias="thresholding_per_frame" compressed="true">pixmaps/thresholding_per_frame.png</file>
+    <file alias="thresholding_per_slice" compressed="true">pixmaps/thresholding_per_slice.png</file>
+    <file alias="thresholding" compressed="true">pixmaps/thresholding.png</file>
+    <file alias="threshold_style_center_width" compressed="true">pixmaps/threshold_style_center_width.png</file>
+    <file alias="threshold_style_min_max" compressed="true">pixmaps/threshold_style_min_max.png</file>
+    <file alias="transfer_function" compressed="true">pixmaps/transfer_function.png</file>
+    <file alias="two_compartment" compressed="true">pixmaps/two_compartment.png</file>
+    <file alias="view_coronal" compressed="true">pixmaps/view_coronal.png</file>
+    <file alias="view_linked3" compressed="true">pixmaps/view_linked3.png</file>
+    <file alias="view_linked" compressed="true">pixmaps/view_linked.png</file>
+    <file alias="view_sagittal" compressed="true">pixmaps/view_sagittal.png</file>
+    <file alias="view_single" compressed="true">pixmaps/view_single.png</file>
+    <file alias="view_transverse" compressed="true">pixmaps/view_transverse.png</file>
+    <file alias="window_abdomen" compressed="true">pixmaps/window_abdomen.png</file>
+    <file alias="window_bone" compressed="true">pixmaps/window_bone.png</file>
+    <file alias="window_brain" compressed="true">pixmaps/window_brain.png</file>
+    <file alias="window_extremities" compressed="true">pixmaps/window_extremities.png</file>
+    <file alias="window_liver" compressed="true">pixmaps/window_liver.png</file>
+    <file alias="window_lung" compressed="true">pixmaps/window_lung.png</file>
+    <file alias="window_pelvis_soft_tissue" compressed="true">pixmaps/window_pelvis_soft_tissue.png</file>
+    <file alias="window_skull_base" compressed="true">pixmaps/window_skull_base.png</file>
+    <file alias="window_soft_tissue" compressed="true">pixmaps/window_soft_tissue.png</file>
+    <file alias="window_spine_a" compressed="true">pixmaps/window_spine_a.png</file>
+    <file alias="window_spine_b" compressed="true">pixmaps/window_spine_b.png</file>
+    <file alias="window_thorax_soft_tissue" compressed="true">pixmaps/window_thorax_soft_tissue.png</file>
+  </gresource>
+</gresources>
