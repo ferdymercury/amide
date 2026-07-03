@@ -17,13 +17,13 @@ Quick Linux instructions
 	cd /tmp/
 	git clone --depth=1 https://github.com/ferdymercury/amide
 	# If Ubuntu 22:
-	sudo apt install libgconf2-dev libmdc2-dev libvolpack1-dev libavcodec-dev gtk-doc-tools intltool libxml2-dev libgsl-dev libdcmtk-dev
+	sudo apt install libgconf2-dev libmdc2-dev libvolpack1-dev libavcodec-dev gtk-doc-tools intltool libxml2-dev libgsl-dev libdcmtk-dev libgtk-3-dev
 	# ElseIf Ubuntu 20:
-	sudo apt install libgconf2-dev libmdc2-dev libvolpack1-dev libavcodec-dev gtk-doc-tools intltool libxml2-dev python-libxml2 libgsl-dev libdcmtk-dev
+	sudo apt install libgconf2-dev libmdc2-dev libvolpack1-dev libavcodec-dev gtk-doc-tools intltool libxml2-dev python-libxml2 libgsl-dev libdcmtk-dev libgtk-3-dev
 	wget http://launchpadlibrarian.net/402991440/gnome-doc-utils_0.20.10-5_all.deb
 	sudo dpkg -i gnome-doc-utils_0.20.10-5_all.deb
 	# ElseIf Ubuntu 18:
-	sudo apt install libgconf2-dev libgnomevfs2-dev gnome-doc-utils libmdc2-dev libvolpack1-dev libavcodec-dev gtk-doc-tools intltool libxml2-dev python-libxml2 libgsl-dev libdcmtk-dev
+	sudo apt install libgconf2-dev libgnomevfs2-dev gnome-doc-utils libmdc2-dev libvolpack1-dev libavcodec-dev gtk-doc-tools intltool libxml2-dev python-libxml2 libgsl-dev libdcmtk-dev libgtk-3-dev
 	# EndIf	
 
 	cd amide
@@ -68,10 +68,10 @@ optimizations are used when compiling.
 
 
 
-2) GTK+:
+2) GTK:
 
-The current series of AMIDE requires GTK+-2, at least version 2.16.
-I'm currently developing on a Fedora Core 24 system, although other
+The current series of AMIDE requires GTK-3, at least version 3.21.5.
+I'm currently developing on a Fedora 25 system, although other
 distributions of Linux with equivalent library support should work.
 
 Scrollkeeper is required for generating the help documentation.  If
@@ -81,7 +81,7 @@ you don't care about that, it's not needed.
    libxml-2
 
 These are various other libraries are needed for installation, most of
-which you will most likely already have installed if you have GTK+.
+which you will most likely already have installed if you have GTK.
 
 
 Optional Packages
@@ -186,3 +186,16 @@ built using gtk-doc as follows:
 
 	./configure --enable-libdcmdata=no --enable-gtk-doc=yes
 	make
+
+
+
+Running AMIDE
+-------------
+
+When running on Linux, please note that the GTK-2 to GTK-3 change introduces
+possible behavior changes. GTK-2 will only run with X11 rendering while GTK-3
+is able to use Wayland as rendering backend. You can force X11 by setting the
+environment variable `GDK_BACKEND=x11`. On X11 sessions forwarded via SSH you
+might find the GUI displaying on the remote machine regardless of the DISPLAY
+variable's content. You can `unset XDG_RUNTIME_DIR` to forward to SSH clients
+regardlessly.
