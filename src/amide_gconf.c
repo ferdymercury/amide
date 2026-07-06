@@ -648,8 +648,69 @@ const gchar * enum_keys[] = {
   NULL
 };
 
+/* Try to build a GSettings from a specific schema directory.
+ * The directory is only used if com.github.ferdymercury.amide.gschema.xml
+ * is present there (as a heuristic that glib-compile-schemas has been run).
+ * Returns a new GSettings instance on success, NULL otherwise. */
+static GSettings * try_settings_from_dir(const gchar *schema_dir) {
+  static const gchar schema_xml[] = "com.github.ferdymercury.amide.gschema.xml";
+  gchar *xml_path;
+  GSettingsSchemaSource *src;
+  GSettingsSchema *schema;
+  GSettings *s = NULL;
+
+  xml_path = g_build_filename(schema_dir, schema_xml, NULL);
+  if (!g_file_test(xml_path, G_FILE_TEST_EXISTS)) {
+    g_free(xml_path);
+    return NULL;
+  }
+  g_free(xml_path);
+
+  src = g_settings_schema_source_new_from_directory(
+      schema_dir,
+      g_settings_schema_source_get_default(),
+      TRUE,
+      NULL);
+  if (src != NULL) {
+    schema = g_settings_schema_source_lookup(src, "com.github.ferdymercury.amide", TRUE);
+    if (schema != NULL) {
+      s = g_settings_new_full(schema, NULL, NULL);
+      g_settings_schema_unref(schema);
+    }
+    g_settings_schema_source_unref(src);
+  }
+  return s;
+}
+
 void amide_gconf_init(void) {
-  settings = g_settings_new("com.github.ferdymercury.amide");
+#if defined(__linux__)
+  /* 1. Try <prefix>/share/glib-2.0/schemas relative to the executable. */
+  if (settings == NULL) {
+    gchar *exe_path = g_file_read_link("/proc/self/exe", NULL);
+    if (exe_path != NULL) {
+      gchar *bin_dir    = g_path_get_dirname(exe_path);
+      gchar *prefix_dir = g_path_get_dirname(bin_dir);
+      gchar *schema_dir = g_build_filename(prefix_dir, "share", "glib-2.0", "schemas", NULL);
+      settings = try_settings_from_dir(schema_dir);
+      g_free(schema_dir);
+      g_free(prefix_dir);
+      g_free(bin_dir);
+      g_free(exe_path);
+    }
+  }
+
+  /* 2. Fall back to the current working directory. */
+  if (settings == NULL) {
+    gchar *cwd = g_get_current_dir();
+    settings = try_settings_from_dir(cwd);
+    g_free(cwd);
+  }
+#endif
+
+  /* 3. Final fallback: system-wide schema lookup. */
+  if (settings == NULL)
+    settings = g_settings_new("com.github.ferdymercury.amide");
+
   return;
 }
 
