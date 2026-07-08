@@ -123,9 +123,6 @@ GSList *        amitk_roi_free_points_list        (GSList * list);
 AmitkDataSet *  amitk_roi_get_intersection_slice  (const AmitkRoi * roi, 
 						   const AmitkVolume * canvas_slice,
 						   const amide_real_t pixel_dim
-#ifndef AMIDE_LIBGNOMECANVAS_AA
-						   , const gboolean fill_map_roi
-#endif
 						   );
 void            amitk_roi_set_specify_color       (AmitkRoi * roi,
 						   gboolean specify_color);

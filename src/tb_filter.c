@@ -67,7 +67,7 @@ static const char * median_linear_filter_text =
 N_("Median filters work relatively well at preserving edges while\n"
    "removing speckle noise.\n"
    "\n"
-   "This filter is the 1D median filter, so the neighboorhood used for\n"
+   "This filter is the 1D median filter, so the neighborhood used for\n"
    "determining the median will be of the given kernel size, and the\n"
    "data set will be filtered 3x (once for each direction).");
 
@@ -305,7 +305,9 @@ static GtkWidget * create_page(tb_filter_t * tb_filter, which_page_t i_page) {
   GtkWidget * table;
   GtkWidget * menu;
 
-  table = gtk_table_new(3,3,FALSE);
+  table = gtk_grid_new();
+  gtk_grid_set_row_spacing(GTK_GRID(table), Y_PADDING);
+  gtk_grid_set_column_spacing(GTK_GRID(table), X_PADDING);
     
   table_row=0;
   table_column=0;
@@ -313,18 +315,14 @@ static GtkWidget * create_page(tb_filter_t * tb_filter, which_page_t i_page) {
   switch(i_page) {
   case PICK_FILTER_PAGE:
     label = gtk_label_new(_("Which Filter"));
-    gtk_table_attach(GTK_TABLE(table), label, 
-		     table_column,table_column+1, table_row,table_row+1,
-		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), label, table_column, table_row, 1, 1);
     
-    menu = gtk_combo_box_new_text();
+    menu = gtk_combo_box_text_new();
     for (i_filter=0; i_filter<AMITK_FILTER_NUM; i_filter++) 
-      gtk_combo_box_append_text(GTK_COMBO_BOX(menu), amitk_filter_get_name(i_filter));
+      gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(menu), amitk_filter_get_name(i_filter));
     gtk_combo_box_set_active(GTK_COMBO_BOX(menu), tb_filter->filter);
     g_signal_connect(G_OBJECT(menu), "changed", G_CALLBACK(filter_cb), tb_filter);
-    gtk_table_attach(GTK_TABLE(table), menu, 
-		     table_column+1, table_column+2, table_row, table_row+1,
-		     FALSE, FALSE, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), menu, table_column+1, table_row, 1, 1);
     gtk_widget_show_all(menu);
     table_row++;
     
@@ -334,16 +332,13 @@ static GtkWidget * create_page(tb_filter_t * tb_filter, which_page_t i_page) {
     tb_filter->kernel_size = DEFAULT_GAUSSIAN_FILTER_SIZE;
     
     label = gtk_label_new(_(gaussian_filter_text));
-    gtk_table_attach(GTK_TABLE(table), label, 
-		     table_column,table_column+2, table_row,table_row+1,
-		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    gtk_widget_set_hexpand(label, TRUE);
+    gtk_grid_attach(GTK_GRID(table), label, table_column, table_row, 2, 1);
     table_row++;
     
     /* the kernel selection */
     label = gtk_label_new(_("Kernel Size"));
-    gtk_table_attach(GTK_TABLE(table), label, 
-		     table_column,table_column+1, table_row,table_row+1,
-		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), label, table_column, table_row, 1, 1);
     
     spin_button =  gtk_spin_button_new_with_range(MIN_FIR_FILTER_SIZE, 
 						  MAX_FIR_FILTER_SIZE,2);
@@ -352,15 +347,12 @@ static GtkWidget * create_page(tb_filter_t * tb_filter, which_page_t i_page) {
 			      tb_filter->kernel_size);
     g_signal_connect(G_OBJECT(spin_button), "value_changed",  
 		     G_CALLBACK(kernel_size_spinner_cb), tb_filter);
-    gtk_table_attach(GTK_TABLE(table), spin_button, 
-		     table_column+1,table_column+2, table_row,table_row+1,
-		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), spin_button,
+                    table_column+1, table_row, 1, 1);
     table_row++;
     
     label = gtk_label_new(_("FWHM (mm)"));
-    gtk_table_attach(GTK_TABLE(table), label, 
-		     table_column,table_column+1, table_row,table_row+1,
-		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), label, table_column, table_row, 1, 1);
     
     spin_button =  gtk_spin_button_new_with_range(MIN_FWHM, MAX_FWHM,0.2);
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), FALSE);
@@ -369,14 +361,11 @@ static GtkWidget * create_page(tb_filter_t * tb_filter, which_page_t i_page) {
 		     G_CALLBACK(fwhm_spinner_cb), tb_filter);
     g_signal_connect(G_OBJECT(spin_button), "output",
 		     G_CALLBACK(amitk_spin_button_scientific_output), NULL);
-    gtk_table_attach(GTK_TABLE(table), spin_button, 
-		     table_column+1,table_column+2, table_row,table_row+1,
-		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), spin_button,
+                    table_column+1, table_row, 1, 1);
 #else /* no libgsl support */
     label = gtk_label_new(_(no_libgsl_text));
-    gtk_table_attach(GTK_TABLE(table), label, 
-		     table_column,table_column+2, table_row,table_row+1,
-		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), label, table_column, table_row, 2, 1);
     table_row++;
 #endif
     break;
@@ -385,16 +374,13 @@ static GtkWidget * create_page(tb_filter_t * tb_filter, which_page_t i_page) {
     tb_filter->kernel_size = DEFAULT_MEDIAN_FILTER_SIZE;
     
     label = gtk_label_new((i_page == MEDIAN_3D_FILTER_PAGE) ? _(median_3d_filter_text) : _(median_linear_filter_text));
-    gtk_table_attach(GTK_TABLE(table), label, 
-		     table_column,table_column+2, table_row,table_row+1,
-		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    gtk_widget_set_hexpand(label, TRUE);
+    gtk_grid_attach(GTK_GRID(table), label, table_column, table_row, 2, 1);
     table_row++;
     
     /* the kernel selection */
     label = gtk_label_new(_("Kernel Size"));
-    gtk_table_attach(GTK_TABLE(table), label, 
-		     table_column,table_column+1, table_row,table_row+1,
-		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), label, table_column, table_row, 1, 1);
     
     spin_button =  gtk_spin_button_new_with_range(MIN_NONLINEAR_FILTER_SIZE, 
 						  MAX_NONLINEAR_FILTER_SIZE,2);
@@ -403,9 +389,8 @@ static GtkWidget * create_page(tb_filter_t * tb_filter, which_page_t i_page) {
 			      tb_filter->kernel_size);
     g_signal_connect(G_OBJECT(spin_button), "value_changed",  
 		     G_CALLBACK(kernel_size_spinner_cb), tb_filter);
-    gtk_table_attach(GTK_TABLE(table), spin_button, 
-		     table_column+1,table_column+2, table_row,table_row+1,
-		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    gtk_grid_attach(GTK_GRID(table), spin_button,
+                    table_column+1, table_row, 1, 1);
     table_row++;
     break;
   default:
@@ -422,7 +407,6 @@ static GtkWidget * create_page(tb_filter_t * tb_filter, which_page_t i_page) {
 void tb_filter(AmitkStudy * study, AmitkDataSet * active_ds, GtkWindow * parent) {
 
   tb_filter_t * tb_filter;
-  GdkPixbuf * logo;
   which_page_t i_page;
 
   if (active_ds == NULL) {
@@ -467,14 +451,11 @@ void tb_filter(AmitkStudy * study, AmitkDataSet * active_ds, GtkWindow * parent)
 
 
   /* things for all pages */
-  logo = gtk_widget_render_icon(GTK_WIDGET(tb_filter->dialog), "amide_icon_logo", GTK_ICON_SIZE_DIALOG, 0);
   for (i_page=0; i_page<NUM_PAGES; i_page++) {
-    gtk_assistant_set_page_header_image(GTK_ASSISTANT(tb_filter->dialog), tb_filter->page[i_page], logo);
     gtk_assistant_set_page_title(GTK_ASSISTANT(tb_filter->dialog), tb_filter->page[i_page], _(wizard_name));
     gtk_assistant_set_page_complete(GTK_ASSISTANT(tb_filter->dialog), tb_filter->page[i_page], TRUE); /* all pages have default values */
     g_object_set_data(G_OBJECT(tb_filter->page[i_page]),"which_page", GINT_TO_POINTER(i_page));
   }
-  g_object_unref(logo);
 
 #ifndef AMIDE_LIBGSL_SUPPORT
   gtk_assistant_set_page_complete(GTK_ASSISTANT(tb_filter->dialog), tb_filter->page[GAUSSIAN_FILTER_PAGE], FALSE);

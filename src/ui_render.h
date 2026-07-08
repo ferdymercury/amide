@@ -33,7 +33,7 @@
 #include "render.h"
 #include "amitk_study.h"
 
-#define GCONF_AMIDE_RENDERING "RENDERING"
+#define GCONF_AMIDE_RENDERING "rendering"
 
 /* defines */
 #define UI_RENDER_BLANK_WIDTH 200
@@ -55,8 +55,8 @@ typedef struct ui_render_t {
   amide_real_t fov;
   AmitkPoint view_center;
   GtkWidget * canvas;
-  GnomeCanvasItem * canvas_image;
-  GnomeCanvasItem * canvas_time_label;
+  AmitkCanvasItem * canvas_image;
+  AmitkCanvasItem * canvas_time_label;
   gboolean time_label_on;
   gint pixbuf_width, pixbuf_height;
   GdkPixbuf * pixbuf;
@@ -70,6 +70,9 @@ typedef struct ui_render_t {
   gdouble front_factor;
   gdouble density;
   gdouble zoom;
+  gdouble x_old;
+  gdouble y_old;
+  gdouble z_old;
   AmitkSpace * box_space;
 
   guint next_update;

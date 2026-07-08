@@ -93,11 +93,11 @@ typedef struct {
 
 static void tree_view_class_init (AmitkTreeViewClass *klass);
 static void tree_view_init (AmitkTreeView *tree_view);
-static void tree_view_destroy (GtkObject *object);
+static void tree_view_destroy (GtkWidget *object);
 static void tree_view_set_view_mode(AmitkTreeView * tree_view, AmitkViewMode view_mode);
 static void tree_view_add_roi_cb(GtkWidget * widget, gpointer data);
 static void tree_view_popup_roi_menu(AmitkTreeView * tree_view, AmitkObject * parent_object, 
-				     guint button, guint32 activate_time);
+				     GdkEventButton * event);
 static gboolean tree_view_button_press_event(GtkWidget *tree_view,GdkEventButton *event);
 static gboolean tree_view_button_release_event(GtkWidget *tree_view, GdkEventButton *event);
 static gboolean tree_view_key_press_event(GtkWidget * tree_view, GdkEventKey * event);
@@ -188,17 +188,15 @@ GType amitk_tree_view_get_type (void) {
 
 static void tree_view_class_init (AmitkTreeViewClass *klass)
 {
-  GtkObjectClass *gtkobject_class;
   /*  GtkTreeViewClass *tree_view_class; */
   GtkWidgetClass *widget_class;
 
-  gtkobject_class = (GtkObjectClass*) klass;
   widget_class    = (GtkWidgetClass*) klass;
   /*  tree_view_class    = (GtkTreeViewClass*) klass; */
 
   parent_class = g_type_class_peek_parent(klass);
 
-  gtkobject_class->destroy = tree_view_destroy;
+  widget_class->destroy = tree_view_destroy;
 
   widget_class->button_press_event = tree_view_button_press_event;
   widget_class->button_release_event = tree_view_button_release_event;
@@ -301,7 +299,7 @@ static void tree_view_init (AmitkTreeView * tree_view)
   
 }
 
-static void tree_view_destroy (GtkObject * object) {
+static void tree_view_destroy (GtkWidget * object) {
 
   AmitkTreeView * tree_view;
 
@@ -339,8 +337,8 @@ static void tree_view_destroy (GtkObject * object) {
     tree_view->drag_list = NULL;
   }
 
-  if (GTK_OBJECT_CLASS (parent_class)->destroy)
-    (* GTK_OBJECT_CLASS (parent_class)->destroy) (object);
+  if (GTK_WIDGET_CLASS (parent_class)->destroy)
+    (* GTK_WIDGET_CLASS (parent_class)->destroy) (object);
 }
 
 
@@ -387,7 +385,7 @@ static void tree_view_add_roi_cb(GtkWidget * widget, gpointer data) {
 
 
 static void tree_view_popup_roi_menu(AmitkTreeView * tree_view, AmitkObject * parent_object, 
-				     guint button, guint32 activate_time) {
+				     GdkEventButton * event) {
   GtkWidget * menu;
   GtkWidget * menuitem;
   AmitkRoiType i_roi_type;
@@ -404,7 +402,7 @@ static void tree_view_popup_roi_menu(AmitkTreeView * tree_view, AmitkObject * pa
   }
   gtk_widget_show(menu);
   
-  gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL, button, activate_time);
+  gtk_menu_popup_at_pointer(GTK_MENU(menu), (GdkEvent *) event);
   return;
 }
 
@@ -461,7 +459,7 @@ static gboolean tree_view_button_press_event (GtkWidget      *widget,
     amitk_tree_view_set_active_object(tree_view, tree_view->active_object);
     
     if ((event->button == 3) && !valid_row)
-      tree_view_popup_roi_menu(tree_view, NULL, event->button, event->time);
+      tree_view_popup_roi_menu(tree_view, NULL, event);
     break;
 
   default:
@@ -603,7 +601,7 @@ static gboolean tree_view_button_release_event (GtkWidget      *widget,
 	  g_signal_emit(G_OBJECT(tree_view),  tree_view_signals[ADD_OBJECT], 0, object, add_type, 0);
       
 	if ((add_object) && (add_type==AMITK_OBJECT_TYPE_ROI))
-	  tree_view_popup_roi_menu(tree_view, object, event->button, event->time);
+	  tree_view_popup_roi_menu(tree_view, object, event);
 	break;
 
       case AMITK_TREE_VIEW_MODE_SINGLE_SELECTION:
@@ -676,7 +674,7 @@ static gboolean tree_view_key_press_event(GtkWidget * widget,
 	gtk_tree_path_free(path);
 	gtk_tree_model_get(model, &iter, COLUMN_OBJECT, &object, -1);
 	
-	if ((event->keyval == GDK_x) || (event->keyval == GDK_X))
+	if ((event->keyval == GDK_KEY_x) || (event->keyval == GDK_KEY_X))
 	  if (!AMITK_IS_STUDY(object))
 	    g_signal_emit(G_OBJECT(tree_view), tree_view_signals[DELETE_OBJECT], 0, object);
       }
@@ -799,29 +797,31 @@ static gboolean tree_view_enter_notify_event(GtkWidget * widget,
 static GdkPixbuf * tree_view_get_object_pixbuf(AmitkTreeView * tree_view, AmitkObject * object) {
 
   GdkPixbuf * pixbuf=NULL;
+  GtkIconTheme * theme = gtk_icon_theme_get_default();
+  GtkIconLookupFlags flags = GTK_ICON_LOOKUP_FORCE_SIZE;
 
   if (AMITK_IS_ROI(object)) {
     switch (AMITK_ROI_TYPE(object)) {
     case AMITK_ROI_TYPE_ELLIPSOID:
-      pixbuf = gtk_widget_render_icon(GTK_WIDGET(tree_view), "amide_icon_roi_ellipsoid", GTK_ICON_SIZE_LARGE_TOOLBAR, 0);
+      pixbuf = gtk_icon_theme_load_icon(theme, "amide_icon_roi_ellipsoid", 24, flags, NULL);
       break;
     case AMITK_ROI_TYPE_CYLINDER:
-      pixbuf = gtk_widget_render_icon(GTK_WIDGET(tree_view), "amide_icon_roi_cylinder", GTK_ICON_SIZE_LARGE_TOOLBAR, 0);
+      pixbuf = gtk_icon_theme_load_icon(theme, "amide_icon_roi_cylinder", 24, flags, NULL);
       break;
     case AMITK_ROI_TYPE_BOX:
-      pixbuf = gtk_widget_render_icon(GTK_WIDGET(tree_view), "amide_icon_roi_box", GTK_ICON_SIZE_LARGE_TOOLBAR, 0);
+      pixbuf = gtk_icon_theme_load_icon(theme, "amide_icon_roi_box", 24, flags, NULL);
       break;
     case AMITK_ROI_TYPE_ISOCONTOUR_2D:
-      pixbuf = gtk_widget_render_icon(GTK_WIDGET(tree_view), "amide_icon_roi_isocontour_2d", GTK_ICON_SIZE_LARGE_TOOLBAR, 0);
+      pixbuf = gtk_icon_theme_load_icon(theme, "amide_icon_roi_isocontour_2d", 24, flags, NULL);
       break;
     case AMITK_ROI_TYPE_ISOCONTOUR_3D:
-      pixbuf = gtk_widget_render_icon(GTK_WIDGET(tree_view), "amide_icon_roi_isocontour_3d", GTK_ICON_SIZE_LARGE_TOOLBAR, 0);
+      pixbuf = gtk_icon_theme_load_icon(theme, "amide_icon_roi_isocontour_3d", 24, flags, NULL);
       break;
     case AMITK_ROI_TYPE_FREEHAND_2D:
-      pixbuf = gtk_widget_render_icon(GTK_WIDGET(tree_view), "amide_icon_roi_freehand_2d", GTK_ICON_SIZE_LARGE_TOOLBAR, 0);
+      pixbuf = gtk_icon_theme_load_icon(theme, "amide_icon_roi_freehand_2d", 24, flags, NULL);
       break;
     case AMITK_ROI_TYPE_FREEHAND_3D:
-      pixbuf = gtk_widget_render_icon(GTK_WIDGET(tree_view), "amide_icon_roi_freehand_3d", GTK_ICON_SIZE_LARGE_TOOLBAR, 0);
+      pixbuf = gtk_icon_theme_load_icon(theme, "amide_icon_roi_freehand_3d", 24, flags, NULL);
       break;
     default:
       g_error("Unknown case in %s at %d\n", __FILE__, __LINE__);
@@ -831,9 +831,9 @@ static GdkPixbuf * tree_view_get_object_pixbuf(AmitkTreeView * tree_view, AmitkO
   } else if (AMITK_IS_DATA_SET(object)) {
     pixbuf = image_get_data_set_pixbuf(AMITK_DATA_SET(object));
   } else if (AMITK_IS_STUDY(object)) {
-    pixbuf = gtk_widget_render_icon(GTK_WIDGET(tree_view), "amide_icon_study", GTK_ICON_SIZE_LARGE_TOOLBAR, 0);
+    pixbuf = gtk_icon_theme_load_icon(theme, "amide_icon_study", 24, flags, NULL);
   } else if (AMITK_IS_FIDUCIAL_MARK(object)) {
-    pixbuf = gtk_widget_render_icon(GTK_WIDGET(tree_view), "amide_icon_align_pt", GTK_ICON_SIZE_LARGE_TOOLBAR, 0);
+    pixbuf = gtk_icon_theme_load_icon(theme, "amide_icon_align_pt", 24, flags, NULL);
   } else {
     g_error("Unknown case in %s at %d\n", __FILE__, __LINE__);
   }

@@ -30,6 +30,7 @@
 #include <string.h>
 #include <locale.h>
 #include "amitk_common.h"
+#include "amide.h"
 
 #define BOOLEAN_STRING_MAX_LENGTH 10 /* when we stop checking */
 static char * true_string = "true";

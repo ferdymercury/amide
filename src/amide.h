@@ -45,6 +45,25 @@ typedef enum {
   AMIDE_EYE_NUM
 } AmideEye;
 
+/* Ugly workaround for old GLib bug that is being exposed:
+   https://gitlab.gnome.org/GNOME/glib/-/issues/299.  The program
+   often aborts with the custom log handler with:
+   (process:1197716): GdkPixbuf-DEBUG (recursed):
+   gdk_pixbuf_from_pixdata() called on:  */
+#undef g_warning
+#undef g_message
+#undef g_debug
+#define g_warning(...) amide_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, \
+                                 __VA_ARGS__)
+#define g_message(...) amide_log(G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE, \
+                                 __VA_ARGS__)
+#define g_debug(...)   amide_log(G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG, \
+                                 __VA_ARGS__)
+
+void amide_log(const gchar *log_domain,
+               GLogLevelFlags log_level,
+               const gchar *format,
+               ...);
 
 /* external variables */
 extern gchar * object_menu_names[];

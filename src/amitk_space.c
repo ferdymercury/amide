@@ -27,6 +27,7 @@
 #include "amitk_space.h"
 #include "amitk_marshal.h"
 #include "amitk_type_builtins.h"
+#include "amide.h"
 
 
 enum {

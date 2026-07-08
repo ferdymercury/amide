@@ -155,11 +155,7 @@ static void image_free_rgb_data(guchar * pixels, gpointer data) {
 GdkPixbuf * image_slice_intersection(const AmitkRoi * roi,
 				     const AmitkVolume * canvas_slice,
 				     const amide_real_t pixel_size,
-#ifdef AMIDE_LIBGNOMECANVAS_AA
 				     const gdouble transparency,
-#else
-				     const gboolean fill_roi,
-#endif
 				     rgba_t color,
 				     AmitkPoint * return_offset,
 				     AmitkPoint * return_corner) {
@@ -169,17 +165,12 @@ GdkPixbuf * image_slice_intersection(const AmitkRoi * roi,
   AmitkVoxel i;
   guchar * rgba_data;
   AmitkVoxel dim;
-#ifdef AMIDE_LIBGNOMECANVAS_AA
   guchar transparency_byte;
 
   transparency_byte = transparency * 0xFF;
-#endif
 
   
   intersection = amitk_roi_get_intersection_slice(roi, canvas_slice, pixel_size 
-#ifndef AMIDE_LIBGNOMECANVAS_AA
-						  , fill_roi
-#endif
 						  );
   if (intersection == NULL) return NULL;
 
@@ -202,18 +193,12 @@ GdkPixbuf * image_slice_intersection(const AmitkRoi * roi,
 	rgba_data[(dim.y-i.y-1)*dim.x*4 + i.x*4+0] = color.r;
 	rgba_data[(dim.y-i.y-1)*dim.x*4 + i.x*4+1] = color.g;
 	rgba_data[(dim.y-i.y-1)*dim.x*4 + i.x*4+2] = color.b;
-#ifdef AMIDE_LIBGNOMECANVAS_AA
 	rgba_data[(dim.y-i.y-1)*dim.x*4 + i.x*4+3] = color.a;
-#else
-	rgba_data[(dim.y-i.y-1)*dim.x*4 + i.x*4+3] = 0xFF;
-#endif
-#ifdef AMIDE_LIBGNOMECANVAS_AA
       }	else if (AMITK_RAW_DATA_UBYTE_CONTENT(intersection->raw_data, i) == 2) {
 	rgba_data[(dim.y-i.y-1)*dim.x*4 + i.x*4+0] = color.r;
 	rgba_data[(dim.y-i.y-1)*dim.x*4 + i.x*4+1] = color.g;
 	rgba_data[(dim.y-i.y-1)*dim.x*4 + i.x*4+2] = color.b;
 	rgba_data[(dim.y-i.y-1)*dim.x*4 + i.x*4+3] = transparency_byte;
-#endif
       }	else {
 	rgba_data[(dim.y-i.y-1)*dim.x*4 + i.x*4+0] = 0x00;
 	rgba_data[(dim.y-i.y-1)*dim.x*4 + i.x*4+1] = 0x00;

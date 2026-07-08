@@ -25,10 +25,8 @@
 
 /* header files that are always needed with this file */
 #include <gtk/gtk.h>
-#include <libgnomecanvas/libgnomecanvas.h>
+#include "amitk_canvas_compat.h"
 #include "amitk_point.h"
-
-#define HELP_MENU_UI_DESCRIPTION  "<menu action='HelpMenu'> <menuitem action='HelpContents'/> <separator/> <menuitem action='HelpAbout'/> </menu>"
 
 typedef enum {
   UI_CURSOR_DEFAULT,
@@ -57,31 +55,21 @@ typedef enum {
 gboolean ui_common_check_filename(const gchar * filename);
 void ui_common_set_last_path_used(const gchar * last_path_used);
 gchar * ui_common_suggest_path(void);
-void ui_common_entry_name_cb(gchar * entry_string, gpointer data);
 void ui_common_about_cb(GtkWidget * button, gpointer data);
-void ui_common_draw_view_axis(GnomeCanvas * canvas, gint row, gint column, 
+void ui_common_draw_view_axis(AmitkSimpleCanvas * canvas, gint row, gint column,
 			      AmitkView view, AmitkLayout layout, 
 			      gint axis_width, gint axis_height);
 
-void ui_common_update_sample_roi_item(GnomeCanvasItem * roi_item,
+void ui_common_update_sample_roi_item(AmitkCanvasItem * roi_item,
 				      gint roi_width,
-#ifdef AMIDE_LIBGNOMECANVAS_AA
 				      gdouble transparency
-#else
-				      GdkLineStyle line_style
-#endif
 				      );
 
 void ui_common_study_preferences_widgets(GtkWidget * packing_table,
 					 gint table_row,
 					 GtkWidget ** proi_width_spin,
-					 GnomeCanvasItem ** proi_item,
-#ifdef AMIDE_LIBGNOMECANVAS_AA
+					 AmitkCanvasItem ** proi_item,
 					 GtkWidget ** proi_transparency_spin,
-#else
-					 GtkWidget ** pline_style_menu,
-					 GtkWidget ** fill_roi_button,
-#endif
 					 GtkWidget ** playout_button1,
 					 GtkWidget ** playout_button2,
 					 GtkWidget ** ppanel_layout_button1,
@@ -98,6 +86,7 @@ void ui_common_init_dialog_response_cb (GtkDialog * dialog, gint response_id, gp
 GList * ui_common_init_dialog_selected_objects(GtkWidget * dialog);
 void ui_common_toolbar_insert_widget(GtkWidget * toolbar, GtkWidget * widget, const gchar * tooltip, gint position);
 void ui_common_toolbar_append_widget(GtkWidget * toolbar, GtkWidget * widget, const gchar * tooltip);
+void ui_common_toolbar_append_widget_full(GtkWidget * toolbar, GtkWidget * widget, const gchar * label, const gchar * tooltip, GCallback cb, gpointer data);
 void ui_common_toolbar_append_separator(GtkWidget * toolbar);
 
 void amide_call_help(const gchar * link_id);
@@ -107,6 +96,6 @@ void amide_unregister_all_windows(void);
 
 
 /* external variables */
-extern GtkActionEntry ui_common_help_menu_items[UI_COMMON_HELP_MENU_NUM];
+extern GActionEntry ui_common_help_menu_items[UI_COMMON_HELP_MENU_NUM];
 extern GdkCursor * ui_common_cursor[NUM_CURSORS];
 

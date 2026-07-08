@@ -78,8 +78,8 @@ static void object_picker(ui_study_t * ui_study, AmitkStudy * import_study) {
   temp_string = g_strdup_printf(_("%s: Pick Object(s) to Import"), PACKAGE);
   dialog = gtk_dialog_new_with_buttons (temp_string,  ui_study->window,
 					GTK_DIALOG_DESTROY_WITH_PARENT,
-					GTK_STOCK_EXECUTE, AMITK_RESPONSE_EXECUTE,
-					GTK_STOCK_CANCEL, GTK_RESPONSE_CLOSE, NULL);
+					_("_Execute"), AMITK_RESPONSE_EXECUTE,
+					_("_Cancel"), GTK_RESPONSE_CLOSE, NULL);
   gtk_window_set_title(GTK_WINDOW(dialog), temp_string);
   g_free(temp_string);
 
@@ -89,9 +89,12 @@ static void object_picker(ui_study_t * ui_study, AmitkStudy * import_study) {
   gtk_container_set_border_width(GTK_CONTAINER(dialog), 10);
 
   /* start making the widgets for this dialog box */
-  table = gtk_table_new(5,2,FALSE);
+  table = gtk_grid_new();
+  gtk_grid_set_row_spacing(GTK_GRID(table), Y_PADDING);
+  gtk_grid_set_column_spacing(GTK_GRID(table), X_PADDING);
   table_row=0;
-  gtk_container_add(GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), table);
+  gtk_container_add(GTK_CONTAINER(gtk_dialog_get_content_area
+                                  (GTK_DIALOG(dialog))), table);
 
   tree_view = amitk_tree_view_new(AMITK_TREE_VIEW_MODE_MULTIPLE_SELECTION,NULL, NULL);
   g_object_set_data(G_OBJECT(dialog), "tree_view", tree_view);
@@ -103,10 +106,8 @@ static void object_picker(ui_study_t * ui_study, AmitkStudy * import_study) {
   gtk_widget_set_size_request(scrolled,250,250);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled), 
 				 GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-  gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolled), 
-					tree_view);
-  gtk_table_attach(GTK_TABLE(table), scrolled, 0,2,
-		   table_row, table_row+1,GTK_FILL, GTK_FILL | GTK_EXPAND, X_PADDING, Y_PADDING);
+  gtk_container_add(GTK_CONTAINER(scrolled), tree_view);
+  gtk_grid_attach(GTK_GRID(table), scrolled, 0, table_row, 2, 1);
   table_row++;
 
   /* and show all our widgets */
@@ -170,8 +171,8 @@ void read_xif(ui_study_t * ui_study, gboolean import_object, gboolean as_directo
   file_chooser = gtk_file_chooser_dialog_new (recovery_mode ? _("Recover AMIDE XIF FILE") : _("Open AMIDE XIF File"),
 					      GTK_WINDOW(ui_study->window), /* parent window */
 					      as_directory ? GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER : GTK_FILE_CHOOSER_ACTION_OPEN, 
-					      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-					      GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+					      _("_Cancel"), GTK_RESPONSE_CANCEL,
+					      _("_Open"), GTK_RESPONSE_ACCEPT,
 					      NULL);
   gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(file_chooser), TRUE);
   amitk_preferences_set_file_chooser_directory(ui_study->preferences, file_chooser); /* set the default directory if applicable */
@@ -221,31 +222,31 @@ void read_xif(ui_study_t * ui_study, gboolean import_object, gboolean as_directo
 } 
 
 /* function to load a study into the  study widget */
-void ui_study_cb_open_xif_file(GtkAction * action, gpointer data) {
+void ui_study_cb_open_xif_file(GSimpleAction * action, GVariant * param, gpointer data) {
   ui_study_t * ui_study=data;
   read_xif(ui_study, FALSE, FALSE, FALSE);
   return;
 }
-void ui_study_cb_open_xif_dir(GtkAction * action, gpointer data) {
+void ui_study_cb_open_xif_dir(GSimpleAction * action, GVariant * param, gpointer data) {
   ui_study_t * ui_study=data;
   read_xif(ui_study, FALSE, TRUE, FALSE);
   return;
 }
 
 /* function to load an object from a pre-existing study into the current study widget */
-void ui_study_cb_import_object_from_xif_file(GtkAction * action, gpointer data) {
+void ui_study_cb_import_object_from_xif_file(GSimpleAction * action, GVariant * param, gpointer data) {
   ui_study_t * ui_study = data;
   read_xif(ui_study, TRUE, FALSE, FALSE);
   return;
 }
-void ui_study_cb_import_object_from_xif_dir(GtkAction * action, gpointer data) {
+void ui_study_cb_import_object_from_xif_dir(GSimpleAction * action, GVariant * param, gpointer data) {
   ui_study_t * ui_study = data;
   read_xif(ui_study, TRUE, TRUE, FALSE);
   return;
 }
 
 /* try to recover portions of a study file */
-void ui_study_cb_recover_xif_file(GtkAction * action, gpointer data) {
+void ui_study_cb_recover_xif_file(GSimpleAction * action, GVariant * param, gpointer data) {
   ui_study_t * ui_study=data;
   read_xif(ui_study, FALSE, FALSE, TRUE);
   return;
@@ -253,7 +254,7 @@ void ui_study_cb_recover_xif_file(GtkAction * action, gpointer data) {
 
 
 /* function to create a new study widget */
-void ui_study_cb_new_study(GtkAction * action, gpointer data) {
+void ui_study_cb_new_study(GSimpleAction * action, GVariant * param, gpointer data) {
   ui_study_t * ui_study = data;
   ui_study_create(NULL, ui_study->preferences);
   return;
@@ -323,8 +324,8 @@ void save_xif(ui_study_t * ui_study, gboolean as_directory) {
   file_chooser = gtk_file_chooser_dialog_new (_("Save AMIDE XIF File"),
 					      GTK_WINDOW(ui_study->window), /* parent window */
 					      as_directory ? GTK_FILE_CHOOSER_ACTION_CREATE_FOLDER : GTK_FILE_CHOOSER_ACTION_SAVE, 
-					      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-					      GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+					      _("_Cancel"), GTK_RESPONSE_CANCEL,
+					      _("_Save"), GTK_RESPONSE_ACCEPT,
 					      NULL);
   gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(file_chooser), TRUE);
 
@@ -405,19 +406,19 @@ void save_xif(ui_study_t * ui_study, gboolean as_directory) {
   g_free(final_filename);
 }
 
-void ui_study_cb_save_as_xif_file(GtkAction * action, gpointer data) {
+void ui_study_cb_save_as_xif_file(GSimpleAction * action, GVariant * param, gpointer data) {
   ui_study_t * ui_study = data;
   save_xif(ui_study, FALSE);
   return;
 }
-void ui_study_cb_save_as_xif_dir(GtkAction * action, gpointer data) {
+void ui_study_cb_save_as_xif_dir(GSimpleAction * action, GVariant * param, gpointer data) {
   ui_study_t * ui_study = data;
   save_xif(ui_study, TRUE);
   return;
 }
 
 /* function to selection which file to import */
-void ui_study_cb_import(GtkAction * action, gpointer data) {
+void ui_study_cb_import(GSimpleAction * action, GVariant * param, gpointer data) {
 
   ui_study_t * ui_study = data;
   GtkWidget * file_chooser;
@@ -432,8 +433,8 @@ void ui_study_cb_import(GtkAction * action, gpointer data) {
   file_chooser = gtk_file_chooser_dialog_new (_("Import File"),
 					      GTK_WINDOW(ui_study->window), /* parent window */
 					      GTK_FILE_CHOOSER_ACTION_OPEN,
-					      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-					      GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+					      _("_Cancel"), GTK_RESPONSE_CANCEL,
+					      _("_Open"), GTK_RESPONSE_ACCEPT,
 					      NULL);
   gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(file_chooser), TRUE);
   amitk_preferences_set_file_chooser_directory(ui_study->preferences, file_chooser); /* set the default directory if applicable */
@@ -456,8 +457,7 @@ void ui_study_cb_import(GtkAction * action, gpointer data) {
 #endif
 
   /* method we're trying to use to read in the file */
-  method = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(action), "method"));
-  submethod = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(action), "submethod"));
+  g_variant_get(param, "(ii)", &method, &submethod);
   
   ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
 
@@ -499,7 +499,7 @@ void ui_study_cb_import(GtkAction * action, gpointer data) {
     
 
 /* function to selection which file to export to */
-void ui_study_cb_export_data_set(GtkAction * action, gpointer data) {
+void ui_study_cb_export_data_set(GSimpleAction * action, GVariant * param, gpointer data) {
   ui_study_t * ui_study = data;
 
   if (!AMITK_IS_DATA_SET(ui_study->active_object)) {
@@ -517,7 +517,7 @@ void ui_study_cb_export_data_set(GtkAction * action, gpointer data) {
 }
 
 /* function to save a view as an external data format */
-void ui_study_cb_export_view(GtkAction * action, gpointer data) {
+void ui_study_cb_export_view(GSimpleAction * action, GVariant * param, gpointer data) {
   
   ui_study_t * ui_study = data;
   GList * current_data_sets;
@@ -543,15 +543,15 @@ void ui_study_cb_export_view(GtkAction * action, gpointer data) {
   file_chooser = gtk_file_chooser_dialog_new(_("Export to File"),
 					     GTK_WINDOW(ui_study->window), /* parent window */
 					     GTK_FILE_CHOOSER_ACTION_SAVE,
-					     GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-					     GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+					     _("_Cancel"), GTK_RESPONSE_CANCEL,
+					     _("_Save"), GTK_RESPONSE_ACCEPT,
 					     NULL);
   gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(file_chooser), TRUE);
   gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER (file_chooser), TRUE);
   amitk_preferences_set_file_chooser_directory(ui_study->preferences, file_chooser); /* set the default directory if applicable */
 
 
-  view = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(action), "view"));
+  view = g_variant_get_int32(param);
 
   if (ui_study->canvas[AMITK_VIEW_MODE_SINGLE][view] == NULL) return;
 
@@ -960,7 +960,7 @@ void ui_study_cb_time(GtkWidget * button, gpointer data) {
 
 
 /* callbacks for setting up a set of slices in a new window */
-void ui_study_cb_series(GtkAction * action, gpointer data) {
+void ui_study_cb_series(GSimpleAction * action, GVariant * param, gpointer data) {
 
   GtkWidget * dialog;
   ui_study_t * ui_study = data;
@@ -991,12 +991,12 @@ void ui_study_cb_series(GtkAction * action, gpointer data) {
 }
 
 #if (AMIDE_FFMPEG_SUPPORT || AMIDE_LIBFAME_SUPPORT)
-void ui_study_cb_fly_through(GtkAction * action, gpointer data) {
+void ui_study_cb_fly_through(GSimpleAction * action, GVariant * param, gpointer data) {
 
   ui_study_t * ui_study = data;
   AmitkView view;
   
-  view = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(action), "view"));
+  view = g_variant_get_int32(param);
 
   tb_fly_through(ui_study->study, view, ui_study->preferences, ui_study->window);
 
@@ -1006,7 +1006,7 @@ void ui_study_cb_fly_through(GtkAction * action, gpointer data) {
 
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
 /* callback for starting up volume rendering */
-void ui_study_cb_render(GtkAction * action, gpointer data) {
+void ui_study_cb_render(GSimpleAction * action, GVariant * param, gpointer data) {
 
   GtkWidget * dialog;
   ui_study_t * ui_study = data;
@@ -1036,7 +1036,7 @@ void ui_study_cb_render(GtkAction * action, gpointer data) {
 
 
 /* do roi calculations */
-void ui_study_cb_roi_statistics(GtkAction * action, gpointer data) {
+void ui_study_cb_roi_statistics(GSimpleAction * action, GVariant * param, gpointer data) {
   ui_study_t * ui_study = data;
   GtkWidget * dialog;
   gint return_val;
@@ -1059,7 +1059,7 @@ void ui_study_cb_roi_statistics(GtkAction * action, gpointer data) {
 }
 
 /* user wants to run the alignment wizard */
-void ui_study_cb_alignment_selected(GtkAction * action, gpointer data) {
+void ui_study_cb_alignment_selected(GSimpleAction * action, GVariant * param, gpointer data) {
   ui_study_t * ui_study = data;
   tb_alignment(ui_study->study, ui_study->window);
   return;
@@ -1068,7 +1068,7 @@ void ui_study_cb_alignment_selected(GtkAction * action, gpointer data) {
 
 
 /* user wants to run the crop wizard */
-void ui_study_cb_crop_selected(GtkAction * action, gpointer data) {
+void ui_study_cb_crop_selected(GSimpleAction * action, GVariant * param, gpointer data) {
   ui_study_t * ui_study = data;
 
   if (!AMITK_IS_DATA_SET(ui_study->active_object)) 
@@ -1079,7 +1079,7 @@ void ui_study_cb_crop_selected(GtkAction * action, gpointer data) {
 }
 
 /* user wants to run the distance wizard */
-void ui_study_cb_distance_selected(GtkAction * action, gpointer data) {
+void ui_study_cb_distance_selected(GSimpleAction * action, GVariant * param, gpointer data) {
   ui_study_t * ui_study = data;
 
   tb_distance(ui_study->study, ui_study->window);
@@ -1088,7 +1088,7 @@ void ui_study_cb_distance_selected(GtkAction * action, gpointer data) {
 }
 
 /* user wants to run the fads wizard */
-void ui_study_cb_fads_selected(GtkAction * action, gpointer data) {
+void ui_study_cb_fads_selected(GSimpleAction * action, GVariant * param, gpointer data) {
   ui_study_t * ui_study = data;
 
   if (!AMITK_IS_DATA_SET(ui_study->active_object)) 
@@ -1104,7 +1104,7 @@ void ui_study_cb_fads_selected(GtkAction * action, gpointer data) {
 }
 
 /* user wants to run the filter wizard */
-void ui_study_cb_filter_selected(GtkAction * action, gpointer data) {
+void ui_study_cb_filter_selected(GSimpleAction * action, GVariant * param, gpointer data) {
   ui_study_t * ui_study = data;
 
   if (!AMITK_IS_DATA_SET(ui_study->active_object)) 
@@ -1116,7 +1116,7 @@ void ui_study_cb_filter_selected(GtkAction * action, gpointer data) {
 }
 
 /* user wants to run the profile wizard */
-void ui_study_cb_profile_selected(GtkAction * action, gpointer data) {
+void ui_study_cb_profile_selected(GSimpleAction * action, GVariant * param, gpointer data) {
   ui_study_t * ui_study = data;
 
   tb_profile(ui_study->study, ui_study->preferences, ui_study->window);
@@ -1126,7 +1126,7 @@ void ui_study_cb_profile_selected(GtkAction * action, gpointer data) {
 
 
 /* user wants to run the image math wizard */
-void ui_study_cb_data_set_math_selected(GtkAction * action, gpointer data) {
+void ui_study_cb_data_set_math_selected(GSimpleAction * action, GVariant * param, gpointer data) {
   ui_study_t * ui_study = data;
 
   tb_math(ui_study->study, ui_study->window);
@@ -1146,16 +1146,18 @@ static gboolean threshold_delete_event(GtkWidget* widget, GdkEvent * event, gpoi
 
 
 /* function called when target button toggled on toolbar */
-void ui_study_cb_canvas_target(GtkToggleAction * action, gpointer data) {
+void ui_study_cb_canvas_target(GSimpleAction * action, GVariant * state, gpointer data) {
 
   ui_study_t * ui_study = data;
-  amitk_study_set_canvas_target(ui_study->study,
-				gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(action)));  
+  gboolean val;
+
+  val = g_variant_get_boolean(state);
+  amitk_study_set_canvas_target(ui_study->study, val);
+  g_simple_action_set_state(action, state);
 }
 
 /* function called when hitting the threshold button, pops up a dialog */
-void ui_study_cb_thresholding(GtkAction * action, gpointer data) {
-
+void ui_study_cb_thresholding(GSimpleAction * action, GVariant * param, gpointer data) {
   ui_study_t * ui_study = data;
 
   if (!AMITK_IS_DATA_SET(ui_study->active_object)) return;
@@ -1182,13 +1184,13 @@ void ui_study_cb_thresholding(GtkAction * action, gpointer data) {
 }
 
 /* callback function for adding an roi */
-void ui_study_cb_add_roi(GtkWidget * widget, gpointer data) {
+void ui_study_cb_add_roi(GSimpleAction * action, GVariant * param, gpointer data) {
 
   ui_study_t * ui_study = data;
   AmitkRoiType roi_type;
 
   /* figure out which menu item called me */
-  roi_type = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"roi_type"));
+  roi_type = g_variant_get_int32(param);
   ui_study_add_roi(ui_study, AMITK_OBJECT(ui_study->study), roi_type);
 
   return;
@@ -1196,7 +1198,7 @@ void ui_study_cb_add_roi(GtkWidget * widget, gpointer data) {
 
 
 /* callback function for adding a fiducial mark */
-void ui_study_cb_add_fiducial_mark(GtkAction * action, gpointer data) {
+void ui_study_cb_add_fiducial_mark(GSimpleAction * action, GVariant * param, gpointer data) {
 
   ui_study_t * ui_study = data;
 
@@ -1209,7 +1211,7 @@ void ui_study_cb_add_fiducial_mark(GtkAction * action, gpointer data) {
 }
 
 /* callback function for changing user's preferences */
-void ui_study_cb_preferences(GtkAction * action, gpointer data) {
+void ui_study_cb_preferences(GSimpleAction * action, GVariant * param, gpointer data) {
 
   ui_study_t * ui_study=data;
   ui_preferences_dialog_create(ui_study);
@@ -1218,12 +1220,16 @@ void ui_study_cb_preferences(GtkAction * action, gpointer data) {
 
 
 /* function to switch the interpolation method */
-void ui_study_cb_interpolation(GtkRadioAction * action, GtkRadioAction * current, gpointer data) {
+void ui_study_cb_interpolation(GSimpleAction * action, GVariant * state, gpointer data) {
   ui_study_t * ui_study = data;
+  int val;
   g_return_if_fail(AMITK_IS_DATA_SET(ui_study->active_object));
 
+  val = g_variant_get_int32(state);
   amitk_data_set_set_interpolation(AMITK_DATA_SET(ui_study->active_object),
-				   gtk_radio_action_get_current_value((GTK_RADIO_ACTION(current))));	
+                                   val);
+  g_simple_action_set_state(action, state);
+
   return;
 }
 
@@ -1270,37 +1276,54 @@ void ui_study_cb_fov_changed(AmitkStudy * study, gpointer data) {
 }
 
 /* function to switch the image fusion type */
-void ui_study_cb_fuse_type(GtkRadioAction * action, GtkRadioAction * current, gpointer data) {
+void ui_study_cb_fuse_type(GSimpleAction * action, GVariant * state, gpointer data) {
 
   ui_study_t * ui_study = data;
+  int val;
 
-  amitk_study_set_fuse_type(ui_study->study,  
-			    gtk_radio_action_get_current_value((GTK_RADIO_ACTION(current))));	
+  val = g_variant_get_int32(state);
+  amitk_study_set_fuse_type(ui_study->study, val);
   ui_study_update_fuse_type(ui_study);
 				
   return;
 }
 
-void ui_study_cb_canvas_visible(GtkToggleAction * action, gpointer data) {
+void ui_study_cb_canvas_visible(GSimpleAction * action, GVariant * state, gpointer data) {
 
   ui_study_t * ui_study = data;
 
   AmitkView view;
+  GtkToggleToolButton * button;
+  gboolean val;
+  const gchar * name;
 
-  view = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(action),"view"));
-  amitk_study_set_canvas_visible(ui_study->study, view, 
-				 gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(action)));
-  ui_study_update_canvas_visible_buttons(ui_study);
+  val = g_variant_get_boolean(state);
+  name = g_action_get_name(G_ACTION(action));
+  if (g_str_has_suffix(name, "transverse"))
+    view = AMITK_VIEW_TRANSVERSE;
+  else if (g_str_has_suffix(name, "coronal"))
+    view = AMITK_VIEW_CORONAL;
+  else
+    view = AMITK_VIEW_SAGITTAL;
+
+  if (!amitk_study_set_canvas_visible(ui_study->study, view, val)) {
+    button = GTK_TOGGLE_TOOL_BUTTON(g_object_get_data(G_OBJECT(action),
+                                                      "button"));
+    gtk_toggle_tool_button_set_active(button, TRUE);
+  } else {
+    ui_study_update_canvas_visible_buttons(ui_study);
+  }
 
   return;
 }
 
-void ui_study_cb_view_mode(GtkRadioAction * action, GtkRadioAction * current, gpointer data) {
+void ui_study_cb_view_mode(GSimpleAction * action, GVariant * state, gpointer data) {
 
   ui_study_t * ui_study = data;
+  gint val;
 
-  amitk_study_set_view_mode(ui_study->study, 
-			    gtk_radio_action_get_current_value((GTK_RADIO_ACTION(current))));	
+  val = g_variant_get_int32(state);
+  amitk_study_set_view_mode(ui_study->study, val);
   ui_study_update_view_mode(ui_study);
 
   return;
@@ -1308,7 +1331,7 @@ void ui_study_cb_view_mode(GtkRadioAction * action, GtkRadioAction * current, gp
 
 
 /* function ran to exit the program */
-void ui_study_cb_quit(GtkAction * action, gpointer data) {
+void ui_study_cb_quit(GSimpleAction * action, GVariant * param, gpointer data) {
 
   ui_study_t * ui_study = data;
   GtkWindow * window = ui_study->window;
@@ -1326,7 +1349,7 @@ void ui_study_cb_quit(GtkAction * action, gpointer data) {
 }
 
 /* function ran when closing a study window */
-void ui_study_cb_close(GtkAction* action, gpointer data) {
+void ui_study_cb_close(GSimpleAction * action, GVariant * param, gpointer data) {
 
   ui_study_t * ui_study = data;
   GtkWindow * window = ui_study->window;

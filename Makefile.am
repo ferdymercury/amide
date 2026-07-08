@@ -20,8 +20,12 @@ SUBDIRS = \
 	etc \
 	$(HELPDIR)
 
+gsettings_SCHEMAS = com.github.ferdymercury.amide.gschema.xml
+
+@GSETTINGS_RULES@
 
 EXTRA_DIST = \
+	$(gsettings_SCHEMAS) \
 	intltool-extract.in \
 	intltool-merge.in    \
 	intltool-update.in \

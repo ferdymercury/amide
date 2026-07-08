@@ -1,0 +1,363 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+
+  <enum id="com.github.ferdymercury.amide.AmitkLayout">
+    <value nick="Linear" value="0"/>
+    <value nick="Orthogonal" value="1"/>
+  </enum>
+
+  <enum id="com.github.ferdymercury.amide.AmitkPanelLayout">
+    <value nick="Mixed" value="0"/>
+    <value nick="Linear X" value="1"/>
+    <value nick="Linear Y" value="2"/>
+  </enum>
+
+  <enum id="com.github.ferdymercury.amide.AmitkWhichDefaultDirectory">
+    <value nick="None" value="0"/>
+    <value nick="Specified" value="1"/>
+    <value nick="Working" value="2"/>
+  </enum>
+
+  <enum id="com.github.ferdymercury.amide.AmitkThresholdStyle">
+    <value nick="Min/Max" value="0"/>
+    <value nick="Center/Width" value="1"/>
+  </enum>
+
+  <enum id="com.github.ferdymercury.amide.AmitkModality">
+    <value nick="pet" value="0"/>
+    <value nick="spect" value="1"/>
+    <value nick="ct" value="2"/>
+    <value nick="mri" value="3"/>
+    <value nick="other" value="4"/>
+  </enum>
+
+  <enum id="com.github.ferdymercury.amide.AmitkFormat">
+    <value nick="Unsigned Byte (8 bit)" value="0"/>
+    <value nick="Signed Byte (8 bit)" value="1"/>
+    <value nick="Unsigned Short (16 bit)" value="2"/>
+    <value nick="Signed Short (16 bit)" value="3"/>
+    <value nick="Unsigned Integer (32 bit)" value="4"/>
+    <value nick="Signed Integer (32 bit)" value="5"/>
+    <value nick="Float (32 bit)" value="6"/>
+    <value nick="Double (64 bit)" value="7"/>
+  </enum>
+
+  <enum id="com.github.ferdymercury.amide.AmitkExportMethod">
+    <value nick="Raw Data" value="0"/>
+    <value nick="DICOM via dcmtk" value="1"/>
+    <value nick="libmdc" value="2"/>
+  </enum>
+
+  <enum id="com.github.ferdymercury.amide.AnalysisCalculationType">
+    <value nick="all voxels" value="0"/>
+    <value nick="highest fraction voxels" value="1"/>
+    <value nick="voxels near max" value="2"/>
+    <value nick="voxels greater than value" value="3"/>
+  </enum>
+
+  <enum id="com.github.ferdymercury.amide.SeriesType">
+    <value nick="over Space" value="0"/>
+    <value nick="over Time" value="1"/>
+    <value nick="over Gates" value="2"/>
+  </enum>
+
+  <enum id="com.github.ferdymercury.amide.AmitkView">
+    <value nick="Transverse" value="0"/>
+    <value nick="Coronal" value="1"/>
+    <value nick="Sagittal" value="2"/>
+  </enum>
+
+  <schema id="com.github.ferdymercury.amide"
+          path="/com/github/ferdymercury/amide/">
+    <child name="roi" schema="com.github.ferdymercury.amide.roi"/>
+    <child name="canvas"
+           schema="com.github.ferdymercury.amide.canvas"/>
+    <child name="misc" schema="com.github.ferdymercury.amide.misc"/>
+    <child name="datasets"
+           schema="com.github.ferdymercury.amide.datasets"/>
+    <child name="windows"
+           schema="com.github.ferdymercury.amide.windows"/>
+    <child name="rawdataimport"
+           schema="com.github.ferdymercury.amide.rawdataimport"/>
+    <child name="export"
+           schema="com.github.ferdymercury.amide.export"/>
+    <child name="analysis"
+           schema="com.github.ferdymercury.amide.analysis"/>
+    <child name="rendering"
+           schema="com.github.ferdymercury.amide.rendering"/>
+    <child name="series"
+           schema="com.github.ferdymercury.amide.series"/>
+    <child name="missing-functionality"
+           schema="com.github.ferdymercury.amide.missing-functionality"/>
+  </schema>
+
+  <schema id="com.github.ferdymercury.amide.roi"
+         path="/com/github/ferdymercury/amide/roi/">
+    <key name="width" type="i">
+      <range min="1" max="5"/>
+      <default>2</default>
+    </key>
+    <key name="transparency" type="d">
+      <default>0.5</default>
+    </key>
+  </schema>
+
+  <schema id="com.github.ferdymercury.amide.canvas"
+         path="/com/github/ferdymercury/amide/canvas/">
+    <key name="layout" enum="com.github.ferdymercury.amide.AmitkLayout">
+      <default>'Linear'</default>
+    </key>
+    <key name="maintain-size" type="b">
+      <default>true</default>
+    </key>
+    <key name="target-empty-area" type="i">
+      <range min="0" max="25"/>
+      <default>5</default>
+    </key>
+    <key name="panel-layout"
+         enum="com.github.ferdymercury.amide.AmitkPanelLayout">
+      <default>'Mixed'</default>
+    </key>
+  </schema>
+
+  <schema id="com.github.ferdymercury.amide.misc"
+         path="/com/github/ferdymercury/amide/misc/">
+    <key name="warnings-to-console" type="b">
+      <default>false</default>
+    </key>
+    <key name="prompt-for-save-on-exit" type="b">
+      <default>true</default>
+    </key>
+    <key name="which-default-directory"
+         enum="com.github.ferdymercury.amide.AmitkWhichDefaultDirectory">
+      <default>'None'</default>
+    </key>
+    <key name="default-directory" type="s">
+      <default>''</default>
+    </key>
+  </schema>
+
+  <schema id="com.github.ferdymercury.amide.datasets"
+          path="/com/github/ferdymercury/amide/datasets/">
+    <key name="threshold-style"
+         enum="com.github.ferdymercury.amide.AmitkThresholdStyle">
+      <default>'Min/Max'</default>
+    </key>
+    <key name="default-color-table-pet" type="i">
+    <default>22</default>
+    </key>
+    <key name="default-color-table-spect" type="i">
+      <default>10</default>
+    </key>
+    <key name="default-color-table-ct" type="i">
+      <default>0</default>
+    </key>
+    <key name="default-color-table-mri" type="i">
+      <default>0</default>
+    </key>
+    <key name="default-color-table-other" type="i">
+      <default>0</default>
+    </key>
+  </schema>
+
+  <schema id="com.github.ferdymercury.amide.windows"
+          path="/com/github/ferdymercury/amide/windows/">
+    <key name="abdomen-min" type="d">
+      <default>-85.0</default>
+    </key>
+    <key name="abdomen-max" type="d">
+      <default>165.0</default>
+    </key>
+    <key name="brain-min" type="d">
+      <default>-0.0</default>
+    </key>
+    <key name="brain-max" type="d">
+      <default>80.0</default>
+    </key>
+    <key name="extremities-min" type="d">
+      <default>-400.0</default>
+    </key>
+    <key name="extremities-max" type="d">
+      <default>1000.0</default>
+    </key>
+    <key name="liver-min" type="d">
+      <default>-40.0</default>
+    </key>
+    <key name="liver-max" type="d">
+      <default>160.0</default>
+    </key>
+    <key name="lung-min" type="d">
+      <default>-1350.0</default>
+    </key>
+    <key name="lung-max" type="d">
+      <default>150.0</default>
+    </key>
+    <key name="pelvis-soft-tissue-min" type="d">
+      <default>-140.0</default>
+    </key>
+    <key name="pelvis-soft-tissue-max" type="d">
+      <default>210.0</default>
+    </key>
+    <key name="skull-base-min" type="d">
+      <default>-60.0</default>
+    </key>
+    <key name="skull-base-max" type="d">
+      <default>140.0</default>
+    </key>
+    <key name="spine-a-min" type="d">
+      <default>-35.0</default>
+    </key>
+    <key name="spine-a-max" type="d">
+      <default>215.0</default>
+    </key>
+    <key name="spine-b-min" type="d">
+      <default>-300.0</default>
+    </key>
+    <key name="spine-b-max" type="d">
+      <default>1200.0</default>
+    </key>
+    <key name="thorax-soft-tissue-min" type="d">
+      <default>-125.0</default>
+    </key>
+    <key name="thorax-soft-tissue-max" type="d">
+      <default>225.0</default>
+    </key>
+  </schema>
+
+  <schema id="com.github.ferdymercury.amide.rawdataimport"
+          path="/com/github/ferdymercury/amide/rawdataimport/">
+    <key name="last-modality"
+         enum="com.github.ferdymercury.amide.AmitkModality">
+      <default>'ct'</default>
+    </key>
+    <key name="last-raw-format"
+         enum="com.github.ferdymercury.amide.AmitkFormat">
+      <default>'Unsigned Byte (8 bit)'</default>
+    </key>
+    <key name="last-data-dim-g" type="i">
+      <default>1</default>
+    </key>
+    <key name="last-data-dim-t" type="i">
+      <default>1</default>
+    </key>
+    <key name="last-data-dim-z" type="i">
+      <default>1</default>
+    </key>
+    <key name="last-data-dim-y" type="i">
+      <default>1</default>
+    </key>
+    <key name="last-data-dim-x" type="i">
+      <default>1</default>
+    </key>
+    <key name="last-voxel-size-z" type="d">
+      <default>1.0</default>
+    </key>
+    <key name="last-voxel-size-y" type="d">
+      <default>1.0</default>
+    </key>
+    <key name="last-voxel-size-x" type="d">
+      <default>1.0</default>
+    </key>
+    <key name="last-offset" type="i">
+      <default>0</default>
+    </key>
+    <key name="last-scale-factor" type="d">
+      <default>1.0</default>
+    </key>
+  </schema>
+
+  <schema id="com.github.ferdymercury.amide.export"
+          path="/com/github/ferdymercury/amide/export/">
+    <key name="reslice-data-set" type="b">
+      <default>false</default>
+    </key>
+    <key name="all-visible-data-sets" type="b">
+      <default>false</default>
+    </key>
+    <key name="inclusive-bounding-box" type="b">
+      <default>false</default>
+    </key>
+    <key name="method"
+         enum="com.github.ferdymercury.amide.AmitkExportMethod">
+      <default>'Raw Data'</default>
+    </key>
+    <key name="submethod" type="i">
+      <default>0</default>
+    </key>
+    <key name="voxel-size-z" type="d">
+      <default>1.0</default>
+    </key>
+    <key name="voxel-size-y" type="d">
+      <default>1.0</default>
+    </key>
+    <key name="voxel-size-x" type="d">
+      <default>1.0</default>
+    </key>
+  </schema>
+
+  <schema id="com.github.ferdymercury.amide.analysis"
+          path="/com/github/ferdymercury/amide/analysis/">
+    <key name="calculate-all-data-sets" type="b">
+      <default>false</default>
+    </key>
+    <key name="calculate-all-rois" type="b">
+      <default>false</default>
+    </key>
+    <key name="calculation-type"
+         enum="com.github.ferdymercury.amide.AnalysisCalculationType">
+      <default>'all voxels'</default>
+    </key>
+    <key name="accurate" type="b">
+      <default>false</default>
+    </key>
+    <key name="sub-fraction" type="d">
+      <default>0.0</default>
+    </key>
+    <key name="threshold-percentage" type="d">
+      <default>0.0</default>
+    </key>
+    <key name="threshold-value" type="d">
+      <default>0.0</default>
+    </key>
+  </schema>
+
+  <schema id="com.github.ferdymercury.amide.rendering"
+          path="/com/github/ferdymercury/amide/rendering/">
+    <key name="strip-highs" type="b">
+      <default>false</default>
+    </key>
+    <key name="optimize-rendering" type="b">
+      <default>false</default>
+    </key>
+    <key name="initially-no-gradient-opacity" type="b">
+      <default>false</default>
+    </key>
+    <key name="update-without-release" type="b">
+      <default>false</default>
+    </key>
+    <key name="eye-width" type="i">
+      <default>0</default>
+    </key>
+    <key name="eye-angle" type="d">
+      <default>5.0</default>
+    </key>
+  </schema>
+
+  <schema id="com.github.ferdymercury.amide.series"
+          path="/com/github/ferdymercury/amide/series/">
+    <key name="type" enum="com.github.ferdymercury.amide.SeriesType">
+      <default>'over Space'</default>
+    </key>
+    <key name="view" enum="com.github.ferdymercury.amide.AmitkView">
+      <default>'Transverse'</default>
+    </key>
+  </schema>
+
+  <schema id="com.github.ferdymercury.amide.missing-functionality"
+          path="/com/github/ferdymercury/amide/missing-functionality/">
+    <key name="already-warned" type="s">
+      <default>'0.0.0'</default>
+    </key>
+  </schema>
+
+</schemalist>
