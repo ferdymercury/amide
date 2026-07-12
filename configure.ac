@@ -331,8 +331,8 @@ AC_ARG_WITH(volpack-prefix,
   , volpack_prefix="$withval", volpack_prefix="")
 
 if test x"$volpack_prefix" != x; then
-  VOLPACK_CFLAGS="-I$volpack_prefix/include"
   VOLPACK_LIBS="-L$volpack_prefix/lib -lvolpack"
+  VOLPACK_CFLAGS="-I$volpack_prefix/include"
   enable_libvolpack=yes
   FOUND_VOLPACK=yes
 else
