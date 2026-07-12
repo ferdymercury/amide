@@ -100,7 +100,7 @@ AM_PATH_GSL(1.1.1, FOUND_LIBGSL=yes, FOUND_LIBGSL=no)
 AC_CHECK_LIB(ecat, matrix_open, FOUND_LIBECAT=yes, FOUND_LIBECAT=no, -L/sw/lib)
 AC_CHECK_LIB(volpack, vpGetErrorString, FOUND_VOLPACK=yes, FOUND_VOLPACK=no, -lm -L/sw/lib -L/usr/local/lib)
 dnl AM_PATH_XMEDCON(0.10.0, FOUND_XMEDCON=yes, FOUND_XMEDCON=no)
-dnl Above requires xmedcon.m4 macro installed. Replaced further down with AC_ARG_WITH (prefix) and AC_CHECM_PROG (xmedcon-config)
+dnl Above requires xmedcon.m4 macro installed. Replaced further down with AC_ARG_WITH (prefix) and AC_CHECK_PROG (xmedcon-config)
 
 PKG_CHECK_MODULES(LIBOPENJP2, libopenjp2 >= 2.1.0, FOUND_OPENJP2=yes, FOUND_OPENJP2=no)
 
