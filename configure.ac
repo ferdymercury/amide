@@ -1,4 +1,4 @@
-gdnl ===============================================================================
+dnl ===============================================================================
 dnl              Configure script for AMIDE
 dnl ===============================================================================
 AC_PREREQ(2.59)
@@ -99,7 +99,8 @@ dnl check for various libraries and programs that we might need
 AM_PATH_GSL(1.1.1, FOUND_LIBGSL=yes, FOUND_LIBGSL=no)
 AC_CHECK_LIB(ecat, matrix_open, FOUND_LIBECAT=yes, FOUND_LIBECAT=no, -L/sw/lib)
 AC_CHECK_LIB(volpack, vpGetErrorString, FOUND_VOLPACK=yes, FOUND_VOLPACK=no, -lm -L/sw/lib -L/usr/local/lib)
-AM_PATH_XMEDCON(0.10.0, FOUND_XMEDCON=yes, FOUND_XMEDCON=no)
+dnl AM_PATH_XMEDCON(0.10.0, FOUND_XMEDCON=yes, FOUND_XMEDCON=no)
+dnl Above requires xmedcon.m4 macro installed. Replaced further down with AC_ARG_WITH (prefix) and AC_CHECK_PROG (xmedcon-config)
 
 PKG_CHECK_MODULES(LIBOPENJP2, libopenjp2 >= 2.1.0, FOUND_OPENJP2=yes, FOUND_OPENJP2=no)
 
@@ -109,8 +110,26 @@ PKG_CHECK_MODULES(VISTAIO, libvistaio >= 1.2.17, FOUND_VISTAIO=yes, FOUND_VISTAI
 dnl switch to C++ for DCMTK library stuff - also, if pthread is on the platform, probably need that
 dnl autoconf doesn't have a nice macro for checking for c++ libraries, therefore the below:
 AC_CHECK_LIB(pthread, pthread_mutex_init, THREAD_LIBS="-lpthread", THREAD_LIBS="")
-AMIDE_LIBDCMDATA_LIBS="-L/usr/local/dicom/lib -L/usr/lib64/dcmtk -L/usr/lib/dcmtk -ltiff -lpng -ldcmimage -ldcmimgle -ldcmjpeg -lijg8 -lijg12 -lijg16 -ldcmdata -loflog -lofstd -lz $THREAD_LIBS"
-AMIDE_LIBDCMDATA_CFLAGS="-I/usr/local/dicom/include"
+
+
+dnl --with-dcmtk-prefix
+AC_ARG_WITH(dcmtk-prefix,
+[
+  --with-dcmtk-prefix=PFX  Prefix where DCMTK is installed (optional)]
+  , dcmtk_prefix="$withval", dcmtk_prefix="")
+if test x"$dcmtk_prefix" != x; then
+  DCMTK_LIBS="-L$dcmtk_prefix/lib -L$dcmtk_prefix/lib64 -ltiff -lpng -ldcmimage -ldcmimgle -ldcmdata -ldcmjpeg -lijg8 -lijg12 -lijg16 -loflog -lofstd -loficonv -lz $THREADS_LIB"
+  DCMTK_CFLAGS="-I$dcmtk_prefix/include"
+else
+  DCMTK_LIBS="-L/usr/local/dicom/lib -L/usr/lib64/dcmtk -L/usr/lib/dcmtk -ldcmimgle -ldcmdata -loflog -lofstd -loficonv -ldcmimage -ldcmjpeg -lijg8 -lijg12 -lijg16 -lz -ltiff -lpng $THREADS_LIB"
+  DCMTK_CFLAGS="-I/usr/local/dicom/include"
+fi
+
+AMIDE_LIBDCMDATA_LIBS="$DCMTK_LIBS"
+AMIDE_LIBDCMDATA_CFLAGS="$DCMTK_CFLAGS"
+dnl previous hardcoded settings: failed compile test ...
+dnl AMIDE_LIBDCMDATA_LIBS="-L/usr/local/dicom/lib -L/usr/lib64/dcmtk -L/usr/lib/dcmtk -ltiff -lpng -ldcmimage -ldcmimgle -ldcmjpeg -lijg8 -lijg12 -lijg16 -ldcmdata -loflog -lofstd -lz $THREAD_LIBS"
+dnl AMIDE_LIBDCMDATA_CFLAGS="-I/usr/local/dicom/include"
 saved_libs="${LIBS}"
 LIBS="${LIBS} ${AMIDE_LIBDCMDATA_LIBS}"
 saved_cxxflags="${CXXFLAGS}"                                              
@@ -267,13 +286,32 @@ AC_ARG_ENABLE(
 	enable_libmdc="$enableval", 
 	enable_libmdc=yes)
 
+dnl Use AC_ARG_WITH (prefix) and AC_CHECK_PROG (xmedcon-config)
+AC_ARG_WITH(xmedcon-prefix,
+[
+  --with-xmedcon-prefix=PFX  Prefix where XMEDCON is installed (optional)]
+  , xmedcon_prefix="$withval", xmedcon_prefix="")
+if test x"$xmedcon_prefix" != x; then
+  XMEDCON_LIBS=$($xmedcon_prefix/bin/xmedcon-config --libs)
+  XMEDCON_CFLAGS=$($xmedcon_prefix/bin/xmedcon-config --cflags)
+  FOUND_XMEDCON=yes
+  enable_libmdc=yes
+else
+  AC_CHECK_PROG(XMEDCONCONFIG, xmedcon-config, yes, no)
+  if test x"$XMEDCONCONFIG" != xno; then
+    XMEDCON_LIBS=$(xmedcon-config --libs)
+    XMEDCON_CFLAGS=$(xmedcon-config --cflags)
+    FOUND_XMEDCON=yes
+  else
+    FOUND_XMEDCON=no
+  fi
+fi
+
 if (test $enable_libmdc = yes) && (test $FOUND_XMEDCON = yes); then
 	echo "compiling with xmedcon/libmdc file support"
 	AC_DEFINE(AMIDE_LIBMDC_SUPPORT, 1, Define to compile with (X)MedCon)
-
-	dnl 2007.10.28 - new xmedcon's should be using glib2/gtk2, dont' have to overwrite XMEDCON_LIBS
-	dnl XMEDCON_LIBS="-L/usr/local/lib -L/usr/local/xmedcon/lib -lmdc"
 	AC_SUBST(XMEDCON_LIBS)
+  AC_SUBST(XMEDCON_CFLAGS)
 else
 	echo "compiling without xmedcon/libmdc file support"
 fi
@@ -286,10 +324,27 @@ AC_ARG_ENABLE(
 	enable_libvolpack="$enableval", 
 	enable_libvolpack=yes)
 
+dnl --with-volpack-prefix
+AC_ARG_WITH(volpack-prefix,
+[
+  --with-volpack-prefix=PFX  Prefix where VOLPACK library is installed (optional)]
+  , volpack_prefix="$withval", volpack_prefix="")
+
+if test x"$volpack_prefix" != x; then
+  VOLPACK_LIBS="-L$volpack_prefix/lib -lvolpack"
+  VOLPACK_CFLAGS="-I$volpack_prefix/include"
+  enable_libvolpack=yes
+  FOUND_VOLPACK=yes
+else
+  VOLPACK_LIBS="-lvolpack"
+fi
+
 if (test $enable_libvolpack = yes) && (test $FOUND_VOLPACK = yes); then
 	echo "compiling with libvolpack rendering support "
-	AMIDE_LIBVOLPACK_LIBS="-lvolpack"
+	AMIDE_LIBVOLPACK_LIBS="$VOLPACK_LIBS"
+	AMIDE_LIBVOLPACK_CFLAGS="$VOLPACK_CFLAGS"
 	AC_SUBST(AMIDE_LIBVOLPACK_LIBS)
+  AC_SUBST(AMIDE_LIBVOLPACK_CFLAGS)
 	AC_DEFINE(AMIDE_LIBVOLPACK_SUPPORT, 1, Define to compile with VolPack)
 else
 	echo "compiling without libvolpack rendering support"
