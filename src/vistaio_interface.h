@@ -33,7 +33,7 @@
 /* includes always needed with this file */
 #include "amitk_data_set.h"
 
-gboolean vistaio_test_vista(gchar *filename); 
+gboolean vistaio_test_vista(const gchar *filename);
 
 
 /* external functions */
