@@ -297,7 +297,7 @@ static gchar ** amide_gnome_program_locate_help_file (const gchar *file_name, gb
   i=0;
   j=0;
   while (dirs[i] != NULL) {
-    buf = g_strdup_printf ("%s%s%s%s%s%s%s", dirs[i], G_DIR_SEPARATOR_S,"gnome",G_DIR_SEPARATOR_S, "help", G_DIR_SEPARATOR_S,file_name);
+    buf = g_strdup_printf ("%s%s%s%s%s", dirs[i], G_DIR_SEPARATOR_S, "help", G_DIR_SEPARATOR_S,file_name);
     
     if (!only_if_exists || g_file_test (buf, G_FILE_TEST_EXISTS)) {
       retvals[j] = buf;
@@ -336,79 +336,18 @@ GQuark amide_gnome_help_error_quark (void) {
 
 gboolean amide_gnome_help_display (const char *file_name, const char *link_id, GError **error) {
 
-  gchar ** help_paths;
-  gchar *file=NULL;
-  GStatBuf help_st;
+  gboolean success;
   gchar *uri=NULL;
-  gboolean retval;
-  const char    *doc_id = PACKAGE;
-  gint i;
-  gchar * temp_str=NULL;
-  
-  g_return_val_if_fail (file_name != NULL, FALSE);
-  
-  retval = FALSE;
-  
-  help_paths = amide_gnome_program_locate_help_file (doc_id,FALSE);
-  
-  if (help_paths == NULL) {
-    g_set_error (error, AMIDE_GNOME_HELP_ERROR, AMIDE_GNOME_HELP_ERROR_INTERNAL,
-		 _("Unable to find the app or global HELP domain"));
-    goto out;
+
+  if (link_id)  {
+    uri = g_strconcat ("yelp help:amide/", link_id, NULL);
+    success = g_spawn_command_line_async (uri, error);
+    g_free (uri);
+  } else {
+    success = g_spawn_command_line_async ("yelp help:amide", error);
   }
-  
-  /* Try to access the help paths, first the app-specific help path
-   * and then falling back to the global help path if the first one fails.
-   */
-  
-  i=0;
-  while ((help_paths[i] != NULL) && (file == NULL)) {
-    if (g_stat (help_paths[i], &help_st) == 0) {
-      if (!S_ISDIR (help_st.st_mode)) 
-	goto error;
-      file = locate_help_file (help_paths[i], file_name);
-    }
-    i++;
-  }
-  if (file == NULL) goto error;
 
-  /* Now that we have a file name, try to display it in the help browser */
-  if (link_id)
-    uri = g_strconcat ("ghelp://", file, "?", link_id, NULL);
-  else
-    uri = g_strconcat ("ghelp://", file, NULL);
-  
-  retval = amide_gnome_help_display_uri_with_env (uri, NULL, error);
-
-  goto out;
-
- error:
-  
-  i=0;
-  while (help_paths[i] != NULL) {
-    amitk_append_str(&temp_str, "%s;", help_paths[i]);
-    i++;
-  }
-  g_set_error (error, AMIDE_GNOME_HELP_ERROR, AMIDE_GNOME_HELP_ERROR_NOT_FOUND,
-	       _("Unable to find the help files in any of the following directories, "
-                 " or these are not valid directories: %s "
-		 ":  Please check your installation"),
-	       temp_str);
-  g_free(temp_str);
-
- out:
-  if (help_paths != NULL) {
-    i=0;
-    while (help_paths[i] != NULL) {
-      g_free(help_paths[i]);
-      i++;
-    }
-    g_free(help_paths);
-  }
-  if (file != NULL) g_free (file);
-  if (uri != NULL) g_free (uri);
-
-  return retval;
+  return success;
 }
 
 

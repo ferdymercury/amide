@@ -472,9 +472,6 @@ test -z "$GLIB_COMPILE_RESOURCES" && AC_MSG_ERROR([
 # Checks for gtk-doc and docbook-tools, from gtk's configure.in
 ################################################################
 
-dnl if we define --enable-gtk-doc, we build the library documentation
-GTK_DOC_CHECK([1.10])
-
 dnl the following is for the application documentation
 AC_ARG_ENABLE(doc,
         [  --disable-doc           Do not build documentation.],,)
@@ -491,11 +488,9 @@ else
 fi
 AM_CONDITIONAL(DISABLE_DOC, test ${enable_doc} = no)
 
-if test ${enable_doc} = yes; then
-   dnl building documentatin
-   GNOME_DOC_INIT
+YELP_HELP_INIT
 
-else
+if test x${enable_doc} = xno; then
   dnl not building documentation
   ENABLE_SK_TRUE="#"
   ENABLE_SK_FALSE=""  
@@ -517,9 +512,6 @@ src/Makefile
 win32/Makefile
 macosx/Makefile
 macosx/amide.plist
-doc/Makefile
-doc/reference/Makefile
-doc/reference/version.xml
 help/Makefile
 etc/Makefile
 etc/amide-$VERSION-1.info:etc/amide.info.in

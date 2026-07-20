@@ -1,15 +1,15 @@
 ## Process this file with automake to produce Makefile.in.
 
-include $(top_srcdir)/gnome-doc-utils.make
-dist-hook: doc-dist-hook
+@YELP_HELP_RULES@
 
-DOC_MODULE = amide
-DOC_ENTITIES = legal.xml
-DOC_INCLUDES =
-DOC_FIGURES = \
+HELP_ID = amide
+HELP_FILES = legal.xml index.docbook
+HELP_EXTRA =
+HELP_MEDIA = \
 	figures/amide_main_window.png \
 	figures/study_tree.png
 
-DOC_LINGUAS = es
+HELP_LINGUAS = es
 
 DISTCLEANFILES = *~ */*~
+

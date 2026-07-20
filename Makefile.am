@@ -14,7 +14,6 @@ SUBDIRS = \
 	win32 \
 	macosx \
 	src \
-	doc \
 	man \
 	po \
 	etc \
@@ -40,4 +39,4 @@ CLEANFILES = \
 
 DISTCLEANFILES = *~ 
 
-DISTCHECK_CONFIGURE_FLAGS = --disable-scrollkeeper --enable-gtk-doc
+DISTCHECK_CONFIGURE_FLAGS = --enable-gtk-doc
