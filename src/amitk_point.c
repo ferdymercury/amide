@@ -49,7 +49,7 @@ GType amitk_point_get_type (void) {
 }
 
 AmitkPoint * amitk_point_copy(const AmitkPoint * point) {
-  return (AmitkPoint *)g_memdup(point, sizeof(AmitkPoint));
+  return (AmitkPoint *)g_memdup2(point, sizeof(AmitkPoint));
 }
 
 void amitk_point_free (AmitkPoint * point) {
@@ -145,7 +145,7 @@ GType amitk_voxel_get_type (void) {
 }
 
 AmitkVoxel * amitk_voxel_copy(const AmitkVoxel * voxel) {
-  return (AmitkVoxel *)g_memdup(voxel, sizeof(AmitkVoxel));
+  return (AmitkVoxel *)g_memdup2(voxel, sizeof(AmitkVoxel));
 }
 
 void amitk_voxel_free (AmitkVoxel * voxel) {
@@ -223,7 +223,7 @@ GType amitk_pixel_get_type (void) {
 }
 
 AmitkPixel * amitk_pixel_copy(const AmitkPixel * pixel) {
-  return (AmitkPixel *)g_memdup(pixel, sizeof(AmitkPixel));
+  return (AmitkPixel *)g_memdup2(pixel, sizeof(AmitkPixel));
 }
 
 void amitk_pixel_free (AmitkPixel * pixel) {
@@ -242,7 +242,7 @@ GType amitk_canvas_point_get_type (void) {
 }
 
 AmitkCanvasPoint * amitk_canvas_point_copy(const AmitkCanvasPoint * point) {
-  return (AmitkCanvasPoint *)g_memdup(point, sizeof(AmitkCanvasPoint));
+  return (AmitkCanvasPoint *)g_memdup2(point, sizeof(AmitkCanvasPoint));
 }
 
 void amitk_canvas_point_free (AmitkCanvasPoint * point) {
@@ -265,7 +265,7 @@ GType amitk_axes_get_type (void) {
 }
 
 AmitkAxes * amitk_axes_copy(const AmitkAxes * axes) {
-  return (AmitkAxes *)g_memdup(axes, sizeof(AmitkAxes));
+  return (AmitkAxes *)g_memdup2(axes, sizeof(AmitkAxes));
 }
 
 void amitk_axes_free (AmitkAxes * axes) {
@@ -503,7 +503,7 @@ GType amitk_corners_get_type (void) {
 }
 
 AmitkCorners * amitk_corners_copy(const AmitkCorners * corners) {
-  return (AmitkCorners *)g_memdup(corners, sizeof(AmitkCorners));
+  return (AmitkCorners *)g_memdup2(corners, sizeof(AmitkCorners));
 }
 
 void amitk_corners_free (AmitkCorners * corners) {

@@ -37,7 +37,7 @@
 #include <locale.h>
 
 
-gboolean vistaio_test_vista(gchar *filename)
+gboolean vistaio_test_vista(const gchar *filename)
 {
   return VistaIOIsVistaFile(filename); 
 }

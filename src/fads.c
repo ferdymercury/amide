@@ -484,6 +484,7 @@ void fads_pca(AmitkDataSet * data_set,
   return;
 }
 
+#if AMIDE_DEBUG
 static gdouble calc_magnitude(AmitkDataSet * ds, gdouble * weight) {
 
   gdouble magnitude;
@@ -506,6 +507,7 @@ static gdouble calc_magnitude(AmitkDataSet * ds, gdouble * weight) {
 
   return sqrt(magnitude);
 }
+#endif
 
 
 /* returned array needs to be free'd */
@@ -909,7 +911,6 @@ void fads_pls(AmitkDataSet * data_set,
   gdouble alpha, factor;
   amide_time_t frame_midpoint, frame_duration;
   gdouble init_value;
-  gdouble magnitude;
   AmitkDataSet * new_ds;
   AmitkVoxel i_voxel;
   gdouble current_beta=0.0;
@@ -917,6 +918,7 @@ void fads_pls(AmitkDataSet * data_set,
   GTimer * timer=NULL;
   gboolean new_outer;
 #if AMIDE_DEBUG
+  gdouble magnitude;
   div_t x;
 #endif
 
@@ -977,7 +979,9 @@ void fads_pls(AmitkDataSet * data_set,
     g_warning(_("failed weight malloc"));
     goto ending;
   }
+#if AMIDE_DEBUG
   magnitude = calc_magnitude(p.data_set, p.weight);
+#endif
 
   if (p.sum_factors_equal_one) {
     p.ec_a = g_try_new(gdouble, p.num_voxels);
@@ -1942,12 +1946,13 @@ void fads_two_comp(AmitkDataSet * data_set,
   amide_time_t time_start;
   AmitkDataSet * new_ds;
   AmitkVoxel i_voxel;
-  gdouble magnitude, k12, k21;
+  gdouble k12, k21;
   gdouble init_value, alpha;
   AmitkViewMode i_view_mode;
   GTimer * timer=NULL;
   gboolean new_outer;
 #if AMIDE_DEBUG
+  gdouble magnitude;
   div_t x;
 #endif
 
@@ -2100,7 +2105,9 @@ void fads_two_comp(AmitkDataSet * data_set,
   /* calculate the weights and magnitude */
   p.weight = calc_weights(p.data_set);
   g_return_if_fail(p.weight != NULL); /* make sure we've malloc'd it */
+#if AMIDE_DEBUG
   magnitude = calc_magnitude(p.data_set, p.weight);
+#endif
 
   
   /* set up gsl */

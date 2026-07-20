@@ -147,7 +147,7 @@ static void convert_rgb_pixbuf_to_yuv(yuv_t * yuv, GdkPixbuf * pixbuf) {
 
 
 typedef struct {
-  AVCodec *codec;
+  const AVCodec *codec;
   AVCodecContext *context;
   AVFrame *picture;
   yuv_t * yuv; 

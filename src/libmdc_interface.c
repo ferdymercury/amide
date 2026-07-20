@@ -933,12 +933,12 @@ gboolean libmdc_export(AmitkDataSet * ds,
 
   /* set what we can */
   if (AMITK_DATA_SET_SUBJECT_NAME(ds) != NULL) 
-    strncpy(fi.patient_name,AMITK_DATA_SET_SUBJECT_NAME(ds), MDC_MAXSTR);
+    strncpy(fi.patient_name,AMITK_DATA_SET_SUBJECT_NAME(ds), MDC_MAXSTR - 1);
   if (AMITK_DATA_SET_SUBJECT_ID(ds) != NULL) 
-    strncpy(fi.patient_id,AMITK_DATA_SET_SUBJECT_ID(ds), MDC_MAXSTR);
+    strncpy(fi.patient_id,AMITK_DATA_SET_SUBJECT_ID(ds), MDC_MAXSTR - 1);
   if (AMITK_DATA_SET_SUBJECT_DOB(ds) != NULL) 
-    strncpy(fi.patient_dob,AMITK_DATA_SET_SUBJECT_DOB(ds), MDC_MAXSTR);
-  strncpy(fi.patient_sex, amitk_subject_sex_get_name(AMITK_DATA_SET_SUBJECT_SEX(ds)), MDC_MAXSTR);
+    strncpy(fi.patient_dob,AMITK_DATA_SET_SUBJECT_DOB(ds), MDC_MAXSTR - 1);
+  strncpy(fi.patient_sex, amitk_subject_sex_get_name(AMITK_DATA_SET_SUBJECT_SEX(ds)), MDC_MAXSTR - 1);
 
   fi.injected_dose = AMITK_DATA_SET_INJECTED_DOSE(ds);
   fi.patient_weight= AMITK_DATA_SET_SUBJECT_WEIGHT(ds);
