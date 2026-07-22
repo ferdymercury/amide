@@ -135,7 +135,7 @@ LIBS="${LIBS} ${AMIDE_LIBDCMDATA_LIBS}"
 saved_cxxflags="${CXXFLAGS}"                                              
 CXXFLAGS="${CXXFLAGS} ${AMIDE_LIBDCMDATA_CFLAGS} -DHAVE_CONFIG_H"
 FOUND_DCMDATA=no
-AC_LANG_CPLUSPLUS
+AC_LANG([C++])
 AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <dcmtk/dcmdata/dcddirif.h>],
 					  [DicomDirInterface dcm_dir;
 					   dcm_dir.writeDicomDir();
