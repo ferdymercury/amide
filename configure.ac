@@ -117,17 +117,35 @@ AC_ARG_WITH(dcmtk-prefix,
 [
   --with-dcmtk-prefix=PFX  Prefix where DCMTK is installed (optional)]
   , dcmtk_prefix="$withval", dcmtk_prefix="")
+
+dnl extra check for liboficonv
+saved_libs="${LIBS}"
+saved_cxxflags="${CXXFLAGS}"
 if test x"$dcmtk_prefix" != x; then
-  DCMTK_LIBS="-L$dcmtk_prefix/lib -L$dcmtk_prefix/lib64 -ltiff -lpng -ldcmimage -ldcmimgle -ldcmdata -ldcmjpeg -lijg8 -lijg12 -lijg16 -loflog -lofstd -lz $THREAD_LIBS"
+  LIBS="$LIBS -L$dcmtk_prefix/lib -L$dcmtk_prefix/lib64"
+  CXXFLAGS="-I$dcmtk_prefix/include"
+else
+  LIBS="-L/usr/local/dicom/lib -L/usr/lib64/dcmtk -L/usr/lib/dcmtk"
+  CXXFLAGS="-I/usr/local/dicom/include"
+fi
+AC_CHECK_LIB(oficonv, OFiconv_open, OFICONV_LIBS="-loficonv", OFICONV_LIBS="")
+
+LIBS="${saved_libs}"
+CXXFLAGS="${saved_cxxflags}"
+
+dnl set dcmtk LIBS & CFLAGS
+if test x"$dcmtk_prefix" != x; then
+  DCMTK_LIBS="-L$dcmtk_prefix/lib -L$dcmtk_prefix/lib64 -ltiff -lpng -ldcmimage -ldcmimgle -ldcmdata -ldcmjpeg -lijg8 -lijg12 -lijg16 -loflog -lofstd $OFICONV_LIBS -lz $THREAD_LIBS"
   DCMTK_CFLAGS="-I$dcmtk_prefix/include"
 else
-  DCMTK_LIBS="-L/usr/local/dicom/lib -L/usr/lib64/dcmtk -L/usr/lib/dcmtk -ldcmimgle -ldcmdata -loflog -lofstd -ldcmimage -ldcmjpeg -lijg8 -lijg12 -lijg16 -lz -ltiff -lpng $THREAD_LIBS"
+  DCMTK_LIBS="-L/usr/local/dicom/lib -L/usr/lib64/dcmtk -L/usr/lib/dcmtk -ldcmimgle -ldcmdata -loflog -lofstd $OFICONV_LIBS -ldcmimage -ldcmjpeg -lijg8 -lijg12 -lijg16 -lz -ltiff -lpng $THREAD_LIBS"
   DCMTK_CFLAGS="-I/usr/local/dicom/include"
 fi
 
 AMIDE_LIBDCMDATA_LIBS="$DCMTK_LIBS"
 AMIDE_LIBDCMDATA_CFLAGS="$DCMTK_CFLAGS"
 
+dnl check dcmtk linking
 saved_libs="${LIBS}"
 LIBS="${LIBS} ${AMIDE_LIBDCMDATA_LIBS}"
 saved_cxxflags="${CXXFLAGS}"                                              
