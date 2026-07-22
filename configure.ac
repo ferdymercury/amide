@@ -118,10 +118,10 @@ AC_ARG_WITH(dcmtk-prefix,
   --with-dcmtk-prefix=PFX  Prefix where DCMTK is installed (optional)]
   , dcmtk_prefix="$withval", dcmtk_prefix="")
 if test x"$dcmtk_prefix" != x; then
-  DCMTK_LIBS="-L$dcmtk_prefix/lib -L$dcmtk_prefix/lib64 -ltiff -lpng -ldcmimage -ldcmimgle -ldcmdata -ldcmjpeg -lijg8 -lijg12 -lijg16 -loflog -lofstd -lz $THREADS_LIB"
+  DCMTK_LIBS="-L$dcmtk_prefix/lib -L$dcmtk_prefix/lib64 -ltiff -lpng -ldcmimage -ldcmimgle -ldcmdata -ldcmjpeg -lijg8 -lijg12 -lijg16 -loflog -lofstd -lz $THREAD_LIBS"
   DCMTK_CFLAGS="-I$dcmtk_prefix/include"
 else
-  DCMTK_LIBS="-L/usr/local/dicom/lib -L/usr/lib64/dcmtk -L/usr/lib/dcmtk -ldcmimgle -ldcmdata -loflog -lofstd -ldcmimage -ldcmjpeg -lijg8 -lijg12 -lijg16 -lz -ltiff -lpng $THREADS_LIB"
+  DCMTK_LIBS="-L/usr/local/dicom/lib -L/usr/lib64/dcmtk -L/usr/lib/dcmtk -ldcmimgle -ldcmdata -loflog -lofstd -ldcmimage -ldcmjpeg -lijg8 -lijg12 -lijg16 -lz -ltiff -lpng $THREAD_LIBS"
   DCMTK_CFLAGS="-I/usr/local/dicom/include"
 fi
 
