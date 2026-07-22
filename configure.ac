@@ -118,24 +118,22 @@ AC_ARG_WITH(dcmtk-prefix,
   --with-dcmtk-prefix=PFX  Prefix where DCMTK is installed (optional)]
   , dcmtk_prefix="$withval", dcmtk_prefix="")
 if test x"$dcmtk_prefix" != x; then
-  DCMTK_LIBS="-L$dcmtk_prefix/lib -L$dcmtk_prefix/lib64 -ltiff -lpng -ldcmimage -ldcmimgle -ldcmdata -ldcmjpeg -lijg8 -lijg12 -lijg16 -loflog -lofstd -lz $THREADS_LIB"
+  DCMTK_LIBS="-L$dcmtk_prefix/lib -L$dcmtk_prefix/lib64 -ltiff -lpng -ldcmimage -ldcmimgle -ldcmdata -ldcmjpeg -lijg8 -lijg12 -lijg16 -loflog -lofstd -lz $THREAD_LIBS"
   DCMTK_CFLAGS="-I$dcmtk_prefix/include"
 else
-  DCMTK_LIBS="-L/usr/local/dicom/lib -L/usr/lib64/dcmtk -L/usr/lib/dcmtk -ldcmimgle -ldcmdata -loflog -lofstd -ldcmimage -ldcmjpeg -lijg8 -lijg12 -lijg16 -lz -ltiff -lpng $THREADS_LIB"
+  DCMTK_LIBS="-L/usr/local/dicom/lib -L/usr/lib64/dcmtk -L/usr/lib/dcmtk -ldcmimgle -ldcmdata -loflog -lofstd -ldcmimage -ldcmjpeg -lijg8 -lijg12 -lijg16 -lz -ltiff -lpng $THREAD_LIBS"
   DCMTK_CFLAGS="-I/usr/local/dicom/include"
 fi
 
 AMIDE_LIBDCMDATA_LIBS="$DCMTK_LIBS"
 AMIDE_LIBDCMDATA_CFLAGS="$DCMTK_CFLAGS"
-dnl previous hardcoded settings: failed compile test ...
-dnl AMIDE_LIBDCMDATA_LIBS="-L/usr/local/dicom/lib -L/usr/lib64/dcmtk -L/usr/lib/dcmtk -ltiff -lpng -ldcmimage -ldcmimgle -ldcmjpeg -lijg8 -lijg12 -lijg16 -ldcmdata -loflog -lofstd -lz $THREAD_LIBS"
-dnl AMIDE_LIBDCMDATA_CFLAGS="-I/usr/local/dicom/include"
+
 saved_libs="${LIBS}"
 LIBS="${LIBS} ${AMIDE_LIBDCMDATA_LIBS}"
 saved_cxxflags="${CXXFLAGS}"                                              
 CXXFLAGS="${CXXFLAGS} ${AMIDE_LIBDCMDATA_CFLAGS} -DHAVE_CONFIG_H"
 FOUND_DCMDATA=no
-AC_LANG_CPLUSPLUS
+AC_LANG([C++])
 AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <dcmtk/dcmdata/dcddirif.h>],
 					  [DicomDirInterface dcm_dir;
 					   dcm_dir.writeDicomDir();
