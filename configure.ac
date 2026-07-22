@@ -127,9 +127,7 @@ fi
 
 AMIDE_LIBDCMDATA_LIBS="$DCMTK_LIBS"
 AMIDE_LIBDCMDATA_CFLAGS="$DCMTK_CFLAGS"
-dnl previous hardcoded settings: failed compile test ...
-dnl AMIDE_LIBDCMDATA_LIBS="-L/usr/local/dicom/lib -L/usr/lib64/dcmtk -L/usr/lib/dcmtk -ltiff -lpng -ldcmimage -ldcmimgle -ldcmjpeg -lijg8 -lijg12 -lijg16 -ldcmdata -loflog -lofstd -lz $THREAD_LIBS"
-dnl AMIDE_LIBDCMDATA_CFLAGS="-I/usr/local/dicom/include"
+
 saved_libs="${LIBS}"
 LIBS="${LIBS} ${AMIDE_LIBDCMDATA_LIBS}"
 saved_cxxflags="${CXXFLAGS}"                                              
