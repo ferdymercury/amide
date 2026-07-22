@@ -1698,6 +1698,7 @@ static gint threshold_arrow_cb(AmitkCanvasItem * item, AmitkCanvasItem * target,
 	}
 
 	threshold_update_color_scale(threshold, AMITK_THRESHOLD_SCALE_FULL);
+	threshold_update_connector_lines(threshold, AMITK_THRESHOLD_SCALE_FULL);
 	threshold_update_spin_buttons(threshold);   /* show the current val in the spin button's */
       }
       break;
