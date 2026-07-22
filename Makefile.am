@@ -28,7 +28,6 @@ EXTRA_DIST = \
 	intltool-extract.in \
 	intltool-merge.in    \
 	intltool-update.in \
-	gnome-doc-utils.make \
 	m4   
 
 CLEANFILES = \
