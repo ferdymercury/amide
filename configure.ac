@@ -1,7 +1,7 @@
 dnl ===============================================================================
 dnl              Configure script for AMIDE
 dnl ===============================================================================
-AC_PREREQ(2.59)
+AC_PREREQ([2.71])
 AC_INIT([amide],[1.0.6],[amide-users@lists.sourceforge.net])
 
 AC_CONFIG_SRCDIR(src/amide.c)
