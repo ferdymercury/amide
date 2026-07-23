@@ -23,7 +23,8 @@ AC_CHECK_FUNCS(strptime)
 
 dnl ================= translation =======================================
 
-AM_GLIB_GNU_GETTEXT
+AM_GNU_GETTEXT_VERSION([0.19.8])
+AM_GNU_GETTEXT([external])
 GETTEXT_PACKAGE=amide
 AC_SUBST(GETTEXT_PACKAGE)
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE", [Define the gettext package to be used])

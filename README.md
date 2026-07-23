@@ -25,9 +25,7 @@ Quick Linux instructions
 	# EndIf	
 
 	cd amide
-	intltoolize
-	libtoolize
-	autoreconf --install
+	autoreconf --install --force
 	# If Ubuntu 20 or later:
 	./configure --prefix /opt/amide --enable-gnome-vfs=no
 	# Else (Ubuntu 18 or Fedora32):

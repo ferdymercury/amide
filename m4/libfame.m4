@@ -52,7 +52,7 @@ dnl Now check if the installed LIBFAME is sufficiently new. (Also sanity
 dnl checks the results of libfame-config to some extent
 dnl
       rm -f conf.libfametest
-      AC_TRY_RUN([
+      AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <fame.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -126,7 +126,7 @@ main ()
     }
   return 1;
 }
-],, no_libfame=yes,[echo $ac_n "cross compiling; assumed OK... $ac_c"])
+]])],[],[no_libfame=yes],[echo $ac_n "cross compiling; assumed OK... $ac_c"])
        CFLAGS="$ac_save_CFLAGS"
        LIBS="$ac_save_LIBS"
      fi
@@ -148,10 +148,10 @@ main ()
           echo "*** Could not run libfame test program, checking why..."
           CFLAGS="$CFLAGS $LIBFAME_CFLAGS"
           LIBS="$LIBS $LIBFAME_LIBS"
-          AC_TRY_LINK([
+          AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 #include <fame.h>
 #include <stdio.h>
-],      [ return ((libfame_major_version) || (libfame_minor_version) || (libfame_micro_version)); ],
+]],     [[ return ((libfame_major_version) || (libfame_minor_version) || (libfame_micro_version)); ]])],
         [ echo "*** The test program compiled, but did not run. This usually means"
           echo "*** that the run-time linker is not finding libfame or finding the wrong"
           echo "*** version of LIBFAME. If it is not finding libfame, you'll need to set your"
