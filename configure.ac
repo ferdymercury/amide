@@ -13,7 +13,7 @@ AM_MAINTAINER_MODE([enable])
 
 AC_PROG_CC
 AC_PROG_CXX
-AC_PROG_LIBTOOL
+LT_INIT
 
 AC_CHECK_HEADERS(unistd.h, AC_DEFINE(HAVE_UNISTD_H))
 AC_CHECK_SIZEOF(long,8)
@@ -29,7 +29,7 @@ AC_SUBST(GETTEXT_PACKAGE)
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE", [Define the gettext package to be used])
 
 ALL_LINGUAS="zh_CN zh_TW"
-AC_PROG_INTLTOOL
+IT_PROG_INTLTOOL
 
 dnl m4 required for compiling
 AC_PATH_PROGS(M4, gnum4 gm4 m4, NOT_FOUND)
@@ -96,7 +96,7 @@ dnl fi
 ##############################################################
 
 dnl check for various libraries and programs that we might need
-AM_PATH_GSL(1.1.1, FOUND_LIBGSL=yes, FOUND_LIBGSL=no)
+AX_PATH_GSL([1.1.1],[FOUND_LIBGSL=yes],[FOUND_LIBGSL=no])
 AC_CHECK_LIB(ecat, matrix_open, FOUND_LIBECAT=yes, FOUND_LIBECAT=no, -L/sw/lib)
 AC_CHECK_LIB(volpack, vpGetErrorString, FOUND_VOLPACK=yes, FOUND_VOLPACK=no, -lm -L/sw/lib -L/usr/local/lib)
 dnl AM_PATH_XMEDCON(0.10.0, FOUND_XMEDCON=yes, FOUND_XMEDCON=no)
