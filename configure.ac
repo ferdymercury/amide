@@ -162,6 +162,11 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <dcmtk/dcmdata/dcddirif.h>],
 LIBS="${saved_libs}"
 CXXFLAGS="${saved_cxxflags}"                                                                                        
 
+dnl unset dcmtk LIBS and CFLAGS when linking failed
+if test x$FOUND_DCMDATA == xno; then
+  AMIDE_LIBDCMDATA_LIBS=""
+  AMIDE_LIBDCMDATA_CFLAGS=""
+fi
 
 dnl trying to phase out libfame use in favor of ffmpeg
 PKG_CHECK_MODULES(FFMPEG, [
