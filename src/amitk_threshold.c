@@ -34,6 +34,7 @@
 #include "image.h"
 #include "amitk_marshal.h"
 #include "amitk_color_table_menu.h"
+#include "amitk_canvas_compat.h"
 
 #define THRESHOLD_COLOR_SCALE_SEPARATION 30.0
 #define THRESHOLD_COLOR_SCALE_WIDTH 16.0
@@ -714,7 +715,7 @@ static void threshold_update_histogram(AmitkThreshold * threshold) {
   root = amitk_simple_canvas_get_root_item(AMITK_SIMPLE_CANVAS(threshold->histogram));
   if (pixbuf != NULL) {
     if (threshold->histogram_image != NULL)
-      g_object_set(threshold->histogram_image, "pixbuf", pixbuf, NULL);
+      canvas_item_set(threshold->histogram_image, "pixbuf", pixbuf, NULL);
     else 
       threshold->histogram_image = 
         amitk_canvas_image_new(root, pixbuf, 0.0, THRESHOLD_TRIANGLE_HEIGHT,
@@ -965,7 +966,7 @@ static void threshold_update_arrow(AmitkThreshold * threshold, AmitkThresholdArr
     } else { /* otherwise, do all the drawing */
       
       if (threshold->arrow[i_ref][arrow] != NULL)
-	g_object_set(threshold->arrow[i_ref][arrow], "points", points, NULL);
+	canvas_item_set(threshold->arrow[i_ref][arrow], "points", points, NULL);
       else {
 	threshold->arrow[i_ref][arrow] = 
           amitk_canvas_polyline_new(amitk_simple_canvas_get_root_item(AMITK_SIMPLE_CANVAS(threshold->color_scales[i_ref])),
@@ -1038,7 +1039,7 @@ static void threshold_update_color_scale(AmitkThreshold * threshold, AmitkThresh
     }
    
     if (threshold->color_scale_image[i_ref][scale] != NULL) {
-      g_object_set(threshold->color_scale_image[i_ref][scale], "pixbuf", pixbuf, NULL);
+      canvas_item_set(threshold->color_scale_image[i_ref][scale], "pixbuf", pixbuf, NULL);
     } else {
       threshold->color_scale_image[i_ref][scale] = 
         amitk_canvas_image_new(amitk_simple_canvas_get_root_item(AMITK_SIMPLE_CANVAS(threshold->color_scales[i_ref])),
@@ -1083,7 +1084,7 @@ static void threshold_update_connector_lines(AmitkThreshold * threshold, AmitkTh
     else if (temp > 1.0) temp = 1.0;
     line_points->coords[3] = THRESHOLD_TRIANGLE_HEIGHT + THRESHOLD_COLOR_SCALE_HEIGHT * temp;
     if (threshold->connector_line[i_ref][AMITK_THRESHOLD_LINE_MAX] != NULL)
-      g_object_set(threshold->connector_line[i_ref][AMITK_THRESHOLD_LINE_MAX],
+      canvas_item_set(threshold->connector_line[i_ref][AMITK_THRESHOLD_LINE_MAX],
 			    "points", line_points, NULL);
     else
       threshold->connector_line[i_ref][AMITK_THRESHOLD_LINE_MAX] =
@@ -1107,7 +1108,7 @@ static void threshold_update_connector_lines(AmitkThreshold * threshold, AmitkTh
     else if (temp < 0.0) temp = 0.0;
     line_points->coords[3] = THRESHOLD_TRIANGLE_HEIGHT + THRESHOLD_COLOR_SCALE_HEIGHT * temp;
     if (threshold->connector_line[i_ref][AMITK_THRESHOLD_LINE_MIN] != NULL)
-      g_object_set(threshold->connector_line[i_ref][AMITK_THRESHOLD_LINE_MIN],
+      canvas_item_set(threshold->connector_line[i_ref][AMITK_THRESHOLD_LINE_MIN],
 			    "points", line_points, NULL);
     else
       threshold->connector_line[i_ref][AMITK_THRESHOLD_LINE_MIN] =
@@ -1135,7 +1136,7 @@ static void threshold_update_connector_lines(AmitkThreshold * threshold, AmitkTh
       else if (temp < 0.0) temp = 0.0;
       line_points->coords[3] = THRESHOLD_TRIANGLE_HEIGHT + THRESHOLD_COLOR_SCALE_HEIGHT * temp;
       if (threshold->connector_line[i_ref][AMITK_THRESHOLD_LINE_CENTER] != NULL)
-	g_object_set(threshold->connector_line[i_ref][AMITK_THRESHOLD_LINE_CENTER],
+	canvas_item_set(threshold->connector_line[i_ref][AMITK_THRESHOLD_LINE_CENTER],
 			      "points", line_points, NULL);
       else
 	threshold->connector_line[i_ref][AMITK_THRESHOLD_LINE_CENTER] =
@@ -1698,6 +1699,7 @@ static gint threshold_arrow_cb(AmitkCanvasItem * item, AmitkCanvasItem * target,
 	}
 
 	threshold_update_color_scale(threshold, AMITK_THRESHOLD_SCALE_FULL);
+	threshold_update_connector_lines(threshold, AMITK_THRESHOLD_SCALE_FULL);
 	threshold_update_spin_buttons(threshold);   /* show the current val in the spin button's */
       }
       break;
